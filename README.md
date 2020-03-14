@@ -9,6 +9,9 @@ zh-en:
 - [news-commentary-v14.en-zh.tsv.gz](http://data.statmt.org/news-commentary/v14/training/news-commentary-v14.en-zh.tsv.gz)
 - [WMT-News](http://opus.nlpl.eu/download.php?f=WMT-News/v2019/moses/en-zh.txt.zip)
 
+jr-en
+- [ASPEC](http://orchid.kuee.kyoto-u.ac.jp/ASPEC/)
+
 de-en:
 - [wikititles-v1.de-en.tsv.gz](http://data.statmt.org/wikititles/v1/wikititles-v1.de-en.tsv.gz)
 - [news-commentary-v14.de-en.tsv.gz](http://data.statmt.org/news-commentary/v14/training/news-commentary-v14.de-en.tsv.gz)
