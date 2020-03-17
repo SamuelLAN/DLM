@@ -1,141 +1,177 @@
 import numpy as np
 from lib.preprocess import utils
-import lib.utils as l_utils
-from preprocess import wmt_news
 
+seg_zh_by_jieba_pipeline = [
+    {
+        'name': 'tokenize_src_lan',
+        'func': utils.zh_word_seg_by_jieba,
+        'input_keys': ['input_1'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'join_list_token_2_string_with_space_for_src_lan',
+        'func': utils.join_list_token_2_string,
+        'input_keys': ['input_1', ' '],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+]
 
-def char_zh_word_en_monolingual(max_zh_seq_len=80, max_en_seq_len=60,
-                                zh_vocab_size=3000, en_vocab_size=2 ** 13, use_cache=True):
-    # read from cache
-    cache_name = f'char_zh_word_en_monolingual_{max_zh_seq_len}_{max_en_seq_len}.pkl'
-    if use_cache:
-        data = l_utils.read_cache(cache_name)
-        if not isinstance(data, type(None)):
-            return data
+encode_with_tfds_tokenizer_pipeline = [
+    {
+        'name': 'train_subword_tokenizer_by_tfds_for_src_lan',
+        'func': utils.train_subword_tokenizer_by_tfds,
+        'input_keys': ['input_1', 'src_vocab_size', 'max_src_seq_len'],
+        'output_keys': 'src_tokenizer',
+    },
+    {
+        'name': 'train_subword_tokenizer_by_tfds_for_tar_lan',
+        'func': utils.train_subword_tokenizer_by_tfds,
+        'input_keys': ['input_2', 'tar_vocab_size', 'max_tar_seq_len'],
+        'output_keys': 'tar_tokenizer',
+    },
+    {
+        'name': 'update vocab_size',
+        'func': lambda a, b: [a.vocab_size, b.vocab_size],
+        'input_keys': ['src_tokenizer', 'tar_tokenizer'],
+        'output_keys': ['src_vocab_size', 'tar_vocab_size'],
+        'show_dict': {'src_vocab_size': 'src_vocab_size', 'tar_vocab_size': 'tar_vocab_size'},
+    },
+    {
+        'name': 'encoder_string_2_subword_idx_for_src_lan',
+        'func': utils.encoder_string_2_subword_idx_by_tfds,
+        'input_keys': ['src_tokenizer', 'input_1'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'encoder_string_2_subword_idx_for_tar_lan',
+        'func': utils.encoder_string_2_subword_idx_by_tfds,
+        'input_keys': ['tar_tokenizer', 'input_2'],
+        'output_keys': 'input_2',
+        'show_dict': {'tar_lan': 'input_2'},
+    },
+    {
+        'name': 'max_seq_len minus 2',
+        'func': lambda a, b: [a - 2, b - 2],
+        'input_keys': ['max_src_seq_len', 'max_tar_seq_len'],
+        'output_keys': ['max_src_seq_len_2', 'max_tar_seq_len_2'],
+    },
+    {
+        'name': 'filter_exceed_max_seq_len',
+        'func': utils.filter_exceed_max_seq_len_for_cross_lingual,
+        'input_keys': ['input_1', 'input_2', 'max_src_seq_len_2', 'max_tar_seq_len_2'],
+        'output_keys': ['input_1', 'input_2'],
+    },
+    {
+        'name': 'add_start_end_token_to_src_lan',
+        'func': utils.add_start_end_token_idx_2_list_token_idx,
+        'input_keys': ['input_1', 'src_vocab_size'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'add_start_end_token_to_tar_lan',
+        'func': utils.add_start_end_token_idx_2_list_token_idx,
+        'input_keys': ['input_2', 'tar_vocab_size'],
+        'output_keys': 'input_2',
+        'show_dict': {'tar_lan': 'input_2'},
+    },
+    {
+        'name': 'add_pad_token_to_src_lan',
+        'func': utils.add_pad_token_idx_2_list_token_idx,
+        'input_keys': ['input_1', 'src_vocab_size', 'max_src_seq_len'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'add_pad_token_to_tar_lan',
+        'func': utils.add_pad_token_idx_2_list_token_idx,
+        'input_keys': ['input_2', 'tar_vocab_size', 'max_tar_seq_len'],
+        'output_keys': 'input_2',
+        'show_dict': {'tar_lan': 'input_2'},
+    },
+    {
+        'name': 'convert_input_to_array',
+        'func': lambda a, b: [np.array(a), np.array(b)],
+        'input_keys': ['input_1', 'input_2'],
+        'output_keys': ['input_1', 'input_2'],
+    },
+    {'output_keys': ['input_1', 'input_2', 'src_tokenizer', 'tar_tokenizer']},
+]
 
-    # load data
+decode_with_tfds_tokenizer_pipeline = [
+    {
+        'name': 'get_vocab_size',
+        'func': lambda x: x.vocab_size,
+        'input_keys': ['tokenizer'],
+        'output_keys': 'vocab_size',
+    },
+    {
+        'name': 'remove_out_of_vocab_token_idx',
+        'func': utils.remove_out_of_vocab_token_idx,
+        'input_keys': ['input_1', 'vocab_size'],
+        'output_keys': 'input_1',
+        'show_dict': {'lan': 'input_1'},
+    },
+    {
+        'name': 'decode_to_sentences',
+        'func': lambda tok, x: list(map(lambda a: tok.decode(a), x)),
+        'input_keys': ['tokenizer', 'input_1'],
+        'output_keys': 'input_2',
+        'show_dict': {'lan': 'input_2'},
+    },
+    {
+        'name': 'decode_subword_idx_2_tokens_by_tfds',
+        'func': utils.decode_subword_idx_2_tokens_by_tfds,
+        'input_keys': ['tokenizer', 'input_1'],
+        'output_keys': 'input_1',
+        'show_dict': {'lan': 'input_1'},
+    },
+    {
+        'name': 'join_list_token_2_string',
+        'func': utils.join_list_token_2_string,
+        'input_keys': ['input_1'],
+        'output_keys': 'input_1',
+        'show_dict': {'lan': 'input_1'},
+    },
+]
+
+remove_zh_space_pipeline = [
+    {
+        'name': 'remove_space',
+        'func': utils.remove_space,
+        'input_keys': ['input_1'],
+        'output_keys': 'input_1',
+        'show_dict': {'lan': 'input_1'},
+    },
+]
+
+if __name__ == '__main__':
+    from preprocess import wmt_news
+
     zh_data, en_data = wmt_news.zh_en()
+    params = {
+        'src_vocab_size': 2 ** 13,
+        'tar_vocab_size': 2 ** 13,
+        'max_src_seq_len': 50,
+        'max_tar_seq_len': 60,
+    }
 
-    # seg chinese to character level
-    list_of_zh_token = utils.char_seg(zh_data)
+    zh_data, en_data, zh_tokenizer, en_tokenizer = utils.pipeline(
+        preprocess_pipeline=seg_zh_by_jieba_pipeline + encode_with_tfds_tokenizer_pipeline,
+        lan_data_1=zh_data, lan_data_2=en_data, params=params)
 
-    # add <start> <end> token
-    en_data = utils.add_start_end_token_2_string(en_data)
-    # tokenize English sentences to token
-    en_tokenizer = utils.train_subword_tokenizer_by_tfds(en_data, en_vocab_size, max_en_seq_len, ['<start>', '<end>'])
-    # encode string to list of token idx
-    list_of_en_token_idx = utils.encoder_string_2_subword_idx_by_tfds(en_tokenizer, en_data)
+    print('\n----------------------------------------------')
+    print(zh_data.shape)
+    print(en_data.shape)
+    print(zh_tokenizer.vocab_size)
+    print(en_tokenizer.vocab_size)
 
-    # filter sentences which exceed max_seq_len
-    list_of_zh_token, list_of_en_token_idx = utils.filter_exceed_max_seq_len_for_cross_lingual(
-        list_of_zh_token, list_of_en_token_idx, max_zh_seq_len - 2, max_en_seq_len
-    )
+    print('\n--------------------------------------------')
+    zh_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline + remove_zh_space_pipeline,
+                             zh_data, None, {'tokenizer': zh_tokenizer})
 
-    # add <start> <end> tokens
-    list_of_zh_token = utils.add_start_end_token_2_list_token(list_of_zh_token)
-    # add <pad> tokens and filter sentences which exceed max_seq_len
-    list_of_zh_token = utils.add_pad_token_2_list_token(list_of_zh_token, max_zh_seq_len)
-    # convert tokens to token_idx
-    list_of_zh_token_idx, zh_char_dictionary = utils.doc_2_idx(list_of_zh_token, keep_n=zh_vocab_size)
-
-    vocab_size = en_tokenizer.vocab_size
-    # add pad token idx
-    list_of_en_token_idx = utils.add_pad_token_idx_2_list_token_idx(list_of_en_token_idx, vocab_size, max_en_seq_len, 0)
-
-    # # show some examples
-    # # remove the out of vocabulary token idx (idx for <start>, <end>, <pad>)
-    # tmp_list_of_en_token_idx = utils.remove_out_of_vocab_token_idx(list_of_en_token_idx, vocab_size)
-    # # decode token idx to tokens
-    # list_of_en_token = utils.decode_subword_idx_2_tokens_by_tfds(en_tokenizer, tmp_list_of_en_token_idx)
-    # for i, v in enumerate(list_of_en_token[:10]):
-    #     print(f'\n---------------- {i} -------------------')
-    #     print(en_data[i])
-    #     print(v)
-    #     print(zh_data[i])
-    #     print(list_of_zh_token[i])
-    #     print('')
-    #
-    # print('\n###################################33')
-    # print(en_tokenizer.vocab_size)
-    # print(len(zh_char_dictionary))
-    # print(np.array(list_of_zh_token_idx).shape)
-    # print(np.array(list_of_en_token_idx).shape)
-
-    # convert list to array
-    arr_of_zh_token_idx = np.array(list_of_zh_token_idx, dtype=np.int32)
-    arr_of_en_token_idx = np.array(list_of_en_token_idx, dtype=np.int32)
-
-    l_utils.cache(cache_name, [arr_of_zh_token_idx, arr_of_en_token_idx, zh_char_dictionary, en_tokenizer])
-    return arr_of_zh_token_idx, arr_of_en_token_idx, zh_char_dictionary, en_tokenizer
-
-
-def word_zh_word_en_monolingual(max_zh_seq_len=50, max_en_seq_len=60,
-                                zh_vocab_size=5000, en_vocab_size=2 ** 13, use_cache=True):
-    # read from cache
-    cache_name = f'word_zh_word_en_monolingual_{max_zh_seq_len}_{max_en_seq_len}.pkl'
-    if use_cache:
-        data = l_utils.read_cache(cache_name)
-        if not isinstance(data, type(None)):
-            return data
-
-    # load data
-    zh_data, en_data = wmt_news.zh_en()
-
-    # seg chinese to character level
-    list_of_zh_token = utils.zh_word_seg_by_jieba(zh_data)
-
-    # add <start> <end> token
-    en_data = utils.add_start_end_token_2_string(en_data)
-    # tokenize English sentences to token
-    en_tokenizer = utils.train_subword_tokenizer_by_tfds(en_data, en_vocab_size, max_en_seq_len, ['<start>', '<end>'])
-    # encode string to list of token idx
-    list_of_en_token_idx = utils.encoder_string_2_subword_idx_by_tfds(en_tokenizer, en_data)
-
-    # filter sentences which exceed max_seq_len
-    list_of_zh_token, list_of_en_token_idx = utils.filter_exceed_max_seq_len_for_cross_lingual(
-        list_of_zh_token, list_of_en_token_idx, max_zh_seq_len - 2, max_en_seq_len
-    )
-
-    # add <start> <end> tokens
-    list_of_zh_token = utils.add_start_end_token_2_list_token(list_of_zh_token)
-    # add <pad> tokens and filter sentences which exceed max_seq_len
-    list_of_zh_token = utils.add_pad_token_2_list_token(list_of_zh_token, max_zh_seq_len)
-    # convert tokens to token_idx
-    list_of_zh_token_idx, zh_char_dictionary = utils.doc_2_idx(list_of_zh_token, keep_n=zh_vocab_size)
-
-    vocab_size = en_tokenizer.vocab_size
-    # add pad token idx
-    list_of_en_token_idx = utils.add_pad_token_idx_2_list_token_idx(list_of_en_token_idx, vocab_size, max_en_seq_len, 0)
-
-    # # show some examples
-    # # remove the out of vocabulary token idx (idx for <start>, <end>, <pad>)
-    # tmp_list_of_en_token_idx = utils.remove_out_of_vocab_token_idx(list_of_en_token_idx, vocab_size)
-    # # decode token idx to tokens
-    # list_of_en_token = utils.decode_subword_idx_2_tokens_by_tfds(en_tokenizer, tmp_list_of_en_token_idx)
-    # for i, v in enumerate(list_of_en_token[:10]):
-    #     print(f'\n---------------- {i} -------------------')
-    #     print(en_data[i])
-    #     print(v)
-    #     print(zh_data[i])
-    #     print(list_of_zh_token[i])
-    #     print('')
-    #
-    # print('\n###################################33')
-    # print(en_tokenizer.vocab_size)
-    # print(len(zh_char_dictionary))
-    # print(np.array(list_of_zh_token_idx).shape)
-    # print(np.array(list_of_en_token_idx).shape)
-
-    # convert list to array
-    arr_of_zh_token_idx = np.array(list_of_zh_token_idx, dtype=np.int32)
-    arr_of_en_token_idx = np.array(list_of_en_token_idx, dtype=np.int32)
-
-    l_utils.cache(cache_name, [arr_of_zh_token_idx, arr_of_en_token_idx, zh_char_dictionary, en_tokenizer])
-    return arr_of_zh_token_idx, arr_of_en_token_idx, zh_char_dictionary, en_tokenizer
-
-
-# arr_of_zh_token_idx, arr_of_en_token_idx, zh_char_dictionary, en_tokenizer = word_zh_word_en_monolingual(50, 60)
-# print(arr_of_zh_token_idx.shape)
-# print(arr_of_en_token_idx.shape)
-# print(len(zh_char_dictionary))
-# print(en_tokenizer.vocab_size)
+    print('\n--------------------------------------------')
+    en_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline, en_data, None, {'tokenizer': en_tokenizer})

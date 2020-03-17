@@ -10,12 +10,18 @@ import tensorflow_datasets as tfds
 from six.moves.urllib.request import urlretrieve
 from nltk.tokenize import word_tokenize
 
+TOKEN_START = '<start>'
+TOKEN_END = '<end>'
+TOKEN_CLS = '<cls>'
+TOKEN_PAD = '<pad>'
+TOKEN_UNK = '<unk>'  # for unknown words
+
 
 def download(url, file_path):
     """ download data """
     dir_path = os.path.splitext(file_path)[0]
     if os.path.exists(dir_path) or os.path.exists(file_path):
-        print('%s exists' % file_path)
+        # print('%s exists' % file_path)
         return
 
     def progress(count, block_size, total_size):
@@ -32,7 +38,7 @@ def unzip_and_delete(file_path):
 
     new_dir_path = os.path.splitext(file_path)[0]
     if os.path.exists(new_dir_path):
-        print('%s has been unzip' % file_path)
+        # print('%s has been unzip' % file_path)
         return
     os.mkdir(new_dir_path)
 
@@ -193,9 +199,26 @@ def doc_2_idx(list_of_doc, dictionary=None, keep_n=5000):
     return list_of_doc, dictionary
 
 
+def idx_2_doc(list_of_list_token_idx, dictionary):
+    """ decode list_of_list_token_idx to list_of_list_token """
+    return list(map(
+        lambda x: list(map(lambda a: dictionary.get(a) if dictionary.get(a) else TOKEN_UNK, x)),
+        list_of_list_token_idx
+    ))
+
+
+def join_list_token_2_string(list_of_list_token, delimiter=''):
+    """ join the list tokens to string """
+    return list(map(lambda x: delimiter.join(x), list_of_list_token))
+
+
+def remove_space(list_of_sentence):
+    return list(map(lambda x: x.replace(' ', ''), list_of_sentence))
+
+
 def add_start_end_token_2_list_token(list_of_list_token):
     """ add <start> and <end> tokens to the start and the end of list_token respectively """
-    return list(map(lambda x: ['<start>'] + x + ['<end>'], list_of_list_token))
+    return list(map(lambda x: [TOKEN_START] + x + [TOKEN_END], list_of_list_token))
 
 
 def add_pad_token_2_list_token(list_of_list_token, max_seq_len):
@@ -204,7 +227,7 @@ def add_pad_token_2_list_token(list_of_list_token, max_seq_len):
     fix_len_list_of_list_token = []
 
     for list_token in list_of_list_token:
-        after_pad_list_token = list_token + ['<pad>'] * (max_seq_len - len(list_token))
+        after_pad_list_token = list_token + [TOKEN_PAD] * (max_seq_len - len(list_token))
         fix_len_list_of_list_token.append(after_pad_list_token)
 
     return fix_len_list_of_list_token
@@ -236,12 +259,12 @@ def filter_exceed_max_seq_len_for_cross_lingual(list_of_list_src_token, list_of_
 
 def add_start_end_token_2_string(list_of_sentences):
     """ add <start> <end> token to string """
-    return list(map(lambda x: '<start> ' + x + '<end>', list_of_sentences))
+    return list(map(lambda x: TOKEN_START + ' ' + x + ' ' + TOKEN_END, list_of_sentences))
 
 
-def add_start_end_token_idx_2_list_token_idx(list_of_list_token_idx, vocab_size):
+def add_start_end_token_idx_2_list_token_idx(list_of_list_token_idx, vocab_size, incr=0):
     """ add the start token idx (vocab_size) and the end token idx (vocab_size + 1) to list_token_idx """
-    return list(map(lambda x: [vocab_size] + x + [vocab_size + 1], list_of_list_token_idx))
+    return list(map(lambda x: [vocab_size + incr] + x + [vocab_size + incr + 1], list_of_list_token_idx))
 
 
 def add_pad_token_idx_2_list_token_idx(list_of_list_token_idx, vocab_size, max_seq_len, incr=2):
@@ -261,3 +284,81 @@ def remove_out_of_vocab_token_idx(list_of_list_token_idx, vocab_size):
     return list(map(lambda x: [v for v in x if v < vocab_size], list_of_list_token_idx))
 
 
+def remove_some_token_idx(list_of_list_token_idx, remove_idx_list):
+    """ remove the out of vocabulary token idx (idx for <start>, <end>, <pad>) """
+    return list(map(lambda x: [v for v in x if v not in remove_idx_list], list_of_list_token_idx))
+
+
+def convert_minus_1_to_unknown_token_idx(list_of_list_token_idx, vocab_size, incr=0):
+    """ convert the -1 to vocab_size + incr (because for the unknown words, the dictionary may convert it to -1) """
+    return list(map(lambda x: list(map(lambda a: a if a != -1 else (vocab_size + incr), x)), list_of_list_token_idx))
+
+
+def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}):
+    """
+    preprocess the data according to the preprocess_pipeline
+    :params
+        preprocess_pipeline (list): a list of preprocessing functions
+            the format must be: [
+                {
+                    'name': 'add_pad_token_idx_to_en', # whatever you name it, just for display
+                    'func': utils.add_pad_token_idx_2_list_token_idx, # the func that will be executed
+                    'input_keys': ['input_2', 'en_vocab_size', 'max_tar_seq_len', 0],
+                        # generate the args for func according to the input_keys;
+                    'output_keys': ['input_2'],
+                        # record the output of the func to the result_dict according to the output_keys
+                },
+                ...
+            ]
+        lan_data_1 (list): list of sentences of language 1
+            e.g., [ 'I am a boy', 'you are a girl.' ]
+        lan_data_2 (list):  list of sentences of language 2
+            e.g., [ 'I am a boy', 'you are a girl.' ]
+    """
+    # share variables when applying different preprocess functions
+    result_dict = {**params, 'input_1': lan_data_1, 'input_2': lan_data_2}
+
+    # traverse the pipeline
+    for func_dict in preprocess_pipeline:
+        # for the last func of the pipeline; the last func would only contains the 'output_keys' for the return values
+        if 'func' not in func_dict:
+            continue
+
+        if 'params' in func_dict:
+            for k, v in func_dict['params'].items():
+                result_dict[k] = v
+
+        # get variables
+        name = func_dict['name']
+        func = func_dict['func']
+        args = [result_dict[key] if isinstance(key, str) and key in result_dict else key
+                for key in func_dict['input_keys']]
+        output_keys = func_dict['output_keys']
+        show_dict = {} if 'show_dict' not in func_dict else func_dict['show_dict']
+
+        # apply preprocess function
+        print('preprocessing %s ...' % name)
+        outputs = func(*args)
+
+        # record output to result_dict
+        if isinstance(output_keys, str):
+            result_dict[output_keys] = outputs
+        elif len(output_keys) == 1:
+            result_dict[output_keys[0]] = outputs
+        else:
+            for i, key in enumerate(output_keys):
+                result_dict[key] = outputs[i]
+
+        # for display
+        for k, v in show_dict.items():
+            v = result_dict[v]
+            tmp_v = v[:2] if isinstance(v, list) else v
+            print('{}: {}'.format(k, tmp_v))
+
+    # return output according to the last element's output_keys
+    last_output_keys = preprocess_pipeline[-1]['output_keys']
+    if isinstance(last_output_keys, str):
+        return result_dict[last_output_keys]
+    elif len(last_output_keys) == 1:
+        return result_dict[last_output_keys]
+    return [result_dict[key] for key in last_output_keys]
