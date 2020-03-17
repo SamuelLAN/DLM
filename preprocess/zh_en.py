@@ -159,6 +159,7 @@ if __name__ == '__main__':
         'max_tar_seq_len': 60,
     }
 
+    print('\n------------------- Encoding -------------------------')
     zh_data, en_data, zh_tokenizer, en_tokenizer = utils.pipeline(
         preprocess_pipeline=seg_zh_by_jieba_pipeline + encode_with_tfds_tokenizer_pipeline,
         lan_data_1=zh_data, lan_data_2=en_data, params=params)
@@ -169,9 +170,9 @@ if __name__ == '__main__':
     print(zh_tokenizer.vocab_size)
     print(en_tokenizer.vocab_size)
 
-    print('\n--------------------------------------------')
+    print('\n------------------- Decoding -------------------------')
     zh_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline + remove_zh_space_pipeline,
                              zh_data, None, {'tokenizer': zh_tokenizer})
 
-    print('\n--------------------------------------------')
+    print('\n------------------- Decoding -------------------------')
     en_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline, en_data, None, {'tokenizer': en_tokenizer})
