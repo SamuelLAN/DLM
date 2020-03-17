@@ -21,7 +21,8 @@ class Saver(keras.callbacks.Callback):
         self.__best = -np.Inf if self.__mode == 'max' else np.Inf
 
     def on_epoch_end(self, epoch, logs=None):
-        if self.__start_train_monitor in logs and logs[self.__start_train_monitor] < self.__start_train_monitor_val:
+        if self.__start_train_monitor and self.__start_train_monitor in logs and \
+                logs[self.__start_train_monitor] < self.__start_train_monitor_val:
             return
 
         monitor = logs[self.__monitor]

@@ -313,3 +313,52 @@ class Transformer(keras.Model):
         # return final_output, attention_weights
         return final_output
 
+    def evaluate_list_token_idx(self, list_input_token_idx, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
+        """
+        Evaluate a sentence
+        :params
+            list_input_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
+                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+            tar_start_token_idx (int): idx of target <start> token
+            tar_end_token_idx (int): idx of target <end> token
+            max_tar_seq_len: max token num of target sentences
+        :return
+            list_target_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
+                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+        """
+        # shape: (1, len of list_input_token_idx )
+        encoder_input = tf.reshape(list_input_token_idx, (1, -1))
+
+        # the first word to the transformer should be the target start token.
+        decoder_input = [tar_start_token_idx]
+        output = tf.expand_dims(decoder_input, 0)
+
+        for i in range(max_tar_seq_len):
+            # enc_padding_mask, combined_mask, dec_padding_mask = self.create_masks(encoder_input, output)
+
+            # predictions.shape == (batch_size, seq_len, vocab_size)
+            # predictions, attention_weights = self.call([encoder_input, output], training=False)
+            predictions = self.call([encoder_input, output], training=False)
+
+            # select the last word from the seq_len dimension
+            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
+
+            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+
+            # return the result if the predicted_id is equal to the end token
+            if predicted_id == tar_end_token_idx:
+                return tf.squeeze(output, axis=0)  # shape == (seq_len,)
+
+            # concatenate the predicted_id to the output which is given to the decoder
+            # as its input.
+            output = tf.concat([output, predicted_id], axis=-1)
+
+        return tf.squeeze(output, axis=0)  # shape == (seq_len,)
+
+    def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx,
+                                        tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
+        """ Evaluate list of sentences """
+        return list(map(
+            lambda x: self.evaluate_list_token_idx(x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len),
+            list_of_list_input_token_idx
+        ))

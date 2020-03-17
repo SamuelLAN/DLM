@@ -15,21 +15,33 @@ def write_pkl(_path, data):
         pickle.dump(data, f)
 
 
-def cache(file_name, data):
-    runtime_dir = os.path.join(root_dir, 'runtime')
-    if not os.path.exists(runtime_dir):
-        os.mkdir(runtime_dir)
+def create_dir_in_root(*args):
+    """ create directory under the root dir """
+    dir_path = root_dir
+    for arg in args:
+        dir_path = os.path.join(dir_path, arg)
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+    return dir_path
 
-    file_path = os.path.join(runtime_dir, file_name)
+
+def cache(file_name, data):
+    """ cache data in the root_dir/runtime/cache """
+    file_path = os.path.join(create_dir_in_root('runtime', 'cache'), file_name)
     write_pkl(file_path, data)
 
 
 def read_cache(file_name):
-    runtime_dir = os.path.join(root_dir, 'runtime')
-    if not os.path.exists(runtime_dir):
-        return
-
-    file_path = os.path.join(runtime_dir, file_name)
+    """ read data from cache in the root_dir/runtime/cache """
+    file_path = os.path.join(create_dir_in_root('runtime', 'cache'), file_name)
     if not os.path.exists(file_path):
         return
     return load_pkl(file_path)
+
+
+def mkdir_time(upper_path, _time):
+    """ create directory with time (for save model) """
+    dir_path = os.path.join(upper_path, _time)
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
+    return dir_path
