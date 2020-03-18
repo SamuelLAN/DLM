@@ -1,6 +1,10 @@
 # DLM
 Dictionary Language Modeling for cross-lingual pretraining on Neural Machine Translation
 
+### environment
+
+- Python 3.6+
+- tensorflow==2.0.0+
 
 ### dataset
 
