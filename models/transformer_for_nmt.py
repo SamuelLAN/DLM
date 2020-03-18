@@ -35,8 +35,8 @@ class Model(BaseModel):
         'ff_units': 128,
         'num_layers': 6,
         'num_heads': 8,
-        'max_pe_input': 50,
-        'max_pe_target': 60,
+        'max_pe_input': data_params['max_src_seq_len'],
+        'max_pe_target': data_params['max_tar_seq_len'],
         'drop_rate': 0.1,
     }
 
@@ -59,6 +59,9 @@ class Model(BaseModel):
         **BaseModel.monitor_params,
         'name': 'loss',
         'mode': 'min',  # for the "name" monitor, the "min" is best;
+        'for_start': 'loss',
+        'for_start_value': 3.,
+        'for_start_mode': 'min',
     }
 
     checkpoint_params = {

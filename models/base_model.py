@@ -51,10 +51,11 @@ class BaseModel:
     }
 
     monitor_params = {
-        'name': 'val_loss',
+        'name': 'loss',
         'mode': 'min',  # for the "name" monitor, the "min" is best;
-        'for_start': None,
-        'for_start_value': None,
+        'for_start': 'loss',
+        'for_start_value': 3.,
+        'for_start_mode': 'min',
     }
 
     checkpoint_params = {
@@ -127,7 +128,8 @@ class BaseModel:
                                self.monitor_params['mode'],
                                self.train_params['early_stop'],
                                self.monitor_params['for_start'],
-                               self.monitor_params['for_start_value'])
+                               self.monitor_params['for_start_value'],
+                               self.monitor_params['for_start_mode'])
         callback_saver.set_model(self.model)
 
         self.callbacks = [callback_tf_board, callback_saver]

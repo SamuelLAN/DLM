@@ -8,7 +8,10 @@ keras = tf.keras
 
 class Saver(keras.callbacks.Callback):
     def __init__(self, file_path, monitor, mode, early_stop,
-                 start_train_monitor='categorical_accuracy', start_train_monitor_val=0.65):
+                 start_train_monitor='categorical_accuracy',
+                 start_train_monitor_val=0.65,
+                 start_train_monitor_mode='max'):
+
         super(Saver, self).__init__()
         self.__file_path = file_path
         self.__monitor = monitor
@@ -16,13 +19,17 @@ class Saver(keras.callbacks.Callback):
         self.__early_stop = early_stop
         self.__start_train_monitor = start_train_monitor
         self.__start_train_monitor_val = start_train_monitor_val
+        self.__start_train_monitor_mode = start_train_monitor_mode
 
         self.__patience = 0
         self.__best = -np.Inf if self.__mode == 'max' else np.Inf
 
     def on_epoch_end(self, epoch, logs=None):
         if self.__start_train_monitor and self.__start_train_monitor in logs and \
-                logs[self.__start_train_monitor] < self.__start_train_monitor_val:
+                ((self.__start_train_monitor_mode == 'max' and
+                  logs[self.__start_train_monitor] < self.__start_train_monitor_val) or
+                 (self.__start_train_monitor_mode == 'min' and
+                  logs[self.__start_train_monitor] > self.__start_train_monitor_val)):
             return
 
         monitor = logs[self.__monitor]

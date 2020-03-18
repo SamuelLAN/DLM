@@ -138,6 +138,6 @@ class Train:
         print('\nFinish testing')
 
 
-o_train = Train(False)
+o_train = Train(use_cache=True)
 o_train.train()
 o_train.test()
