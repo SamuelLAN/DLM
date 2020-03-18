@@ -2,7 +2,7 @@ from nltk.translate.bleu_score import sentence_bleu, corpus_bleu
 import tensorflow as tf
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from models.base_model import BaseModel
-from preprocess import zh_en
+from preprocess import zh_en, tfds_pl
 from lib.preprocess import utils
 
 keras = tf.keras
@@ -12,14 +12,14 @@ tfv1 = tf.compat.v1
 class Model(BaseModel):
     name = 'transformer_for_nmt'
 
-    preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + zh_en.train_subword_tokenizer_pipeline + \
-                          zh_en.encode_with_tfds_tokenizer_pipeline
+    preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.train_tokenizer_pipeline + \
+                          tfds_pl.encode_pipeline
     # for test
-    encode_pipeline = zh_en.encode_with_tfds_tokenizer_pipeline
-    encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + zh_en.encode_with_tfds_tokenizer_pipeline_for_src
-    encode_pipeline_for_tar = zh_en.encode_with_tfds_tokenizer_pipeline_for_src
-    decode_pipeline_for_src = zh_en.decode_with_tfds_tokenizer_pipeline + zh_en.remove_zh_space_pipeline
-    decode_pipeline_for_tar = zh_en.decode_with_tfds_tokenizer_pipeline
+    encode_pipeline = tfds_pl.encode_pipeline
+    encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.encode_pipeline_for_src
+    encode_pipeline_for_tar = tfds_pl.encode_pipeline_for_src
+    decode_pipeline_for_src = tfds_pl.decode_pipeline + zh_en.remove_zh_space_pipeline
+    decode_pipeline_for_tar = tfds_pl.decode_pipeline
 
     data_params = {
         'src_vocab_size': 15000,  # approximate
@@ -60,7 +60,7 @@ class Model(BaseModel):
         'name': 'loss',
         'mode': 'min',  # for the "name" monitor, the "min" is best;
         'for_start': 'loss',
-        'for_start_value': 3.,
+        'for_start_value': 3.6,
         'for_start_mode': 'min',
     }
 
@@ -87,12 +87,14 @@ class Model(BaseModel):
     def decode_src_data(self, encoded_data, tokenizer, to_sentence=True):
         """ decode the list of list token idx to sentences """
         end_index = None if to_sentence else -2
-        return utils.pipeline(self.decode_pipeline_for_src[:end_index], encoded_data, None, {'tokenizer': tokenizer}, False)
+        return utils.pipeline(self.decode_pipeline_for_src[:end_index], encoded_data, None, {'tokenizer': tokenizer},
+                              False)
 
     def decode_tar_data(self, encoded_data, tokenizer, to_sentence=True):
         """ decode the list of list token idx to sentences """
         end_index = None if to_sentence else -1
-        return utils.pipeline(self.decode_pipeline_for_tar[:end_index], encoded_data, None, {'tokenizer': tokenizer}, False)
+        return utils.pipeline(self.decode_pipeline_for_tar[:end_index], encoded_data, None, {'tokenizer': tokenizer},
+                              False)
 
     def calculate_bleu_for_encoded(self, src_encode_data, tar_encode_data, dataset=''):
         """ evaluate the BLEU according to the encoded src language data (list_of_list_token_idx)
