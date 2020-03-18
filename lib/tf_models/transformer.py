@@ -298,7 +298,7 @@ class Transformer(keras.Model):
         inp, tar = inputs
 
         if isinstance(mask, type(None)):
-            enc_padding_mask, look_ahead_mask, dec_padding_mask = self.__create_masks(inp, tar)
+            enc_padding_mask, look_ahead_mask, dec_padding_mask = self.create_masks(inp, tar)
         else:
             enc_padding_mask, look_ahead_mask, dec_padding_mask = mask
 

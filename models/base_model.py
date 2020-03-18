@@ -14,23 +14,27 @@ tfv1 = tf.compat.v1
 
 
 class BaseModel:
+    name = 'transformer'
+
+    data_params = {
+        'src_vocab_size': 2 ** 13,  # approximate
+        'tar_vocab_size': 2 ** 13,  # approximate
+        'max_src_seq_len': 50,
+        'max_tar_seq_len': 60,
+        'incr': 3,
+    }
+
     model_params = {
-       'drop_rate': 0.1,
+        'drop_rate': 0.1,
     }
 
     train_params = {
-        # 'learning_rate': 3e-3,
-        'learning_rate': CustomSchedule(model_params['dim_model']),
+        'learning_rate': 3e-3,
+        # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 64,
         'epoch': 300,
         'early_stop': 30,
         'loss': keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none'),
-    }
-
-    compile_params = {
-        'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
-        'loss': keras.losses.categorical_crossentropy,
-        'metrics': [],
     }
 
     tb_params = {
@@ -38,6 +42,13 @@ class BaseModel:
         'update_freq': 'epoch',
         'write_grads': False,
         'write_graph': True,
+    }
+
+    compile_params = {
+        'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
+        'loss': keras.losses.categorical_crossentropy,
+        'customize_loss': True,
+        'metrics': [],
     }
 
     monitor_params = {
@@ -58,8 +69,8 @@ class BaseModel:
 
     TIME = time.strftime('%Y_%m_%d_%H_%M_%S')
 
-    def __init__(self, input_vocab_size, target_vocab_size, name='transformer'):
-        self.name = name
+    def __init__(self, input_vocab_size, target_vocab_size, name=''):
+        self.name = name if name else self.name
         self.input_vocab_size = input_vocab_size
         self.target_vocab_size = target_vocab_size
         self.finish_train = False
@@ -67,28 +78,11 @@ class BaseModel:
         # create directories for tensorboard files and model files
         self.__create_dir()
 
-        # set memory growth
-        self.__init_gpu_config()
-
         # build models
         self.build()
 
         # for using model.fit, set callbacks for the training process
         self.set_callbacks()
-
-    @staticmethod
-    def __init_gpu_config():
-        gpus = tf.config.experimental.list_physical_devices('GPU')
-        if gpus:
-            try:
-                # Currently, memory growth needs to be the same across GPUs
-                for gpu in gpus:
-                    tf.config.experimental.set_memory_growth(gpu, True)
-                logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-                print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-            except RuntimeError as e:
-                # Memory growth must be set before GPUs have been initialized
-                print(e)
 
     def __create_dir(self):
         # create tensorboard path
@@ -104,8 +98,8 @@ class BaseModel:
             d_model=self.model_params['dim_model'],
             num_heads=self.model_params['num_heads'],
             d_ff=self.model_params['ff_units'],
-            input_vocab_size=self.input_vocab_size,
-            target_vocab_size=self.target_vocab_size,
+            input_vocab_size=self.input_vocab_size + self.data_params['incr'],
+            target_vocab_size=self.target_vocab_size + self.data_params['incr'],
             max_pe_input=self.model_params['max_pe_input'],
             max_pe_target=self.model_params['max_pe_target'],
             drop_rate=self.model_params['drop_rate'],
@@ -136,8 +130,9 @@ class BaseModel:
         self.callbacks = [callback_tf_board, callback_saver]
 
     def __compile(self):
+        loss = self.loss if self.compile_params['customize_loss'] else self.compile_params['loss']
         self.model.compile(optimizer=self.compile_params['optimizer'],
-                           loss=self.compile_params['loss'],
+                           loss=loss,
                            metrics=self.compile_params['metrics'])
 
     @staticmethod
@@ -169,10 +164,10 @@ class BaseModel:
             self.load_model(model_dir)
 
         # fit model
-        self.model.fit(train_x, train_y,
+        self.model.fit([train_x, train_y], train_y,
                        epochs=self.train_params['epoch'],
                        batch_size=self.train_params['batch_size'],
-                       validation_data=(val_x, val_y),
+                       validation_data=([val_x, val_y], val_y),
                        callbacks=self.callbacks,
                        verbose=2)
 
@@ -184,8 +179,21 @@ class BaseModel:
     def train_in_eager(self, train_x, train_y, val_x, val_y):
         pass
 
-    def loss(self):
-        pass
+    def loss(self, y_true, y_pred, from_logits=False, label_smoothing=0):
+        mask = tf.math.logical_not(tf.math.equal(y_true, 0))
+        loss_ = self.train_params['loss'](y_true, y_pred)
+
+        mask = tf.cast(mask, dtype=loss_.dtype)
+        loss_ *= mask
+
+        return tf.reduce_mean(loss_)
+
+    def evaluate_encoded(self, list_of_list_src_token_idx):
+        """ translate list of list encoded token idx; the results are also encoded """
+        return self.model.evaluate_list_of_list_token_idx(list_of_list_src_token_idx,
+                                                          self.target_vocab_size,
+                                                          self.target_vocab_size + 1,
+                                                          self.data_params['max_tar_seq_len'])
 
     # def evaluate(self, sentence):
     #     pass

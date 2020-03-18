@@ -8,6 +8,8 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
+    name = 'transformer_for_cross_lingual_pretrain'
+
     model_params = {
         'emb_dim': 128,
         'dim_model': 128,
@@ -62,21 +64,8 @@ class Model(BaseModel):
             drop_rate=self.model_params['drop_rate'],
         )
 
-    def train(self, train_x, train_y, val_x, val_y):
-        # preprocess for data
-        train_x, train_y = self.preprocess(train_x, train_y)
-
-        super(Model, self).train(train_x, train_y, val_x, val_y)
-
     def train_in_eager(self, train_x, train_y, val_x, val_y):
         pass
 
     def loss(self):
-        pass
-
-    def preprocess(self, src_sentences, tar_sentences):
-        # TODO
-        return src_sentences, tar_sentences
-
-    def preprocess_test_data(self, sentences):
         pass

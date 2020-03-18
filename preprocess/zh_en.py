@@ -18,7 +18,7 @@ seg_zh_by_jieba_pipeline = [
     },
 ]
 
-encode_with_tfds_tokenizer_pipeline = [
+train_subword_tokenizer_pipeline = [
     {
         'name': 'train_subword_tokenizer_by_tfds_for_src_lan',
         'func': utils.train_subword_tokenizer_by_tfds,
@@ -31,6 +31,9 @@ encode_with_tfds_tokenizer_pipeline = [
         'input_keys': ['input_2', 'tar_vocab_size', 'max_tar_seq_len'],
         'output_keys': 'tar_tokenizer',
     },
+]
+
+encode_with_tfds_tokenizer_pipeline = [
     {
         'name': 'update vocab_size',
         'func': lambda a, b: [a.vocab_size, b.vocab_size],
@@ -101,6 +104,49 @@ encode_with_tfds_tokenizer_pipeline = [
     {'output_keys': ['input_1', 'input_2', 'src_tokenizer', 'tar_tokenizer']},
 ]
 
+encode_with_tfds_tokenizer_pipeline_for_src = [
+    {
+        'name': 'update vocab_size',
+        'func': lambda a: a.vocab_size,
+        'input_keys': ['src_tokenizer'],
+        'output_keys': 'src_vocab_size',
+        'show_dict': {'src_vocab_size': 'src_vocab_size'},
+    },
+    {
+        'name': 'encoder_string_2_subword_idx_for_src_lan',
+        'func': utils.encoder_string_2_subword_idx_by_tfds,
+        'input_keys': ['src_tokenizer', 'input_1'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'max_seq_len minus 2',
+        'func': lambda a: a - 2,
+        'input_keys': ['max_src_seq_len'],
+        'output_keys': 'max_src_seq_len_2',
+    },
+    {
+        'name': 'add_start_end_token_to_src_lan',
+        'func': utils.add_start_end_token_idx_2_list_token_idx,
+        'input_keys': ['input_1', 'src_vocab_size'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'add_pad_token_to_src_lan',
+        'func': utils.add_pad_token_idx_2_list_token_idx,
+        'input_keys': ['input_1', 'src_vocab_size', 'max_src_seq_len'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'convert_input_to_array',
+        'func': lambda a: np.array(a),
+        'input_keys': ['input_1'],
+        'output_keys': 'input_1',
+    },
+]
+
 decode_with_tfds_tokenizer_pipeline = [
     {
         'name': 'get_vocab_size',
@@ -148,31 +194,31 @@ remove_zh_space_pipeline = [
     },
 ]
 
-if __name__ == '__main__':
-    from preprocess import wmt_news
-
-    zh_data, en_data = wmt_news.zh_en()
-    params = {
-        'src_vocab_size': 2 ** 13,
-        'tar_vocab_size': 2 ** 13,
-        'max_src_seq_len': 50,
-        'max_tar_seq_len': 60,
-    }
-
-    print('\n------------------- Encoding -------------------------')
-    zh_data, en_data, zh_tokenizer, en_tokenizer = utils.pipeline(
-        preprocess_pipeline=seg_zh_by_jieba_pipeline + encode_with_tfds_tokenizer_pipeline,
-        lan_data_1=zh_data, lan_data_2=en_data, params=params)
-
-    print('\n----------------------------------------------')
-    print(zh_data.shape)
-    print(en_data.shape)
-    print(zh_tokenizer.vocab_size)
-    print(en_tokenizer.vocab_size)
-
-    print('\n------------------- Decoding -------------------------')
-    zh_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline + remove_zh_space_pipeline,
-                             zh_data, None, {'tokenizer': zh_tokenizer})
-
-    print('\n------------------- Decoding -------------------------')
-    en_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline, en_data, None, {'tokenizer': en_tokenizer})
+# if __name__ == '__main__':
+#     from preprocess import wmt_news
+#
+#     zh_data, en_data = wmt_news.zh_en()
+#     params = {
+#         'src_vocab_size': 2 ** 13,
+#         'tar_vocab_size': 2 ** 13,
+#         'max_src_seq_len': 50,
+#         'max_tar_seq_len': 60,
+#     }
+#
+#     print('\n------------------- Encoding -------------------------')
+#     zh_data, en_data, zh_tokenizer, en_tokenizer = utils.pipeline(
+#         preprocess_pipeline=seg_zh_by_jieba_pipeline + encode_with_tfds_tokenizer_pipeline,
+#         lan_data_1=zh_data, lan_data_2=en_data, params=params)
+#
+#     print('\n----------------------------------------------')
+#     print(zh_data.shape)
+#     print(en_data.shape)
+#     print(zh_tokenizer.vocab_size)
+#     print(en_tokenizer.vocab_size)
+#
+#     print('\n------------------- Decoding -------------------------')
+#     zh_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline + remove_zh_space_pipeline,
+#                              zh_data, None, {'tokenizer': zh_tokenizer})
+#
+#     print('\n------------------- Decoding -------------------------')
+#     en_data = utils.pipeline(decode_with_tfds_tokenizer_pipeline, en_data, None, {'tokenizer': en_tokenizer})
