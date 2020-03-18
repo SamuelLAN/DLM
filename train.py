@@ -59,11 +59,11 @@ class Train:
             ])
 
         print('src_vocab_size: {}\ntar_vocab_size: {}'.format(self.__src_vocab_size, self.__tar_vocab_size))
-        print('train_size: {}\nval_size: {}\ntest_size: {}'.format(
-            len(self.__train_src), len(self.__val_src), len(self.__test_src)))
-        print(
-            'train_x.shape: {}\ntrain_y.shape: {}'.format(self.__train_src_encode.shape, self.__train_tar_encode.shape))
-        print('test_x.shape: {}\ntest_y.shape: {}'.format(self.__test_src_encode.shape, self.__test_tar_encode.shape))
+        print('train_size: {}\ntest_size: {}'.format(len(self.__train_src), len(self.__test_src)))
+        print('train_x.shape: {}\ntrain_y.shape: {}'.format(
+            self.__train_src_encode.shape, self.__train_tar_encode.shape))
+        print('test_x.shape: {}\ntest_y.shape: {}'.format(
+            self.__test_src_encode.shape, self.__test_tar_encode.shape))
 
     def __load_data(self):
         """ load the data """
@@ -110,8 +110,7 @@ class Train:
         self.model = Model(self.__src_vocab_size, self.__tar_vocab_size)
 
         print('\nTraining model ...')
-        self.model.train([self.__train_src_encode, self.__train_tar_encode], self.__train_tar_encode,
-                         self.__val_src_encode, self.__val_tar_encode)
+        self.model.train(self.__train_src_encode, self.__train_tar_encode)
         print('\nFinish training')
 
     def test(self, load_model=False):
@@ -139,6 +138,6 @@ class Train:
         print('\nFinish testing')
 
 
-o_train = Train()
+o_train = Train(False)
 o_train.train()
 o_train.test()

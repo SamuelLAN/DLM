@@ -22,9 +22,9 @@ class Model(BaseModel):
     decode_pipeline_for_tar = zh_en.decode_with_tfds_tokenizer_pipeline
 
     data_params = {
-        'src_vocab_size': 2 ** 13,  # approximate
+        'src_vocab_size': 15000,  # approximate
         'tar_vocab_size': 2 ** 13,  # approximate
-        'max_src_seq_len': 50,
+        'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'incr': 3,
     }
