@@ -20,14 +20,24 @@ from load.zh_en import Loader
 
 class Train:
 
-    def __init__(self):
+    def __init__(self, use_cache=True):
+        # read data from cache ;
+        #    if no cache, then load the data and preprocess it, then store it to cache
         cache_name = 'preprocessed_data.pkl'
-        data = read_cache(cache_name)
+        data = read_cache(cache_name) if use_cache else None
         if not isinstance(data, type(None)):
-            self.__train_src, self.__train_tar, self.__train_src_encode, self.__train_tar_encode, \
-            self.__val_src, self.__val_src_encode, self.__val_tar, self.__val_tar_encode, \
-            self.__test_src, self.__test_tar, self.__test_src_encode, \
-            self.__src_tokenizer, self.__tar_tokenizer, self.__src_vocab_size, self.__tar_vocab_size = data
+            self.__train_src, \
+            self.__train_tar, \
+            self.__train_src_encode, \
+            self.__train_tar_encode, \
+            self.__test_src, \
+            self.__test_tar, \
+            self.__test_src_encode, \
+            self.__test_tar_encode, \
+            self.__src_tokenizer, \
+            self.__tar_tokenizer, \
+            self.__src_vocab_size, \
+            self.__tar_vocab_size = data
 
         else:
             self.__load_data()
@@ -38,13 +48,10 @@ class Train:
                 self.__train_tar,
                 self.__train_src_encode,
                 self.__train_tar_encode,
-                self.__val_src,
-                self.__val_src_encode,
-                self.__val_tar,
-                self.__val_tar_encode,
                 self.__test_src,
                 self.__test_tar,
                 self.__test_src_encode,
+                self.__test_tar_encode,
                 self.__src_tokenizer,
                 self.__tar_tokenizer,
                 self.__src_vocab_size,
@@ -54,19 +61,20 @@ class Train:
         print('src_vocab_size: {}\ntar_vocab_size: {}'.format(self.__src_vocab_size, self.__tar_vocab_size))
         print('train_size: {}\nval_size: {}\ntest_size: {}'.format(
             len(self.__train_src), len(self.__val_src), len(self.__test_src)))
+        print(
+            'train_x.shape: {}\ntrain_y.shape: {}'.format(self.__train_src_encode.shape, self.__train_tar_encode.shape))
+        print('test_x.shape: {}\ntest_y.shape: {}'.format(self.__test_src_encode.shape, self.__test_tar_encode.shape))
 
     def __load_data(self):
         """ load the data """
         print('\nLoading data ...')
 
         # load the data
-        train_loader = Loader(0.0, 0.8)
-        val_loader = Loader(0.8, 0.9)
+        train_loader = Loader(0.0, 0.9)
         test_loader = Loader(0.9, 1.0)
 
         # load data
         self.__train_src, self.__train_tar = train_loader.data()
-        self.__val_src, self.__val_tar = val_loader.data()
         self.__test_src, self.__test_tar = test_loader.data()
 
         print('\nFinish loading ')
@@ -82,21 +90,14 @@ class Train:
             Model.data_params,
         )
 
-        self.__val_src_encode, self.__val_tar_encode, _, _ = utils.pipeline(
-            Model.encode_pipeline,
-            self.__val_src,
-            self.__val_tar,
-            {
-                **Model.data_params,
-                'src_tokenizer': self.__src_tokenizer,
-                'tar_tokenizer': self.__tar_tokenizer,
-            }
-        )
-
-        self.__test_src_encode = utils.pipeline(Model.encode_pipeline_for_src, self.__test_src, None, {
+        params = {
             **Model.data_params,
             'src_tokenizer': self.__src_tokenizer,
-        })
+            'tar_tokenizer': self.__tar_tokenizer,
+        }
+
+        self.__test_src_encode, self.__test_tar_encode, _, _ = utils.pipeline(Model.encode_pipeline,
+                                                                              self.__test_src, self.__test_tar, params)
 
         # get vocabulary size
         self.__src_vocab_size = self.__src_tokenizer.vocab_size
@@ -105,26 +106,35 @@ class Train:
         print('\nFinish preprocessing ')
 
     def train(self):
-        print('\nBuilding model ...')
-        # build model
+        print('\nBuilding model ({}) ...'.format(Model.TIME))
         self.model = Model(self.__src_vocab_size, self.__tar_vocab_size)
 
         print('\nTraining model ...')
-        # train
-        self.model.train(self.__train_src_encode, self.__train_tar_encode, self.__val_src_encode, self.__val_tar_encode)
-
+        self.model.train([self.__train_src_encode, self.__train_tar_encode], self.__train_tar_encode,
+                         self.__val_src_encode, self.__val_tar_encode)
         print('\nFinish training')
 
-    def test(self):
+    def test(self, load_model=False):
         """ test BLEU here """
+        if load_model:
+            self.model = Model(self.__src_vocab_size, self.__tar_vocab_size, finish_train=True)
+            self.model.train(self.__train_src_encode, self.__train_tar_encode)
+
         print('\nTesting model ...')
 
-        train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__tar_tokenizer,
-                                                           self.__train_tar, 'train')
-        val_bleu = self.model.calculate_bleu_for_encoded(self.__val_src_encode, self.__tar_tokenizer,
-                                                         self.__val_tar, 'val')
-        test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__tar_tokenizer,
-                                                          self.__test_tar, 'test')
+        print('\nTranslate examples:')
+        example_num = 10
+
+        pred = self.model.translate_list_token_idx(self.__train_src_encode[:example_num], self.__tar_tokenizer)
+        for i in range(example_num):
+            src_lan = self.model.decode_src_data(self.__train_src_encode[i:i + 1], self.__src_tokenizer)[0]
+            tar_lan = self.model.decode_tar_data(self.__train_tar_encode[i:i + 1], self.__tar_tokenizer)[0]
+            print('\nsrc_lan: {}\ntar_lan: {}\ntranslation: {}'.format(src_lan, tar_lan, pred[i]))
+
+        print('\nCalculating bleu ...')
+
+        train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
+        test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
 
         print('\nFinish testing')
 

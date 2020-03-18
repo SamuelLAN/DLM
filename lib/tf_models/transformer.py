@@ -274,7 +274,7 @@ class Transformer(keras.Model):
         self.decoder = Decoder(num_layers, d_model, num_heads, d_ff,
                                target_vocab_size, max_pe_target, drop_rate)
 
-        self.final_layer = layers.Dense(target_vocab_size, activation='tanh')
+        self.final_layer = layers.Dense(target_vocab_size)
 
     @staticmethod
     def create_masks(inp, tar):
@@ -283,7 +283,7 @@ class Transformer(keras.Model):
 
         # Used in the 2nd attention block in the decoder.
         # This padding mask is used to mask the encoder outputs.
-        dec_padding_mask = create_padding_mask(tar)
+        dec_padding_mask = create_padding_mask(inp)
 
         # Used in the 1st attention block in the decoder.
         # It is used to pad and mask future tokens in the input received by

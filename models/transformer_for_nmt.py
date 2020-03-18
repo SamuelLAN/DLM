@@ -42,7 +42,7 @@ class Model(BaseModel):
 
     train_params = {
         **BaseModel.train_params,
-        'learning_rate': 3e-3,
+        'learning_rate': 1e-3,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 64,
         'epoch': 300,
@@ -57,7 +57,7 @@ class Model(BaseModel):
 
     monitor_params = {
         **BaseModel.monitor_params,
-        'name': 'val_loss',
+        'name': 'loss',
         'mode': 'min',  # for the "name" monitor, the "min" is best;
     }
 
@@ -65,25 +65,6 @@ class Model(BaseModel):
         'load_model': [],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
-
-    evaluate_dict = {
-
-    }
-
-    @property
-    def tar_start_token_idx(self):
-        return self.target_vocab_size
-
-    @property
-    def tar_end_token_idx(self):
-        return self.target_vocab_size + 1
-
-    @property
-    def tar_max_seq_len(self):
-        return self.data_params['max_tar_seq_len']
-
-    def train_in_eager(self, train_x, train_y, val_x, val_y):
-        pass
 
     def translate_sentences(self, list_of_src_sentences, src_tokenizer, tar_tokenizer):
         """ translate list of sentences and decode the results """
@@ -93,18 +74,34 @@ class Model(BaseModel):
         })
 
         pred_encoded = self.evaluate_encoded(encoded_data)
-        return self.decode_data(pred_encoded, tar_tokenizer)
+        return self.decode_tar_data(pred_encoded, tar_tokenizer)
 
-    def decode_data(self, encoded_data, tokenizer):
+    def translate_list_token_idx(self, list_of_list_of_src_token_idx, tar_tokenizer):
+        """  """
+        pred_encoded = self.evaluate_encoded(list_of_list_of_src_token_idx)
+        return self.decode_tar_data(pred_encoded, tar_tokenizer)
+
+    def decode_src_data(self, encoded_data, tokenizer, to_sentence=True):
         """ decode the list of list token idx to sentences """
-        return utils.pipeline(self.decode_pipeline_for_tar, encoded_data, None, {'tokenizer': tokenizer})
+        end_index = None if to_sentence else -2
+        return utils.pipeline(self.decode_pipeline_for_src[:end_index], encoded_data, None, {'tokenizer': tokenizer}, False)
 
-    def calculate_bleu_for_encoded(self, src_encode_data, tar_tokenizer, tar_decode_data, dataset=''):
+    def decode_tar_data(self, encoded_data, tokenizer, to_sentence=True):
+        """ decode the list of list token idx to sentences """
+        end_index = None if to_sentence else -1
+        return utils.pipeline(self.decode_pipeline_for_tar[:end_index], encoded_data, None, {'tokenizer': tokenizer}, False)
+
+    def calculate_bleu_for_encoded(self, src_encode_data, tar_encode_data, dataset=''):
         """ evaluate the BLEU according to the encoded src language data (list_of_list_token_idx)
                                 and the target reference (list of sentences) """
+        print('\nstart translating {} ...'.format(dataset))
         pred_encoded_data = self.evaluate_encoded(src_encode_data)
-        pred_decoded_data = self.decode_data(pred_encoded_data, tar_tokenizer)
 
-        bleu = corpus_bleu(tar_decode_data, pred_decoded_data)
+        pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
+        tar_encode_data = utils.convert_list_of_list_token_idx_2_string(tar_encode_data)
+
+        print('calculating bleu ...')
+        bleu = corpus_bleu(tar_encode_data, pred_encoded_data)
+
         print('{} bleu: {}'.format(dataset, bleu))
         return bleu

@@ -263,14 +263,14 @@ def add_start_end_token_2_string(list_of_sentences):
 
 
 def add_start_end_token_idx_2_list_token_idx(list_of_list_token_idx, vocab_size, incr=0):
-    """ add the start token idx (vocab_size) and the end token idx (vocab_size + 1) to list_token_idx """
-    return list(map(lambda x: [vocab_size + incr] + x + [vocab_size + incr + 1], list_of_list_token_idx))
+    """ add the start token idx (vocab_size + 1) and the end token idx (vocab_size + 2) to list_token_idx """
+    return list(map(lambda x: [vocab_size + 1 + incr] + x + [vocab_size + incr + 2], list_of_list_token_idx))
 
 
-def add_pad_token_idx_2_list_token_idx(list_of_list_token_idx, vocab_size, max_seq_len, incr=2):
-    """ add the pad token idx (vocab_size + incr) """
+def add_pad_token_idx_2_list_token_idx(list_of_list_token_idx, max_seq_len):
+    """ add the pad token idx (0) """
     fix_len_list_of_list_token_idx = []
-    pad_idx = vocab_size + incr
+    pad_idx = 0
 
     for list_token_idx in list_of_list_token_idx:
         after_pad_list_token_idx = list_token_idx + [pad_idx] * (max_seq_len - len(list_token_idx))
@@ -294,7 +294,11 @@ def convert_minus_1_to_unknown_token_idx(list_of_list_token_idx, vocab_size, inc
     return list(map(lambda x: list(map(lambda a: a if a != -1 else (vocab_size + incr), x)), list_of_list_token_idx))
 
 
-def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}):
+def convert_list_of_list_token_idx_2_string(list_of_list_token_idx):
+    return list(map(lambda x: list(map(str, x)), list_of_list_token_idx))
+
+
+def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}, verbose=True):
     """
     preprocess the data according to the preprocess_pipeline
     :params
@@ -314,6 +318,8 @@ def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}):
             e.g., [ 'I am a boy', 'you are a girl.' ]
         lan_data_2 (list):  list of sentences of language 2
             e.g., [ 'I am a boy', 'you are a girl.' ]
+        params (dict): pass parameters that functions in the pipeline may need
+        verbose (bool): whether or not to print information
     """
     # share variables when applying different preprocess functions
     result_dict = {**params, 'input_1': lan_data_1, 'input_2': lan_data_2}
@@ -337,7 +343,8 @@ def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}):
         show_dict = {} if 'show_dict' not in func_dict else func_dict['show_dict']
 
         # apply preprocess function
-        print('preprocessing %s ...' % name)
+        if verbose:
+            print('preprocessing %s ...' % name)
         outputs = func(*args)
 
         # record output to result_dict
@@ -350,10 +357,11 @@ def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}):
                 result_dict[key] = outputs[i]
 
         # for display
-        for k, v in show_dict.items():
-            v = result_dict[v]
-            tmp_v = v[:2] if isinstance(v, list) else v
-            print('{}: {}'.format(k, tmp_v))
+        if verbose:
+            for k, v in show_dict.items():
+                v = result_dict[v]
+                tmp_v = v[:2] if isinstance(v, list) else v
+                print('{}: {}'.format(k, tmp_v))
 
     # return output according to the last element's output_keys
     last_output_keys = preprocess_pipeline[-1]['output_keys']

@@ -84,14 +84,14 @@ encode_with_tfds_tokenizer_pipeline = [
     {
         'name': 'add_pad_token_to_src_lan',
         'func': utils.add_pad_token_idx_2_list_token_idx,
-        'input_keys': ['input_1', 'src_vocab_size', 'max_src_seq_len'],
+        'input_keys': ['input_1', 'max_src_seq_len'],
         'output_keys': 'input_1',
         'show_dict': {'src_lan': 'input_1'},
     },
     {
         'name': 'add_pad_token_to_tar_lan',
         'func': utils.add_pad_token_idx_2_list_token_idx,
-        'input_keys': ['input_2', 'tar_vocab_size', 'max_tar_seq_len'],
+        'input_keys': ['input_2', 'max_tar_seq_len'],
         'output_keys': 'input_2',
         'show_dict': {'tar_lan': 'input_2'},
     },
@@ -120,12 +120,6 @@ encode_with_tfds_tokenizer_pipeline_for_src = [
         'show_dict': {'src_lan': 'input_1'},
     },
     {
-        'name': 'max_seq_len minus 2',
-        'func': lambda a: a - 2,
-        'input_keys': ['max_src_seq_len'],
-        'output_keys': 'max_src_seq_len_2',
-    },
-    {
         'name': 'add_start_end_token_to_src_lan',
         'func': utils.add_start_end_token_idx_2_list_token_idx,
         'input_keys': ['input_1', 'src_vocab_size'],
@@ -133,9 +127,15 @@ encode_with_tfds_tokenizer_pipeline_for_src = [
         'show_dict': {'src_lan': 'input_1'},
     },
     {
+        'name': 'filter_exceed_max_seq_len',
+        'func': utils.filter_exceed_max_seq_len,
+        'input_keys': ['input_1', 'max_src_seq_len'],
+        'output_keys': 'input_1',
+    },
+    {
         'name': 'add_pad_token_to_src_lan',
         'func': utils.add_pad_token_idx_2_list_token_idx,
-        'input_keys': ['input_1', 'src_vocab_size', 'max_src_seq_len'],
+        'input_keys': ['input_1', 'max_src_seq_len'],
         'output_keys': 'input_1',
         'show_dict': {'src_lan': 'input_1'},
     },
