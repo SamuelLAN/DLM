@@ -42,7 +42,7 @@ class Model(BaseModel):
 
     train_params = {
         **BaseModel.train_params,
-        'learning_rate': 1e-4,
+        'learning_rate': 2e-5,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 64,
         'epoch': 300,
