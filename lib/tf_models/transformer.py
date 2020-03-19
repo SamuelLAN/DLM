@@ -333,7 +333,7 @@ class Transformer(keras.Model):
         decoder_input = [tar_start_token_idx]
         output = tf.expand_dims(decoder_input, 0)
 
-        for i in range(max_tar_seq_len):
+        for i in range(max_tar_seq_len - 1):
             # enc_padding_mask, combined_mask, dec_padding_mask = self.create_masks(encoder_input, output)
 
             # predictions.shape == (batch_size, seq_len, vocab_size)

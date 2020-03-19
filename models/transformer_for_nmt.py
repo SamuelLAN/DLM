@@ -67,7 +67,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [],  # [name, time]
+        'load_model': [name, '2020_03_19_13_10_32'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 
@@ -82,14 +82,8 @@ class Model(BaseModel):
         return self.decode_tar_data(pred_encoded, tar_tokenizer)
 
     def translate_list_token_idx(self, list_of_list_of_src_token_idx, tar_tokenizer):
-        """  """
+        """ translate the src list token idx to target language sentences """
         pred_encoded = self.evaluate_encoded(list_of_list_of_src_token_idx)
-
-        print('\n----------------------------------------')
-        for i, v in enumerate(pred_encoded):
-            print(v)
-        print('-------------------------------')
-
         return self.decode_tar_data(pred_encoded, tar_tokenizer)
 
     def decode_src_data(self, encoded_data, tokenizer, to_sentence=True):

@@ -191,7 +191,8 @@ class BaseModel:
         mask = tf.expand_dims(tf.cast(tf.logical_not(tf.equal(y_true, 0)), y_pred.dtype), axis=-1)
         y_true = tf.cast(tf.one_hot(tf.cast(y_true, tf.int32), y_pred.shape[-1]), y_pred.dtype)
 
-        loss = - (y_true * tf.math.log(y_pred) + (1 - y_true) * tf.math.log(1 - y_pred))
+        epison = 0.0001
+        loss = - (y_true * tf.math.log(y_pred + epison) + (1 - y_true) * tf.math.log(1 - y_pred + epison))
 
         loss *= mask
         loss = tf.reduce_sum(loss, axis=-1)

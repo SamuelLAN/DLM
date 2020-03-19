@@ -111,14 +111,14 @@ class Train:
         self.model = Model(self.__src_vocab_size, self.__tar_vocab_size)
 
         print('\nTraining model ...')
-        self.model.train([self.__train_src_encode, self.__train_tar_encode[:, :-1]], self.__train_tar_encode[:, 1:])
+        self.model.train((self.__train_src_encode, self.__train_tar_encode[:, :-1]), self.__train_tar_encode[:, 1:])
         print('\nFinish training')
 
     def test(self, load_model=False):
         """ test BLEU here """
         if load_model:
             self.model = Model(self.__src_vocab_size, self.__tar_vocab_size, finish_train=True)
-            self.model.train([self.__train_src_encode, self.__train_tar_encode[:, :-1]], self.__train_tar_encode[:, 1:])
+            self.model.train((self.__train_src_encode, self.__train_tar_encode[:, :-1]), self.__train_tar_encode[:, 1:])
 
         print('\nTesting model ...')
 
