@@ -12,9 +12,10 @@ if gpus:
         # Memory growth must be set before GPUs have been initialized
         print(e)
 
+import os
 from models.transformer_for_nmt import Model
 from lib.preprocess import utils
-from lib.utils import cache, read_cache
+from lib.utils import cache, read_cache, create_dir_in_root
 from load.zh_en import Loader
 
 
@@ -110,14 +111,14 @@ class Train:
         self.model = Model(self.__src_vocab_size, self.__tar_vocab_size)
 
         print('\nTraining model ...')
-        self.model.train(self.__train_src_encode, self.__train_tar_encode)
+        self.model.train([self.__train_src_encode, self.__train_tar_encode[:, :-1]], self.__train_tar_encode[:, 1:])
         print('\nFinish training')
 
     def test(self, load_model=False):
         """ test BLEU here """
         if load_model:
             self.model = Model(self.__src_vocab_size, self.__tar_vocab_size, finish_train=True)
-            self.model.train(self.__train_src_encode, self.__train_tar_encode)
+            self.model.train([self.__train_src_encode, self.__train_tar_encode[:, :-1]], self.__train_tar_encode[:, 1:])
 
         print('\nTesting model ...')
 
@@ -125,17 +126,33 @@ class Train:
         example_num = 10
 
         pred = self.model.translate_list_token_idx(self.__train_src_encode[:example_num], self.__tar_tokenizer)
+        examples = ''
         for i in range(example_num):
             src_lan = self.model.decode_src_data(self.__train_src_encode[i:i + 1], self.__src_tokenizer)[0]
             tar_lan = self.model.decode_tar_data(self.__train_tar_encode[i:i + 1], self.__tar_tokenizer)[0]
-            print('\nsrc_lan: {}\ntar_lan: {}\ntranslation: {}'.format(src_lan, tar_lan, pred[i]))
+            examples += 'src_lan: {}\ntar_lan: {}\ntranslation: {}\n\n'.format(src_lan, tar_lan, pred[i])
 
-        print('\nCalculating bleu ...')
+        print('\n{}\n\nCalculating bleu ...'.format(examples))
 
         train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
 
         print('\nFinish testing')
+
+        self.log(examples, train_bleu, test_bleu)
+
+    def log(self, examples, train_bleu, test_bleu):
+        data = (self.model.name, self.model.TIME, train_bleu, test_bleu,
+                self.model.data_params, self.model.model_params, self.model.train_params, examples)
+
+        string = '\n---------------------------------------------------' \
+                 '\nmodel_name: {}\nmodel_time: {}\ntrain_bleu: {}\ntest_bleu: {}\n' \
+                 'data_params: {}\nmodel_params: {}\ntrain_params: {}\nexamples: {}\n\n'.format(*data)
+
+        print(string)
+
+        with open(os.path.join(create_dir_in_root('runtime', 'log'), '{}.log'.format(self.model.name)), 'ab') as f:
+            f.write(string.encode('utf-8'))
 
 
 o_train = Train(use_cache=True)

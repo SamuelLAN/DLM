@@ -274,7 +274,7 @@ class Transformer(keras.Model):
         self.decoder = Decoder(num_layers, d_model, num_heads, d_ff,
                                target_vocab_size, max_pe_target, drop_rate)
 
-        self.final_layer = layers.Dense(target_vocab_size)
+        self.final_layer = layers.Dense(target_vocab_size, activation='softmax')
 
     @staticmethod
     def create_masks(inp, tar):

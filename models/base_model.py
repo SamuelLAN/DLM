@@ -88,6 +88,8 @@ class BaseModel:
         # for using model.fit, set callbacks for the training process
         self.set_callbacks()
 
+        self.__global_step = tfv1.train.get_or_create_global_step()
+
     def __create_dir(self):
         # create tensorboard path
         self.__tb_dir = utils.create_dir_in_root('runtime', 'tensorboard', self.name, self.TIME)
@@ -105,7 +107,7 @@ class BaseModel:
             input_vocab_size=self.input_vocab_size + self.data_params['incr'],
             target_vocab_size=self.target_vocab_size + self.data_params['incr'],
             max_pe_input=self.model_params['max_pe_input'],
-            max_pe_target=self.model_params['max_pe_target'],
+            max_pe_target=self.model_params['max_pe_target'] - 1,
             drop_rate=self.model_params['drop_rate'],
         )
 
@@ -166,14 +168,15 @@ class BaseModel:
         # if we want to load a trained model
         if self.checkpoint_params['load_model']:
             model_dir = utils.create_dir_in_root(*(['runtime', 'models'] + self.checkpoint_params['load_model']))
-            self.load_model(model_dir, [train_x[0][:1], train_x[1][:1]], train_y[:1])
+            batch_x = [v[:1] for v in train_x] if isinstance(train_x, tuple) else train_x[:1]
+            self.load_model(model_dir, batch_x, train_y[:1])
 
         if not self.__finish_train:
             # fit model
-            self.model.fit([train_x, train_y], train_y,
+            self.model.fit(train_x, train_y,
                            epochs=self.train_params['epoch'],
                            batch_size=self.train_params['batch_size'],
-                           validation_data=([val_x, val_y], val_y) if not isinstance(val_x, type(None)) else None,
+                           validation_data=(val_x, val_y) if not isinstance(val_x, type(None)) else None,
                            callbacks=self.callbacks,
                            verbose=2)
 
@@ -183,6 +186,19 @@ class BaseModel:
             self.__finish_train = True
 
     def loss(self, y_true, y_pred, from_logits=True, label_smoothing=0):
+        # reshape y_true to (batch_size, max_tar_seq_len)
+        y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
+        mask = tf.expand_dims(tf.cast(tf.logical_not(tf.equal(y_true, 0)), y_pred.dtype), axis=-1)
+        y_true = tf.cast(tf.one_hot(tf.cast(y_true, tf.int32), y_pred.shape[-1]), y_pred.dtype)
+
+        loss = - (y_true * tf.math.log(y_pred) + (1 - y_true) * tf.math.log(1 - y_pred))
+
+        loss *= mask
+        loss = tf.reduce_sum(loss, axis=-1)
+        loss = tf.reduce_mean(loss)
+        return loss
+
+    def loss2(self, y_true, y_pred, from_logits=True, label_smoothing=0):
         # reshape y_true to (batch_size, max_tar_seq_len)
         y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
 

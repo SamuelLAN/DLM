@@ -31,8 +31,8 @@ class Model(BaseModel):
 
     model_params = {
         'emb_dim': 128,
-        'dim_model': 128,
-        'ff_units': 128,
+        'dim_model': 1024,
+        'ff_units': 1024,
         'num_layers': 6,
         'num_heads': 8,
         'max_pe_input': data_params['max_src_seq_len'],
@@ -42,7 +42,7 @@ class Model(BaseModel):
 
     train_params = {
         **BaseModel.train_params,
-        'learning_rate': 1e-3,
+        'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 64,
         'epoch': 300,
@@ -51,7 +51,9 @@ class Model(BaseModel):
 
     compile_params = {
         **BaseModel.compile_params,
-        'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
+        'optimizer': keras.optimizers.Adam(learning_rate=train_params['learning_rate'], beta_1=0.9, beta_2=0.98,
+                                           epsilon=1e-9),
+        # 'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'metrics': [],
     }
 
@@ -82,6 +84,12 @@ class Model(BaseModel):
     def translate_list_token_idx(self, list_of_list_of_src_token_idx, tar_tokenizer):
         """  """
         pred_encoded = self.evaluate_encoded(list_of_list_of_src_token_idx)
+
+        print('\n----------------------------------------')
+        for i, v in enumerate(pred_encoded):
+            print(v)
+        print('-------------------------------')
+
         return self.decode_tar_data(pred_encoded, tar_tokenizer)
 
     def decode_src_data(self, encoded_data, tokenizer, to_sentence=True):
