@@ -314,7 +314,7 @@ class Transformer(keras.Model):
         return final_output
 
     def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx, tar_start_token_idx, tar_end_token_idx,
-                                        max_tar_seq_len=60):
+                                        max_tar_seq_len=60, verbose=0):
         """
         Evaluate a sentence
         :params
@@ -335,7 +335,7 @@ class Transformer(keras.Model):
         ret = []
 
         while len(outputs) and seq_len < max_tar_seq_len:
-            if seq_len % 2 == 0:
+            if verbose and seq_len % 2 == 0:
                 progress = float(seq_len) / max_tar_seq_len * 100.
                 print('\rprogress: %.2f%% ' % progress, end='')
 
@@ -362,51 +362,9 @@ class Transformer(keras.Model):
 
         if len(outputs):
             ret += outputs
-            ret.sort(key=lambda x: x['index'])
 
+        ret.sort(key=lambda x: x['index'])
         return list(map(lambda x: x['output'], ret))
-
-    def evaluate_list_token_idx(self, list_input_token_idx, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
-        """
-        Evaluate a sentence
-        :params
-            list_input_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
-                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
-            tar_start_token_idx (int): idx of target <start> token
-            tar_end_token_idx (int): idx of target <end> token
-            max_tar_seq_len: max token num of target sentences
-        :return
-            list_target_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
-                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
-        """
-        # shape: (1, len of list_input_token_idx )
-        encoder_input = tf.reshape(list_input_token_idx, (1, -1))
-
-        # the first word to the transformer should be the target start token.
-        decoder_input = [tar_start_token_idx]
-        output = tf.expand_dims(decoder_input, 0)
-
-        for i in range(max_tar_seq_len - 1):
-            # enc_padding_mask, combined_mask, dec_padding_mask = self.create_masks(encoder_input, output)
-
-            # predictions.shape == (batch_size, seq_len, vocab_size)
-            # predictions, attention_weights = self.call([encoder_input, output], training=False)
-            predictions = self.call([encoder_input, output], training=False)
-
-            # select the last word from the seq_len dimension
-            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
-
-            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-
-            # return the result if the predicted_id is equal to the end token
-            if predicted_id == tar_end_token_idx:
-                return tf.squeeze(output, axis=0)  # shape == (seq_len,)
-
-            # concatenate the predicted_id to the output which is given to the decoder
-            # as its input.
-            output = tf.concat([output, predicted_id], axis=-1)
-
-        return tf.squeeze(output, axis=0)  # shape == (seq_len,)
 
     def beam_search_list_token_idx(self,
                                    list_input_token_idx,
@@ -504,27 +462,6 @@ class Transformer(keras.Model):
         index = 0 if not get_random else np.random.randint(0, top_k)
         return ret[index]['output']
 
-    def evaluate_list_of_list_token_idx_slow(self, list_of_list_input_token_idx,
-                                             tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
-        """ Evaluate list of encoded sentences """
-        predictions = []
-
-        length = len(list_of_list_input_token_idx)
-        for i, x in enumerate(list_of_list_input_token_idx):
-            if i % 5 == 0:
-                progress = float(i + 1) / length * 100.
-                print('\rprogress: %.2f%% ' % progress, end='')
-
-            predictions.append(self.evaluate_list_token_idx(
-                x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len))
-
-        return predictions
-
-        # return list(map(
-        #     lambda x: self.evaluate_list_token_idx(x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len),
-        #     list_of_list_input_token_idx
-        # ))
-
     def beam_search_list_of_list_token_idx(self, list_of_list_input_token_idx,
                                            tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60,
                                            top_k=1, get_random=False):
@@ -541,13 +478,3 @@ class Transformer(keras.Model):
                 x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len, top_k, get_random))
 
         return predictions
-
-        # return list(map(
-        #     lambda x: self.beam_search_list_token_idx(x,
-        #                                               tar_start_token_idx,
-        #                                               tar_end_token_idx,
-        #                                               max_tar_seq_len,
-        #                                               top_k,
-        #                                               get_random),
-        #     list_of_list_input_token_idx
-        # ))

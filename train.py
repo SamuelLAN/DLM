@@ -123,6 +123,7 @@ class Train:
         if load_model:
             self.model = Model(self.__src_vocab_size, self.__tar_vocab_size, finish_train=True)
             self.model.train((self.__train_src_encode, self.__train_tar_encode[:, :-1]), self.__train_tar_encode[:, 1:])
+            self.__train_time = 0.
 
         print('\nTesting model ...')
 
@@ -134,8 +135,8 @@ class Train:
         print('\n\nCalculating bleu ...')
 
         start_train_time = time.time()
-        # train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
-        train_bleu = 1.0
+        train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
+        # train_bleu = 1.0
         start_test_time = time.time()
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         self.__test_train_time = start_test_time - start_train_time
@@ -173,5 +174,5 @@ class Train:
 
 
 o_train = Train(use_cache=True)
-# o_train.train()
-o_train.test(True)
+o_train.train()
+o_train.test()

@@ -47,7 +47,7 @@ class BaseModel:
 
     compile_params = {
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
-        'loss': keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none'),
+        'loss': keras.losses.SparseCategoricalCrossentropy(from_logits=False, reduction='none'),
         'customize_loss': True,
         'metrics': [],
     }
@@ -187,7 +187,7 @@ class BaseModel:
 
             self.__finish_train = True
 
-    def loss(self, y_true, y_pred, from_logits=True, label_smoothing=0):
+    def loss2(self, y_true, y_pred, from_logits=True, label_smoothing=0):
         # reshape y_true to (batch_size, max_tar_seq_len)
         y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
         mask = tf.expand_dims(tf.cast(tf.logical_not(tf.equal(y_true, 0)), y_pred.dtype), axis=-1)
@@ -201,7 +201,7 @@ class BaseModel:
         loss = tf.reduce_mean(loss)
         return loss
 
-    def loss2(self, y_true, y_pred, from_logits=True, label_smoothing=0):
+    def loss(self, y_true, y_pred, from_logits=True, label_smoothing=0):
         # reshape y_true to (batch_size, max_tar_seq_len)
         y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
 
@@ -219,10 +219,21 @@ class BaseModel:
 
     def evaluate_encoded(self, list_of_list_src_token_idx):
         """ translate list of list encoded token idx; the results are also encoded """
-        return self.model.evaluate_list_of_list_token_idx(list_of_list_src_token_idx,
-                                                          self.tar_start_token_idx,
-                                                          self.tar_end_token_idx,
-                                                          self.data_params['max_tar_seq_len'])
+        batch_size = self.train_params['batch_size']
+        steps = int(np.ceil(len(list_of_list_src_token_idx) / batch_size))
+
+        # evaluate in batch so that OOM would not happen
+        predictions = []
+        for step in range(steps):
+            progress = float(step + 1) / steps * 100.
+            print('\rprogress: %.2f%% ' % progress, end='')
+
+            batch_x = list_of_list_src_token_idx[step * batch_size: (step + 1) * batch_size]
+            predictions += self.model.evaluate_list_of_list_token_idx(batch_x,
+                                                                      self.tar_start_token_idx,
+                                                                      self.tar_end_token_idx,
+                                                                      self.data_params['max_tar_seq_len'])
+        return predictions
 
     def evaluate_encoded_beam_search(self, list_of_list_src_token_idx):
         """ translate list of list encoded token idx; the results are also encoded """

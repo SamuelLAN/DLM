@@ -38,6 +38,7 @@ class Model(BaseModel):
         'max_pe_input': data_params['max_src_seq_len'],
         'max_pe_target': data_params['max_tar_seq_len'],
         'drop_rate': 0.1,
+        'use_beam_search': False,
         'top_k': 5,
         'get_random': False,
     }
@@ -47,8 +48,8 @@ class Model(BaseModel):
         'learning_rate': 2e-5,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 64,
-        'epoch': 300,
-        'early_stop': 30,
+        'epoch': 100,
+        'early_stop': 20,
     }
 
     compile_params = {
@@ -69,7 +70,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [name, '2020_03_22_02_23_18'],  # [name, '2020_03_19_13_10_32'],  # [name, time]
+        'load_model': [],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 
@@ -80,12 +81,12 @@ class Model(BaseModel):
             'max_src_seq_len': self.data_params['max_src_seq_len'],
         })
 
-        pred_encoded = self.evaluate_encoded(encoded_data)
+        pred_encoded = self.evaluate(encoded_data)
         return self.decode_tar_data(pred_encoded, tar_tokenizer)
 
     def translate_list_token_idx(self, list_of_list_of_src_token_idx, tar_tokenizer):
         """ translate the src list token idx to target language sentences """
-        pred_encoded = self.evaluate_encoded(list_of_list_of_src_token_idx)
+        pred_encoded = self.evaluate(list_of_list_of_src_token_idx)
         return self.decode_tar_data(pred_encoded, tar_tokenizer)
 
     def decode_src_data(self, encoded_data, tokenizer, to_sentence=True):
@@ -104,7 +105,7 @@ class Model(BaseModel):
         """ evaluate the BLEU according to the encoded src language data (list_of_list_token_idx)
                                 and the target reference (list of sentences) """
         print('\nstart translating {} ...'.format(dataset))
-        pred_encoded_data = self.evaluate_encoded(src_encode_data)
+        pred_encoded_data = self.evaluate(src_encode_data)
 
         pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
         tar_encode_data = utils.convert_list_of_list_token_idx_2_string(tar_encode_data)
@@ -114,3 +115,8 @@ class Model(BaseModel):
 
         print('{} bleu: {}'.format(dataset, bleu))
         return bleu
+
+    def evaluate(self, list_of_list_src_token_idx):
+        if self.model_params['use_beam_search']:
+            return self.evaluate_encoded_beam_search(list_of_list_src_token_idx)
+        return self.evaluate_encoded(list_of_list_src_token_idx)
