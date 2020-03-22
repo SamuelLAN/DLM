@@ -44,7 +44,7 @@ def fr_en_europarl():
 def de_en_europarl():
     file_name = 'europarl_v7_de-en.tgz'
     url = 'http://www.statmt.org/europarl/v7/de-en.tgz'
-    return get_europarl(url, file_name, 'europarl-v7.de-en.fr', 'europarl-v7.de-en.en')
+    return get_europarl(url, file_name, 'europarl-v7.de-en.de', 'europarl-v7.de-en.en')
 
 
 
