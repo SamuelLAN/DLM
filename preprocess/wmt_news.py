@@ -1,5 +1,6 @@
 import os
 from lib.preprocess import utils
+import shutil
 
 __data_dir = 'D:\Data\DLM\data'
 
@@ -18,6 +19,34 @@ def get(url, file_name, lan_1_name, lan_2_name):
     lan_1_data = utils.read_lines(lan_1_file_path)
     lan_2_data = utils.read_lines(lan_2_file_path)
     return lan_1_data, lan_2_data
+
+def get_europarl(url, file_name, lan_1_name, lan_2_name):
+    europarl_news_path = os.path.join(__data_dir, file_name)
+    europarl_news_dir = os.path.splitext(europarl_news_path)[0]
+    lan_1_file_path = os.path.join(europarl_news_dir, lan_1_name)
+    lan_2_file_path = os.path.join(europarl_news_dir, lan_2_name)
+
+    utils.download(url, europarl_news_path)
+    shutil.unpack_archive(europarl_news_path, europarl_news_dir)
+    os.remove(europarl_news_path)
+   
+    # read data
+    lan_1_data = utils.read_lines(lan_1_file_path)
+    lan_2_data = utils.read_lines(lan_2_file_path)
+    return lan_1_data, lan_2_data
+
+
+def fr_en_europarl():
+    file_name = 'europarl_v7_fr-en.tgz'
+    url = 'http://www.statmt.org/europarl/v7/fr-en.tgz'
+    return get_europarl(url, file_name, 'europarl-v7.fr-en.fr', 'europarl-v7.fr-en.en')
+
+def de_en_europarl():
+    file_name = 'europarl_v7_de-en.tgz'
+    url = 'http://www.statmt.org/europarl/v7/de-en.tgz'
+    return get_europarl(url, file_name, 'europarl-v7.de-en.fr', 'europarl-v7.de-en.en')
+
+
 
 
 def zh_en():
@@ -54,6 +83,10 @@ def fr_en():
     file_name = 'wmt_news_2019_fr_en.zip'
     url = 'http://opus.nlpl.eu/download.php?f=WMT-News/v2019/moses/en-fr.txt.zip'
     return get(url, file_name, 'WMT-News.en-fr.fr', 'WMT-News.en-fr.en')
+
+
+def get_europarl(url, file_name, lan_1_name, lan_2_name):
+
 
 
 # lan_1_data, lan_2_data = zh_en()
