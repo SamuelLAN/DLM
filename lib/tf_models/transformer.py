@@ -355,14 +355,6 @@ class Transformer(keras.Model):
 
         return tf.squeeze(output, axis=0)  # shape == (seq_len,)
 
-    def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx,
-                                        tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
-        """ Evaluate list of sentences """
-        return list(map(
-            lambda x: self.evaluate_list_token_idx(x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len),
-            list_of_list_input_token_idx
-        ))
-
     def beam_search_list_token_idx(self,
                                    list_input_token_idx,
                                    tar_start_token_idx,
@@ -458,3 +450,24 @@ class Transformer(keras.Model):
         index = 0 if not get_random else np.random.randint(0, top_k)
         return top_k_outputs[index]['output']
 
+    def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx,
+                                        tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
+        """ Evaluate list of encoded sentences """
+        return list(map(
+            lambda x: self.evaluate_list_token_idx(x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len),
+            list_of_list_input_token_idx
+        ))
+
+    def beam_search_list_of_list_token_idx(self, list_of_list_input_token_idx,
+                                           tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60,
+                                           top_k=1, get_random=False):
+        """ Beam search list of encoded sentences """
+        return list(map(
+            lambda x: self.beam_search_list_token_idx(x,
+                                                      tar_start_token_idx,
+                                                      tar_end_token_idx,
+                                                      max_tar_seq_len,
+                                                      top_k,
+                                                      get_random),
+            list_of_list_input_token_idx
+        ))
