@@ -98,6 +98,10 @@ def zh_word_seg_by_jieba(list_of_sentences):
     """ Tokenize Chinese words by jieba """
     return list(map(lambda x: list(jieba.cut(x)), list_of_sentences))
 
+def jr_word_seg_by_mecab(list_of_sentences):
+    """ Tokenize japanese words by mecab """
+    wakati = MeCab.Tagger("-Owakati")
+    return list(map(lambda x: list(wakati.parse(x).split()), list_of_sentences))
 
 def en_word_seg_by_nltk(list_of_sentences):
     """ tokenize English words by NLTK """
