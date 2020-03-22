@@ -26,6 +26,8 @@ class BaseModel:
 
     model_params = {
         'drop_rate': 0.1,
+        'top_k': 3,
+        'get_random': False,
     }
 
     train_params = {
@@ -221,3 +223,12 @@ class BaseModel:
                                                           self.tar_start_token_idx,
                                                           self.tar_end_token_idx,
                                                           self.data_params['max_tar_seq_len'])
+
+    def evaluate_encoded_beam_search(self, list_of_list_src_token_idx):
+        """ translate list of list encoded token idx; the results are also encoded """
+        return self.model.beam_search_list_of_list_token_idx(list_of_list_src_token_idx,
+                                                             self.tar_start_token_idx,
+                                                             self.tar_end_token_idx,
+                                                             self.data_params['max_tar_seq_len'],
+                                                             self.model_params['top_k'],
+                                                             self.model_params['get_random'])

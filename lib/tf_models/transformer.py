@@ -313,6 +313,59 @@ class Transformer(keras.Model):
         # return final_output, attention_weights
         return final_output
 
+    def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx, tar_start_token_idx, tar_end_token_idx,
+                                        max_tar_seq_len=60):
+        """
+        Evaluate a sentence
+        :params
+            list_input_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
+                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+            tar_start_token_idx (int): idx of target <start> token
+            tar_end_token_idx (int): idx of target <end> token
+            max_tar_seq_len: max token num of target sentences
+        :return
+            list_target_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
+                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+        """
+        # shape: (batch_size, len of list_input_token_idx )
+        batch_size = len(list_of_list_input_token_idx)
+        outputs = [{'output': [tar_start_token_idx], 'index': i} for i in range(batch_size)]
+
+        seq_len = 1
+        ret = []
+
+        while len(outputs) and seq_len < max_tar_seq_len:
+            if seq_len % 2 == 0:
+                progress = float(seq_len) / max_tar_seq_len * 100.
+                print('\rprogress: %.2f%% ' % progress, end='')
+
+            # get input
+            encoder_input = np.array([list_of_list_input_token_idx[val['index']] for val in outputs])
+            decoder_input = np.array(list(map(lambda x: x['output'], outputs)))
+
+            # predictions.shape == (top_k, seq_len, vocab_size)
+            predictions = self.call([encoder_input, decoder_input], training=False)
+            predictions = predictions[:, -1]
+
+            last_token_idx = np.argmax(predictions, axis=-1)
+
+            tmp_outputs = []
+            for i, val in enumerate(outputs):
+                val['output'] += [last_token_idx[i]]
+                if last_token_idx[i] == tar_end_token_idx:
+                    ret.append(val)
+                else:
+                    tmp_outputs.append(val)
+
+            outputs = tmp_outputs
+            seq_len += 1
+
+        if len(outputs):
+            ret += outputs
+            ret.sort(key=lambda x: x['index'])
+
+        return list(map(lambda x: x['output'], ret))
+
     def evaluate_list_token_idx(self, list_input_token_idx, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
         """
         Evaluate a sentence
@@ -397,19 +450,20 @@ class Transformer(keras.Model):
         log_probs = log_probs[:top_k]
 
         # list for saving the top_k results
-        top_k_outputs = list(map(lambda x: {'output:': [tar_start_token_idx, x[1]], 'log_prob': x[0]}, log_probs))
+        top_k_outputs = list(map(lambda x: {'output': [tar_start_token_idx, x[1]], 'log_prob': x[0]}, log_probs))
         seq_len = 2
         ret = []
 
         # check if the last word is <end>
         for i in range(top_k - 1, -1, -1):
             val = top_k_outputs[i]
-            if val['output'][-1] in [tar_end_token_idx, 0]:
+            if val['output'][-1] == tar_end_token_idx:
                 ret.append(val)
                 del top_k_outputs[i]
 
         while len(top_k_outputs) and seq_len < max_tar_seq_len:
             # get decoder input
+            encoder_input = np.array([list_input_token_idx for i in range(len(top_k_outputs))])
             decoder_input = np.array(list(map(lambda x: x['output'], top_k_outputs)))
 
             # predictions.shape == (top_k, seq_len, vocab_size)
@@ -434,7 +488,7 @@ class Transformer(keras.Model):
 
                 # if end, them
                 last_word_id = val['output'][-1]
-                if last_word_id in [tar_end_token_idx, 0]:
+                if last_word_id == tar_end_token_idx:
                     ret.append(val)
 
                 # if not end
@@ -448,26 +502,52 @@ class Transformer(keras.Model):
             ret.sort(key=lambda x: -x['log_prob'] / float(len(x['output'])))
 
         index = 0 if not get_random else np.random.randint(0, top_k)
-        return top_k_outputs[index]['output']
+        return ret[index]['output']
 
-    def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx,
-                                        tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
+    def evaluate_list_of_list_token_idx_slow(self, list_of_list_input_token_idx,
+                                             tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60):
         """ Evaluate list of encoded sentences """
-        return list(map(
-            lambda x: self.evaluate_list_token_idx(x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len),
-            list_of_list_input_token_idx
-        ))
+        predictions = []
+
+        length = len(list_of_list_input_token_idx)
+        for i, x in enumerate(list_of_list_input_token_idx):
+            if i % 5 == 0:
+                progress = float(i + 1) / length * 100.
+                print('\rprogress: %.2f%% ' % progress, end='')
+
+            predictions.append(self.evaluate_list_token_idx(
+                x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len))
+
+        return predictions
+
+        # return list(map(
+        #     lambda x: self.evaluate_list_token_idx(x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len),
+        #     list_of_list_input_token_idx
+        # ))
 
     def beam_search_list_of_list_token_idx(self, list_of_list_input_token_idx,
                                            tar_start_token_idx, tar_end_token_idx, max_tar_seq_len=60,
                                            top_k=1, get_random=False):
         """ Beam search list of encoded sentences """
-        return list(map(
-            lambda x: self.beam_search_list_token_idx(x,
-                                                      tar_start_token_idx,
-                                                      tar_end_token_idx,
-                                                      max_tar_seq_len,
-                                                      top_k,
-                                                      get_random),
-            list_of_list_input_token_idx
-        ))
+        predictions = []
+
+        length = len(list_of_list_input_token_idx)
+        for i, x in enumerate(list_of_list_input_token_idx):
+            if i % 5 == 0 and length > 20:
+                progress = float(i + 1) / length * 100.
+                print('\rprogress: %.2f%% ' % progress, end='')
+
+            predictions.append(self.beam_search_list_token_idx(
+                x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len, top_k, get_random))
+
+        return predictions
+
+        # return list(map(
+        #     lambda x: self.beam_search_list_token_idx(x,
+        #                                               tar_start_token_idx,
+        #                                               tar_end_token_idx,
+        #                                               max_tar_seq_len,
+        #                                               top_k,
+        #                                               get_random),
+        #     list_of_list_input_token_idx
+        # ))

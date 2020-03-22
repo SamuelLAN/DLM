@@ -126,20 +126,16 @@ class Train:
 
         print('\nTesting model ...')
 
-        print('\nTranslate examples:')
-        example_num = 10
+        train_examples = self.show_examples(self.__train_src_encode, self.__train_tar_encode, 5)
+        test_examples = self.show_examples(self.__test_src_encode, self.__test_tar_encode, 5)
 
-        pred = self.model.translate_list_token_idx(self.__train_src_encode[:example_num], self.__tar_tokenizer)
-        examples = ''
-        for i in range(example_num):
-            src_lan = self.model.decode_src_data(self.__train_src_encode[i:i + 1], self.__src_tokenizer)[0]
-            tar_lan = self.model.decode_tar_data(self.__train_tar_encode[i:i + 1], self.__tar_tokenizer)[0]
-            examples += 'src_lan: {}\ntar_lan: {}\ntranslation: {}\n\n'.format(src_lan, tar_lan, pred[i])
+        print('\nTrain examples: {}\n\nTest examples: {}'.format(train_examples, test_examples))
 
-        print('\n{}\n\nCalculating bleu ...'.format(examples))
+        print('\n\nCalculating bleu ...')
 
         start_train_time = time.time()
-        train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
+        # train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
+        train_bleu = 1.0
         start_test_time = time.time()
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         self.__test_train_time = start_test_time - start_train_time
@@ -147,7 +143,7 @@ class Train:
 
         print('\nFinish testing')
 
-        self.log(examples, train_bleu, test_bleu)
+        self.log(train_examples, test_examples, train_bleu, test_bleu)
 
     def show_examples(self, src_encoded_data, tar_encoded_data, example_num):
         pred = self.model.translate_list_token_idx(src_encoded_data[:example_num], self.__tar_tokenizer)
@@ -158,14 +154,16 @@ class Train:
             examples += 'src_lan: {}\ntar_lan: {}\ntranslation: {}\n\n'.format(src_lan, tar_lan, pred[i])
         return examples
 
-    def log(self, examples, train_bleu, test_bleu):
+    def log(self, train_examples, test_examples, train_bleu, test_bleu):
         data = (self.model.name, self.model.TIME, train_bleu, test_bleu,
-                self.model.data_params, self.model.model_params, self.model.train_params, examples,
+                self.model.data_params, self.model.model_params, self.model.train_params,
+                train_examples, test_examples,
                 self.__train_time, self.__test_train_time, self.__test_test_time)
 
         string = '\n---------------------------------------------------' \
                  '\nmodel_name: {}\nmodel_time: {}\ntrain_bleu: {}\ntest_bleu: {}\n' \
-                 'data_params: {}\nmodel_params: {}\ntrain_params: {}\nexamples: {}\n' \
+                 'data_params: {}\nmodel_params: {}\ntrain_params: {}\n' \
+                 'train_examples: {}\ntest_examples: {}\n' \
                  'train_time: {}\ntest_train_time: {}\ntest_test_time: {}\n\n'.format(*data)
 
         print(string)
@@ -175,5 +173,5 @@ class Train:
 
 
 o_train = Train(use_cache=True)
-o_train.train()
-o_train.test()
+# o_train.train()
+o_train.test(True)

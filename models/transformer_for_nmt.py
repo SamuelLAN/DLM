@@ -38,6 +38,8 @@ class Model(BaseModel):
         'max_pe_input': data_params['max_src_seq_len'],
         'max_pe_target': data_params['max_tar_seq_len'],
         'drop_rate': 0.1,
+        'top_k': 5,
+        'get_random': False,
     }
 
     train_params = {
@@ -67,7 +69,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [name, '2020_03_19_20_04_10'],  # [name, '2020_03_19_13_10_32'],  # [name, time]
+        'load_model': [name, '2020_03_22_02_23_18'],  # [name, '2020_03_19_13_10_32'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 
