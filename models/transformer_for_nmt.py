@@ -59,7 +59,7 @@ class Model(BaseModel):
 
     monitor_params = {
         **BaseModel.monitor_params,
-        'name': 'loss',
+        'name': 'val_loss',
         'mode': 'min',  # for the "name" monitor, the "min" is best;
         'for_start': 'loss',
         'for_start_value': 3.6,
@@ -67,7 +67,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [name, '2020_03_19_13_10_32'],  # [name, time]
+        'load_model': [name, '2020_03_19_20_04_10'],  # [name, '2020_03_19_13_10_32'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 

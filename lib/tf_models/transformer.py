@@ -362,3 +362,99 @@ class Transformer(keras.Model):
             lambda x: self.evaluate_list_token_idx(x, tar_start_token_idx, tar_end_token_idx, max_tar_seq_len),
             list_of_list_input_token_idx
         ))
+
+    def beam_search_list_token_idx(self,
+                                   list_input_token_idx,
+                                   tar_start_token_idx,
+                                   tar_end_token_idx,
+                                   max_tar_seq_len=60,
+                                   top_k=1,
+                                   get_random=False):
+        """
+        Use beam search to decode
+        :param
+            list_input_token_idx (list): [[12, 43, 2, 346, 436, 87, 876], ..., ]
+                        # correspond to [['He', 'llo', ',', 'I', 'am', 'stu', 'dent'], ..., ]
+            tar_start_token_idx (int): idx of target <start> token
+            tar_end_token_idx (int): idx of target <end> token
+            max_tar_seq_len (int): max token num of target sentences
+            top_k (int): Choose the last token from top K.
+            get_random (bool): whether to choose the result from the final top_k results randomly
+        :return:
+            list_target_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
+                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+        """
+
+        # shape: (1, len of list_input_token_idx )
+        encoder_input = tf.reshape(list_input_token_idx, (1, -1))
+
+        # the first word to the transformer should be the target start token.
+        decoder_input = [tar_start_token_idx]
+        output = tf.expand_dims(decoder_input, 0)
+
+        # predictions.shape == (batch_size, seq_len, vocab_size)
+        # predictions, attention_weights = self.call([encoder_input, output], training=False)
+        predictions = self.call([encoder_input, output], training=False)
+
+        # log the probability of the last word
+        predictions = np.log(predictions[0, -1] + 0.0001)
+
+        # get the top_k result of the last word
+        log_probs = [(log_prob, j) for j, log_prob in enumerate(predictions)]
+        log_probs.sort(reverse=True)
+        log_probs = log_probs[:top_k]
+
+        # list for saving the top_k results
+        top_k_outputs = list(map(lambda x: {'output:': [tar_start_token_idx, x[1]], 'log_prob': x[0]}, log_probs))
+        seq_len = 2
+        ret = []
+
+        # check if the last word is <end>
+        for i in range(top_k - 1, -1, -1):
+            val = top_k_outputs[i]
+            if val['output'][-1] in [tar_end_token_idx, 0]:
+                ret.append(val)
+                del top_k_outputs[i]
+
+        while len(top_k_outputs) and seq_len < max_tar_seq_len:
+            # get decoder input
+            decoder_input = np.array(list(map(lambda x: x['output'], top_k_outputs)))
+
+            # predictions.shape == (top_k, seq_len, vocab_size)
+            predictions = self.call([encoder_input, decoder_input], training=False)
+            predictions = np.log(predictions[:, -1] + 0.0001)
+
+            # concat the last word of the new predictions to the top_k_outputs
+            #    and calculate the total log_prob
+            tmp_outputs = []
+            for i, val in enumerate(top_k_outputs):
+                tmp_outputs += [{'output': val['output'] + [j], 'log_prob': val['log_prob'] + log_prob}
+                                for j, log_prob in enumerate(predictions[i])]
+
+            # compare normalized log_prob and get top_k
+            tmp_outputs += ret
+            tmp_outputs.sort(key=lambda x: -x['log_prob'] / float(len(x['output'])))
+            tmp_outputs = tmp_outputs[:top_k]
+
+            # whether to continue prediction
+            top_k_outputs = []
+            for val in tmp_outputs:
+
+                # if end, them
+                last_word_id = val['output'][-1]
+                if last_word_id in [tar_end_token_idx, 0]:
+                    ret.append(val)
+
+                # if not end
+                else:
+                    top_k_outputs.append(val)
+
+            seq_len += 1
+
+        if len(ret) < top_k:
+            ret += top_k_outputs[: top_k - len(ret)]
+            ret.sort(key=lambda x: -x['log_prob'] / float(len(x['output'])))
+
+        index = 0 if not get_random else np.random.randint(0, top_k)
+        return top_k_outputs[index]['output']
+
