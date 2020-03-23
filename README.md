@@ -42,4 +42,87 @@ fr-en:
 
 - When using the project, <br>
   please remember to modify the "__data_dir" variable <br> 
-  in the top of "/preprocess/wmt-news.py" and "/preprocess/europarl.py"
+  in the top of "[preprocess/wmt-news.py](preprocess/wmt-news.py)" and "[preprocess/europarl.py](preprocess/europarl.py)"
+
+### for training
+
+Tutorial for training the models
+
+> load data
+
+    at the top of [train.py](train.py)
+    
+    There is a line of code like "from load.xxx import Loader"
+    
+    change the xxx to zh_en; or any other languages
+
+> if use transformer in pytorch instead of tensorflow (optional)
+
+    at the top of [train.py](train.py)
+    
+    There is a line of code like "from models.transformer_for_nmt import Model"
+    
+    change it to "from models.transformer_for_nmt_torch import Model"
+    
+> [train.py](train.py)
+
+    at the bottom of train.py
+    
+    make sure it is 
+        o_train = Train(use_cache=True)
+        o_train.train()
+        o_train.test()
+
+    The "use_cache" param indicate whether to load the preprocessed data from cache if there is cache
+
+> for adjusting the parameters, loss, optimizer and so on
+
+    it is in [models/transformer_for_nmt.py](models/transformer_for_nmt.py)
+    
+    You can change
+        
+    + data_params
+    
+    + model_params
+    
+    + train_params
+    
+    + compile_params
+    
+    + monitor_params
+
+> if you want to choose dataset
+
+    it is in top of the "\_\_init__" function of "Loader" in [load/zh_en.py](load/zh_en.py)
+
+> if you want to change the preprocess pipeline
+
+    it is in [models/transformer_for_nmt.py](models/transformer_for_nmt.py)
+
+    you could change the pipelines at the top of the "Model"
+
+> if you want to load the trained model
+
+    it is in the "checkpoint_params" of [models/transformer_for_nmt.py](models/transformer_for_nmt.py)
+
+    you can specify the "name, time" of the model_dir, then it would load the best model automatically.
+
+> tensorboard
+
+    the tensorboard files will be save in the "runtime/tensorboard" directory.
+    
+    This directory will be generated automatically after running the train.py
+
+> model files
+
+    all model files will be saved in "runtime/models"
+    
+    This directory will be generated automatically after running the train.py
+
+> log
+
+    All the results of running [train.py](train.py) will be logged into the "runtime/model.log".
+    
+    Including the data params, model params, train params and the results.
+    
+    But if the [train.py](train.py) exits before it finishes, then there would be no logs.

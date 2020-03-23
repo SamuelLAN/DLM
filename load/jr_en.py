@@ -6,11 +6,9 @@ class Loader:
     RANDOM_STATE = 42
 
     def __init__(self, start_ratio=0.0, end_ratio=0.8):
+        # TODO add loading jr_en data
         # load data from files
         # jr_data, en_data = wmt_news.jr_en()
-
-        # TODO add more source of data here
-        # ...
 
         # shuffle the data
         random.seed(self.RANDOM_STATE)

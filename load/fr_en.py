@@ -1,5 +1,5 @@
 import random
-from preprocess import wmt_news
+from preprocess import wmt_news, europarl
 
 
 class Loader:
@@ -9,8 +9,12 @@ class Loader:
         # load data from files
         fr_data, en_data = wmt_news.fr_en()
 
-        # TODO add more source of data here
-        # ...
+        # add more data source
+        # TODO check if you need the europaral data
+        #   also check the combine ratio between wmt_news and europarl
+        fr_data_2, en_data_2 = europarl.fr_en()
+        fr_data += fr_data_2
+        en_data += en_data_2
 
         # shuffle the data
         random.seed(self.RANDOM_STATE)
