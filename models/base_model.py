@@ -248,9 +248,6 @@ class BaseModel:
         """ evaluate the Loss according to the encoded src language data (list_of_list_token_idx)
                                 and the target reference (list of sentences) """
         print('\nstart calculating loss for {} ...'.format(dataset))
-        pred_encoded_data = self.evaluate_encoded(src_encode_data)
-        pred_encoded_data = np.array(pred_encoded_data)
-
         batch_size = self.train_params['batch_size']
         steps = int(np.ceil(len(tar_encode_data) / batch_size))
 
@@ -260,9 +257,14 @@ class BaseModel:
             progress = float(step + 1) / steps * 100.
             print('\rprogress: %.2f%% ' % progress, end='')
 
+            batch_x = src_encode_data[step * batch_size: (step + 1) * batch_size]
             batch_y = tar_encode_data[step * batch_size: (step + 1) * batch_size]
-            batch_pred = pred_encoded_data[step * batch_size: (step + 1) * batch_size]
-            loss.append(self.loss(batch_y, batch_pred))
+
+            batch_input = [batch_x, batch_y[:, :-1]]
+            batch_output = batch_y[:, 1:]
+
+            predictions = self.model(batch_input, training=False)
+            loss.append(self.loss(batch_output, predictions))
 
         loss = np.mean(loss)
         print('{} loss: {}'.format(dataset, loss))

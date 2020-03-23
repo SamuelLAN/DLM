@@ -126,3 +126,24 @@ Tutorial for training the models
     Including the data params, model params, train params and the results.
     
     But if the train.py exits before it finishes, then there would be no logs.
+
+### for testing
+
+Tutorial for testing the models
+
+> train.py
+
+    at the bottom of train.py
+    
+    make sure it is 
+        o_train = Train(use_cache=True)
+        # o_train.train()
+        o_train.test(True)
+
+    The "use_cache" param indicate whether to load the preprocessed data from cache if there is cache
+
+> choose which model to load
+
+    it is in the "checkpoint_params" of models/transformer_for_nmt.py
+
+    you can specify the "name, time" of the model_dir, then it would load the best model automatically.

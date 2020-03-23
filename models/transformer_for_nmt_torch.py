@@ -71,6 +71,10 @@ class Model(BaseModel):
         """
         # TODO build the pytorch model here
         #   the "model" should provide the following functions:
+        #       __call__(inputs, training=None)
+        #           :params: inputs is ( encoder_input, decoder_input )
+        #           :return: decoder_output
+        #           (It would be used in the "self.calculate_loss_for_encoded" functions during the test process)
         #       evaluate_list_of_list_token_idx
         #           (for generating the translation, which means iterate the predictions to do translations.
         #               Details are in the /lib/tf_models/transformer.)
