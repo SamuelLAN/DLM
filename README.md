@@ -37,5 +37,8 @@ fr-en:
 - [Wikipedia](http://opus.nlpl.eu/download.php?f=Wikipedia/v1.0/tmx/en-fr.tmx.gz)
 - [WMT-News](http://opus.nlpl.eu/download.php?f=WMT-News/v2019/moses/en-fr.txt.zip)
 
+### note
 
-
+- When using the project, <br>
+  please remember to modify the "__data_dir" variable <br> 
+  in the top of "/preprocess/wmt-news.py" and "/preprocess/europarl.py"
