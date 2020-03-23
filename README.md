@@ -50,7 +50,7 @@ Tutorial for training the models
 
 > load data
 
-    at the top of [train.py](train.py)
+    at the top of train.py
     
     There is a line of code like "from load.xxx import Loader"
     
@@ -58,13 +58,13 @@ Tutorial for training the models
 
 > if use transformer in pytorch instead of tensorflow (optional)
 
-    at the top of [train.py](train.py)
+    at the top of train.py
     
     There is a line of code like "from models.transformer_for_nmt import Model"
     
     change it to "from models.transformer_for_nmt_torch import Model"
     
-> [train.py](train.py)
+> train.py
 
     at the bottom of train.py
     
@@ -77,7 +77,7 @@ Tutorial for training the models
 
 > for adjusting the parameters, loss, optimizer and so on
 
-    it is in [models/transformer_for_nmt.py](models/transformer_for_nmt.py)
+    it is in models/transformer_for_nmt.py
     
     You can change
         
@@ -93,17 +93,17 @@ Tutorial for training the models
 
 > if you want to choose dataset
 
-    it is in top of the "__init__" function of "Loader" in [load/zh_en.py](load/zh_en.py)
+    it is in top of the "__init__" function of "Loader" in load/zh_en.py
 
 > if you want to change the preprocess pipeline
 
-    it is in [models/transformer_for_nmt.py](models/transformer_for_nmt.py)
+    it is in models/transformer_for_nmt.py
 
     you could change the pipelines at the top of the "Model"
 
 > if you want to load the trained model
 
-    it is in the "checkpoint_params" of [models/transformer_for_nmt.py](models/transformer_for_nmt.py)
+    it is in the "checkpoint_params" of models/transformer_for_nmt.py
 
     you can specify the "name, time" of the model_dir, then it would load the best model automatically.
 
@@ -121,8 +121,8 @@ Tutorial for training the models
 
 > log
 
-    All the results of running [train.py](train.py) will be logged into the "runtime/model.log".
+    All the results of running train.py will be logged into the "runtime/model.log".
     
     Including the data params, model params, train params and the results.
     
-    But if the [train.py](train.py) exits before it finishes, then there would be no logs.
+    But if the train.py exits before it finishes, then there would be no logs.
