@@ -1,4 +1,5 @@
 from lib.preprocess import utils
+from preprocess.zh_en import remove_space_pipeline, seg_char_pipeline
 
 seg_jr_by_mecab_pipeline = [
     {
@@ -14,16 +15,6 @@ seg_jr_by_mecab_pipeline = [
         'input_keys': ['input_1', ' '],
         'output_keys': 'input_1',
         'show_dict': {'src_lan': 'input_1'},
-    },
-]
-
-remove_space_pipeline = [
-    {
-        'name': 'remove_space',
-        'func': utils.remove_space,
-        'input_keys': ['input_1'],
-        'output_keys': 'input_1',
-        'show_dict': {'lan': 'input_1'},
     },
 ]
 

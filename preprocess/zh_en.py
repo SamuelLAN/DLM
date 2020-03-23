@@ -27,6 +27,23 @@ remove_space_pipeline = [
     },
 ]
 
+seg_char_pipeline = [
+    {
+        'name': 'char_seg',
+        'func': utils.char_seg,
+        'input_keys': ['input_1'],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+    {
+        'name': 'join_list_token_2_string_with_space_for_src_lan',
+        'func': utils.join_list_token_2_string,
+        'input_keys': ['input_1', ' '],
+        'output_keys': 'input_1',
+        'show_dict': {'src_lan': 'input_1'},
+    },
+]
+
 if __name__ == '__main__':
     from preprocess import wmt_news
     from preprocess import tfds_pl
@@ -41,7 +58,7 @@ if __name__ == '__main__':
 
     print('\n------------------- Encoding -------------------------')
     zh_data, en_data, zh_tokenizer, en_tokenizer = utils.pipeline(
-        preprocess_pipeline=seg_zh_by_jieba_pipeline + tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline,
+        preprocess_pipeline=seg_char_pipeline + tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline,
         lan_data_1=zh_data, lan_data_2=en_data, params=params)
 
     print('\n----------------------------------------------')
