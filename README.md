@@ -93,7 +93,7 @@ Tutorial for training the models
 
 > if you want to choose dataset
 
-    it is in top of the "\_\_init__" function of "Loader" in [load/zh_en.py](load/zh_en.py)
+    it is in top of the "__init__" function of "Loader" in [load/zh_en.py](load/zh_en.py)
 
 > if you want to change the preprocess pipeline
 
