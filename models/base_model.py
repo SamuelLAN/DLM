@@ -201,7 +201,7 @@ class BaseModel:
         loss = tf.reduce_mean(loss)
         return loss
 
-    def loss(self, y_true, y_pred, from_logits=True, label_smoothing=0):
+    def loss(self, y_true, y_pred, from_logits=False, label_smoothing=0):
         # reshape y_true to (batch_size, max_tar_seq_len)
         y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
 
@@ -243,3 +243,27 @@ class BaseModel:
                                                              self.data_params['max_tar_seq_len'],
                                                              self.model_params['top_k'],
                                                              self.model_params['get_random'])
+
+    def calculate_loss_for_encoded(self, src_encode_data, tar_encode_data, dataset=''):
+        """ evaluate the Loss according to the encoded src language data (list_of_list_token_idx)
+                                and the target reference (list of sentences) """
+        print('\nstart calculating loss for {} ...'.format(dataset))
+        pred_encoded_data = self.evaluate_encoded(src_encode_data)
+        pred_encoded_data = np.array(pred_encoded_data)
+
+        batch_size = self.train_params['batch_size']
+        steps = int(np.ceil(len(tar_encode_data) / batch_size))
+
+        # evaluate in batch so that OOM would not happen
+        loss = []
+        for step in range(steps):
+            progress = float(step + 1) / steps * 100.
+            print('\rprogress: %.2f%% ' % progress, end='')
+
+            batch_y = tar_encode_data[step * batch_size: (step + 1) * batch_size]
+            batch_pred = pred_encoded_data[step * batch_size: (step + 1) * batch_size]
+            loss.append(self.loss(batch_y, batch_pred))
+
+        loss = np.mean(loss)
+        print('{} loss: {}'.format(dataset, loss))
+        return loss

@@ -94,6 +94,17 @@ class Model(BaseModel):
         # ...
         pass
 
+    def loss(self, y_true, y_pred, from_logits=False, label_smoothing=0):
+        """
+        Calculate the loss
+          (The test process will use this function)
+        TODO
+            you should provide this function no matter you use it in training or not;
+            because the test process would call this function
+        :return: loss (float)
+        """
+        pass
+
     def train(self, train_x, train_y, val_x=None, val_y=None):
         """
         TODO
@@ -121,6 +132,8 @@ class Model(BaseModel):
             # TODO
             #   you should write down the train process here
             #   This process should also provide the following functions:
+            #       calculate the loss
+            #       update model weights
             #       early stop
             #       validation
             #       something like tensorboard (for saving files for tensorboard, you should save it to self.tb_dir)

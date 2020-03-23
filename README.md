@@ -7,7 +7,7 @@ Dictionary Language Modeling for cross-lingual pretraining on Neural Machine Tra
 - tensorflow==2.0.0+
 - tensorflow_datasets=2.1.0
 - nltk==3.4.5
-- mecab==0.996.2	
+- mecab-python3==0.996.2	
 - jieba==0.42.1
 - pkuseg==0.0.22
 - gensim==3.8.1
