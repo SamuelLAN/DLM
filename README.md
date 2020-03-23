@@ -3,7 +3,7 @@ Dictionary Language Modeling for cross-lingual pretraining on Neural Machine Tra
 
 ### environment
 
-- Python 3.6+
+- Python 3.7
 - tensorflow==2.0.0+
 - tensorflow_datasets=2.1.0
 - nltk==3.4.5
