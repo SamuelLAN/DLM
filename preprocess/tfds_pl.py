@@ -169,7 +169,7 @@ decode_pipeline = [
 
 if __name__ == '__main__':
     from preprocess import wmt_news
-    from preprocess.zh_en import seg_zh_by_jieba_pipeline, remove_zh_space_pipeline
+    from preprocess.zh_en import seg_zh_by_jieba_pipeline, remove_space_pipeline
 
     zh_data, en_data = wmt_news.zh_en()
     params = {
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     print(en_tokenizer.vocab_size)
 
     print('\n------------------- Decoding -------------------------')
-    zh_data = utils.pipeline(decode_pipeline + remove_zh_space_pipeline,
+    zh_data = utils.pipeline(decode_pipeline + remove_space_pipeline,
                              zh_data, None, {'tokenizer': zh_tokenizer})
 
     print('\n------------------- Decoding -------------------------')

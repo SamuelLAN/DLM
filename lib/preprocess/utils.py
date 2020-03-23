@@ -4,7 +4,7 @@ import pkuseg
 import chardet
 import zipfile
 import unicodedata
-import numpy as np
+import MeCab
 from gensim import corpora
 import tensorflow_datasets as tfds
 from six.moves.urllib.request import urlretrieve

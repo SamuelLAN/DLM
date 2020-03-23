@@ -94,11 +94,11 @@ class BaseModel:
 
     def __create_dir(self):
         # create tensorboard path
-        self.__tb_dir = utils.create_dir_in_root('runtime', 'tensorboard', self.name, self.TIME)
+        self.tb_dir = utils.create_dir_in_root('runtime', 'tensorboard', self.name, self.TIME)
 
         # create model path
-        self.__model_dir = utils.create_dir_in_root('runtime', 'models', self.name, self.TIME)
-        self.__checkpoint_path = os.path.join(self.__model_dir, self.name + self.checkpoint_params['extend_name'])
+        self.model_dir = utils.create_dir_in_root('runtime', 'models', self.name, self.TIME)
+        self.checkpoint_path = os.path.join(self.model_dir, self.name + self.checkpoint_params['extend_name'])
 
     def build(self):
         self.model = Transformer(
@@ -117,7 +117,7 @@ class BaseModel:
         """ if using model.fit to train model,
               then we need to set callbacks for the training process """
         # callback for tensorboard
-        callback_tf_board = Board(log_dir=self.__tb_dir,
+        callback_tf_board = Board(log_dir=self.tb_dir,
                                   histogram_freq=self.tb_params['histogram_freq'],
                                   write_grads=self.tb_params['write_grads'],
                                   write_graph=self.tb_params['write_graph'],
@@ -127,7 +127,7 @@ class BaseModel:
         callback_tf_board.set_model(self.model)
 
         # callback for saving model and early stopping
-        callback_saver = Saver(self.__checkpoint_path,
+        callback_saver = Saver(self.checkpoint_path,
                                self.monitor_params['name'],
                                self.monitor_params['mode'],
                                self.train_params['early_stop'],
@@ -153,7 +153,7 @@ class BaseModel:
 
     def load_model(self, model_dir='', x=None, y=None):
         # get model path
-        model_dir = model_dir if model_dir else self.__model_dir
+        model_dir = model_dir if model_dir else self.model_dir
         model_path = self.__get_best_model_path(model_dir)
 
         # empty fit, to prevent error from occurring when loading model

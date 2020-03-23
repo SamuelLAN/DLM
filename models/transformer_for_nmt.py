@@ -18,7 +18,7 @@ class Model(BaseModel):
     encode_pipeline = tfds_pl.encode_pipeline
     encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.encode_pipeline_for_src
     encode_pipeline_for_tar = tfds_pl.encode_pipeline_for_src
-    decode_pipeline_for_src = tfds_pl.decode_pipeline + zh_en.remove_zh_space_pipeline
+    decode_pipeline_for_src = tfds_pl.decode_pipeline + zh_en.remove_space_pipeline
     decode_pipeline_for_tar = tfds_pl.decode_pipeline
 
     data_params = {
