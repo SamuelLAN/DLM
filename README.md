@@ -121,7 +121,7 @@ Tutorial for training the models
 
 > log
 
-    All the results of running train.py will be logged into the "runtime/model.log".
+    All the results of running train.py will be logged into the "runtime/log".
     
     Including the data params, model params, train params and the results.
     
