@@ -1,0 +1,11 @@
+runtime
+.idea
+.git
+__pycache__
+*/__pycache__
+*.npy
+*.pkl
+*.pyc
+.vscode
+.DS_store
+data
