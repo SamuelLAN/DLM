@@ -376,3 +376,21 @@ def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}, verbos
     elif len(last_output_keys) == 1:
         return result_dict[last_output_keys]
     return [result_dict[key] for key in last_output_keys]
+
+
+def analyze(lan_data, lan_name, bin_size=50):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    len_list = list(map(len, lan_data))
+    print('\nmean length of {}: {}\nmax length of {}: {}\n'
+          'min length of {}: {}\nstd length of {}: {}\n'.format(
+        lan_name, np.mean(len_list), lan_name, np.max(len_list),
+        lan_name, np.min(len_list), lan_name, np.std(len_list)))
+
+    plt.hist(len_list, bins=bin_size, edgecolor='#E6E6E6')
+    plt.title('histogram of length of {}'.format(lan_name))
+    plt.xlabel('length (num of tokens in a sentence)')
+    plt.ylabel('size')
+    plt.grid(linestyle='dashed')
+    plt.show()

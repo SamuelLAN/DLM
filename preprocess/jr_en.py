@@ -23,7 +23,7 @@ if __name__ == '__main__':
     from preprocess import tfds_pl
 
     # TODO change this one to jr-en data source
-    jr_data, en_data = wmt_news.zh_en()
+    origin_jr_data, origin_en_data = wmt_news.zh_en()
 
     params = {
         'src_vocab_size': 2 ** 13,
@@ -32,10 +32,12 @@ if __name__ == '__main__':
         'max_tar_seq_len': 60,
     }
 
+    seg_pipeline = seg_jr_by_mecab_pipeline
+
     print('\n------------------- Encoding -------------------------')
     jr_data, en_data, jr_tokenizer, en_tokenizer = utils.pipeline(
-        preprocess_pipeline=seg_jr_by_mecab_pipeline + tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline,
-        lan_data_1=jr_data, lan_data_2=en_data, params=params)
+        preprocess_pipeline=seg_pipeline + tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline,
+        lan_data_1=origin_jr_data, lan_data_2=origin_en_data, params=params)
 
     print('\n----------------------------------------------')
     print(jr_data.shape)
@@ -49,3 +51,11 @@ if __name__ == '__main__':
 
     print('\n------------------- Decoding -------------------------')
     en_data = utils.pipeline(tfds_pl.decode_pipeline, en_data, None, {'tokenizer': en_tokenizer})
+
+    print('\n------------------- Analyzing -------------------------')
+    analyze_pipeline = seg_pipeline + tfds_pl.encode_pipeline[1:3] + [{'output_keys': ['input_1', 'input_2']}]
+    jr_data, en_data = utils.pipeline(analyze_pipeline, origin_jr_data, origin_en_data, {
+        'src_tokenizer': jr_tokenizer, 'tar_tokenizer': en_tokenizer}, verbose=0)
+
+    utils.analyze(jr_data, 'jr')
+    utils.analyze(en_data, 'en')

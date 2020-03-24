@@ -145,6 +145,13 @@ decode_pipeline = [
         'show_dict': {'lan': 'input_1'},
     },
     {
+        'name': 'remove_out_of_vocab_token_idx',
+        'func': utils.remove_some_token_idx,
+        'input_keys': ['input_1', [0]],
+        'output_keys': 'input_1',
+        'show_dict': {'lan': 'input_1'},
+    },
+    {
         'name': 'decode_to_sentences',
         'func': lambda tok, x: list(map(lambda a: tok.decode(a), x)),
         'input_keys': ['tokenizer', 'input_1'],

@@ -106,6 +106,7 @@ class Model(BaseModel):
                                 and the target reference (list of sentences) """
         print('\nstart translating {} ...'.format(dataset))
         pred_encoded_data = self.evaluate(src_encode_data)
+        tar_encode_data = utils.remove_some_token_idx(tar_encode_data, [0])
 
         pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
         tar_encode_data = utils.convert_list_of_list_token_idx_2_string(tar_encode_data)
