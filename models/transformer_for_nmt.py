@@ -110,6 +110,7 @@ class Model(BaseModel):
 
         pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
         tar_encode_data = utils.convert_list_of_list_token_idx_2_string(tar_encode_data)
+        tar_encode_data = list(map(lambda x: [x], tar_encode_data))
 
         print('calculating bleu ...')
         bleu = corpus_bleu(tar_encode_data, pred_encoded_data)
