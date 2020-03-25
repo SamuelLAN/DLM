@@ -19,11 +19,11 @@ seg_jr_by_mecab_pipeline = [
 ]
 
 if __name__ == '__main__':
-    from preprocess import wmt_news
+    from preprocess import jr_en_data
     from preprocess import tfds_pl
 
     # TODO change this one to jr-en data source
-    origin_jr_data, origin_en_data = wmt_news.zh_en()
+    origin_jr_data, origin_en_data = jr_en_data.jr_en()
 
     params = {
         'src_vocab_size': 2 ** 13,
