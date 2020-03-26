@@ -87,3 +87,12 @@ if __name__ == '__main__':
     utils.analyze(zh_data, 'zh')
     utils.analyze(en_data, 'en')
 
+    # mean length of zh: 26.75571467268623
+    # max length of zh: 633
+    # min length of zh: 1
+    # std length of zh: 20.216869776258417
+    #
+    # mean length of en: 32.43115711060948
+    # max length of en: 861
+    # min length of en: 5
+    # std length of en: 23.08921787547763
