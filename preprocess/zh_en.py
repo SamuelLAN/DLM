@@ -45,12 +45,13 @@ seg_char_pipeline = [
 ]
 
 if __name__ == '__main__':
-    from preprocess import wmt_news
+    from preprocess import wmt_news, UM_Corpus
     from preprocess import tfds_pl
     import numpy as np
     import matplotlib.pyplot as plt
 
-    origin_zh_data, origin_en_data = wmt_news.zh_en()
+    # origin_zh_data, origin_en_data = wmt_news.zh_en()
+    origin_zh_data, origin_en_data = UM_Corpus.zh_en()
     params = {
         'src_vocab_size': 15000,
         'tar_vocab_size': 2 ** 13,
