@@ -72,8 +72,8 @@ class Train:
         print('\nLoading data ...')
 
         # load the data
-        train_loader = Loader(0.0, 0.9)
-        test_loader = Loader(0.9, 1.0)
+        train_loader = Loader(0.0, 0.9, Model.data_params['sample_rate'])
+        test_loader = Loader(0.9, 1.0, Model.data_params['sample_rate'])
 
         # load data
         self.__train_src, self.__train_tar = train_loader.data()
@@ -181,6 +181,6 @@ class Train:
             f.write(string.encode('utf-8'))
 
 
-o_train = Train(use_cache=True)
+o_train = Train(use_cache=False)
 o_train.train()
-o_train.test()
+o_train.test(load_model=False)

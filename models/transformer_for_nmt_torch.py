@@ -22,6 +22,7 @@ class Model(BaseModel):
         'tar_vocab_size': 2 ** 13,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
+        'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
         'incr': 3,
     }
 
