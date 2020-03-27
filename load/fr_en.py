@@ -5,7 +5,7 @@ from preprocess import wmt_news, europarl
 class Loader:
     RANDOM_STATE = 42
 
-    def __init__(self, start_ratio=0.0, end_ratio=0.8):
+    def __init__(self, start_ratio=0.0, end_ratio=0.8, sample_rate=1.0):
         # load data from files
         fr_data, en_data = wmt_news.fr_en()
 
