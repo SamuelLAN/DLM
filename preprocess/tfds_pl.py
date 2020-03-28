@@ -1,6 +1,15 @@
 import numpy as np
 from lib.preprocess import utils
 
+remove_noise_pipeline = [
+    {
+        'name': 'combine_multi_space',
+        'func': utils.combine_multi_space,
+        'input_keys': ['input_1'],
+        'output_keys': 'input_1',
+    }
+]
+
 train_tokenizer_pipeline = [
     {
         'name': 'train_subword_tokenizer_by_tfds_for_src_lan',

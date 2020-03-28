@@ -1,4 +1,5 @@
 import os
+import re
 import jieba
 import pkuseg
 import chardet
@@ -394,3 +395,8 @@ def analyze(lan_data, lan_name, bin_size=50):
     plt.ylabel('size')
     plt.grid(linestyle='dashed')
     plt.show()
+
+
+def combine_multi_space(list_of_sentences):
+    reg = re.compile(r'\s+')
+    return list(map(lambda x: reg.sub(' ', x), list_of_sentences))

@@ -12,11 +12,12 @@ tfv1 = tf.compat.v1
 class Model(BaseModel):
     name = 'transformer_for_nmt'
 
-    preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.train_tokenizer_pipeline + \
-                          tfds_pl.encode_pipeline
+    preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.remove_noise_pipeline + \
+                          tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline
     # for test
-    encode_pipeline = tfds_pl.encode_pipeline
-    encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.encode_pipeline_for_src
+    encode_pipeline = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.remove_noise_pipeline + tfds_pl.encode_pipeline
+    encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.remove_noise_pipeline + \
+                              tfds_pl.encode_pipeline_for_src
     encode_pipeline_for_tar = tfds_pl.encode_pipeline_for_src
     decode_pipeline_for_src = tfds_pl.decode_pipeline + zh_en.remove_space_pipeline
     decode_pipeline_for_tar = tfds_pl.decode_pipeline
@@ -26,19 +27,19 @@ class Model(BaseModel):
         'tar_vocab_size': 2 ** 13,  # approximate
         'max_src_seq_len': 80,
         'max_tar_seq_len': 80,
-        'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
+        'sample_rate': 0.05,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
         'incr': 3,
     }
 
     model_params = {
         'emb_dim': 128,
-        'dim_model': 1024,
-        'ff_units': 1024,
+        'dim_model': 256,
+        'ff_units': 256,
         'num_layers': 6,
         'num_heads': 8,
         'max_pe_input': data_params['max_src_seq_len'],
         'max_pe_target': data_params['max_tar_seq_len'],
-        'drop_rate': 0.1,
+        'drop_rate': 0.3,
         'use_beam_search': False,
         'top_k': 5,
         'get_random': False,
@@ -49,7 +50,7 @@ class Model(BaseModel):
         # 'learning_rate': 2e-5,
         'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 64,
-        'epoch': 100,
+        'epoch': 400,
         'early_stop': 20,
     }
 
