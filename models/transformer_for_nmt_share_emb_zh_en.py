@@ -51,7 +51,7 @@ class Model(BaseModel):
         **BaseModel.train_params,
         # 'learning_rate': 8e-5,
         'learning_rate': CustomSchedule(model_params['dim_model']),
-        'batch_size': 64,
+        'batch_size': 16,
         'epoch': 500,
         'early_stop': 50,
     }
