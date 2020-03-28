@@ -368,7 +368,7 @@ def pipeline(preprocess_pipeline, lan_data_1, lan_data_2=None, params={}, verbos
         if verbose:
             for k, v in show_dict.items():
                 v = result_dict[v]
-                tmp_v = v[:2] if isinstance(v, list) or isinstance(v, np.ndarray) else v
+                tmp_v = v[:2] if isinstance(v, list) or isinstance(v, np.ndarray) or isinstance(v, tuple) else v
                 print('{}: {}'.format(k, tmp_v))
 
     # return output according to the last element's output_keys

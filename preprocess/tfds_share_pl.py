@@ -4,7 +4,7 @@ from lib.preprocess import utils
 train_tokenizer = [
     {
         'name': 'combine src and tar input',
-        'func': lambda a, b: a + b,
+        'func': lambda a, b: list(a) + list(b),
         'input_keys': ['input_1', 'input_2'],
         'output_keys': 'input_all',
     },
@@ -29,7 +29,7 @@ encode_pipeline = [
         'func': lambda a: a.vocab_size,
         'input_keys': ['tokenizer'],
         'output_keys': 'vocab_size',
-        'show_dict': {'vocab_size': 'vocab_size'},
+        'show_dict': {'vocab_size': 'vocab_size', 'src_lan': 'input_1', 'tar_lan': 'input_2'},
     },
     {
         'name': 'encoder_string_2_subword_idx_for_src_lan',
