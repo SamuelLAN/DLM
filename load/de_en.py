@@ -21,6 +21,9 @@ class Loader:
         data = list(zip(de_data, en_data))
         random.shuffle(data)
 
+        # sample data if the data size is too big; low resource setting
+        data = self.sample_data(data, sample_rate)
+
         # split data according to the ratio (for train set, val set and test set)
         data = self.__split_data(data, start_ratio, end_ratio)
 
@@ -33,6 +36,11 @@ class Loader:
         start_index = int(len_data * start_ratio)
         end_index = int(len_data * end_ratio)
         return data[start_index: end_index]
+
+    @staticmethod
+    def sample_data(data, sample_rate):
+        len_data = len(data)
+        return data[: int(len_data * sample_rate)]
 
     def data(self):
         return self.__src_data, self.__tar_data
