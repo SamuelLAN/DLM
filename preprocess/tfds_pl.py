@@ -7,6 +7,7 @@ remove_noise_pipeline = [
         'func': utils.combine_multi_space,
         'input_keys': ['input_1'],
         'output_keys': 'input_1',
+        'show_dict': {'lan': 'input_1'},
     }
 ]
 
@@ -31,7 +32,8 @@ encode_pipeline = [
         'func': lambda a, b: [a.vocab_size, b.vocab_size],
         'input_keys': ['src_tokenizer', 'tar_tokenizer'],
         'output_keys': ['src_vocab_size', 'tar_vocab_size'],
-        'show_dict': {'src_vocab_size': 'src_vocab_size', 'tar_vocab_size': 'tar_vocab_size'},
+        'show_dict': {'src_vocab_size': 'src_vocab_size', 'tar_vocab_size': 'tar_vocab_size',
+                      'src_lan': 'input_1', 'tar_lan': 'input_2'},
     },
     {
         'name': 'encoder_string_2_subword_idx_for_src_lan',
