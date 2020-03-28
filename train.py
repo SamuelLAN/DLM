@@ -94,6 +94,7 @@ class Train:
 
         params = {
             **Model.data_params,
+            'tokenizer': self.__src_tokenizer,
             'src_tokenizer': self.__src_tokenizer,
             'tar_tokenizer': self.__tar_tokenizer,
         }

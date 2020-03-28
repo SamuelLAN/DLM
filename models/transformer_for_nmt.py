@@ -2,7 +2,7 @@ from nltk.translate.bleu_score import sentence_bleu, corpus_bleu
 import tensorflow as tf
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from models.base_model import BaseModel
-from preprocess import zh_en, tfds_pl
+from preprocess import zh_en, tfds_pl, tfds_share_pl
 from lib.preprocess import utils
 
 keras = tf.keras
@@ -10,21 +10,22 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
-    name = 'transformer_for_nmt'
+    name = 'transformer_for_nmt_share_emb_zh_word_level'
 
     preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.remove_noise_pipeline + \
-                          tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline
+                          tfds_share_pl.train_tokenizer + tfds_share_pl.encode_pipeline
     # for test
-    encode_pipeline = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.remove_noise_pipeline + tfds_pl.encode_pipeline
+    encode_pipeline = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.remove_noise_pipeline + tfds_share_pl.encode_pipeline
     encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + tfds_pl.remove_noise_pipeline + \
-                              tfds_pl.encode_pipeline_for_src
-    encode_pipeline_for_tar = tfds_pl.encode_pipeline_for_src
-    decode_pipeline_for_src = tfds_pl.decode_pipeline + zh_en.remove_space_pipeline
-    decode_pipeline_for_tar = tfds_pl.decode_pipeline
+                              tfds_share_pl.encode_pipeline_for_src
+    encode_pipeline_for_tar = tfds_share_pl.encode_pipeline_for_src
+    decode_pipeline_for_src = tfds_share_pl.decode_pipeline + zh_en.remove_space_pipeline
+    decode_pipeline_for_tar = tfds_share_pl.decode_pipeline
 
     data_params = {
-        'src_vocab_size': 14000,  # approximate
-        'tar_vocab_size': 2 ** 13,  # approximate
+        'vocab_size': 35000,  # approximate
+        # 'src_vocab_size': 16000,  # approximate
+        # 'tar_vocab_size': 16000,  # approximate
         'max_src_seq_len': 80,
         'max_tar_seq_len': 80,
         'sample_rate': 0.05,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
@@ -33,13 +34,14 @@ class Model(BaseModel):
 
     model_params = {
         'emb_dim': 128,
-        'dim_model': 256,
-        'ff_units': 256,
+        'dim_model': 128,
+        'ff_units': 128,
         'num_layers': 6,
         'num_heads': 8,
         'max_pe_input': data_params['max_src_seq_len'],
         'max_pe_target': data_params['max_tar_seq_len'],
-        'drop_rate': 0.3,
+        'drop_rate': 0.1,
+        'share_emb': True,
         'use_beam_search': False,
         'top_k': 5,
         'get_random': False,
@@ -47,11 +49,11 @@ class Model(BaseModel):
 
     train_params = {
         **BaseModel.train_params,
-        # 'learning_rate': 2e-5,
+        # 'learning_rate': 8e-5,
         'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 64,
-        'epoch': 400,
-        'early_stop': 20,
+        'epoch': 500,
+        'early_stop': 50,
     }
 
     compile_params = {
@@ -67,7 +69,7 @@ class Model(BaseModel):
         'name': 'val_loss',
         'mode': 'min',  # for the "name" monitor, the "min" is best;
         'for_start': 'loss',
-        'for_start_value': 3.6,
+        'for_start_value': 1.5,
         'for_start_mode': 'min',
     }
 

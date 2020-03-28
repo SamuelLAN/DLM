@@ -26,6 +26,7 @@ class BaseModel:
 
     model_params = {
         'drop_rate': 0.1,
+        'share_emb': True,
         'top_k': 3,
         'get_random': False,
     }
@@ -79,6 +80,7 @@ class BaseModel:
         self.name = name if name else self.name
         self.input_vocab_size = input_vocab_size
         self.target_vocab_size = target_vocab_size
+        self.num_classes = self.target_vocab_size + self.data_params['incr']
         self.__finish_train = finish_train
 
         # create directories for tensorboard files and model files
@@ -107,10 +109,11 @@ class BaseModel:
             num_heads=self.model_params['num_heads'],
             d_ff=self.model_params['ff_units'],
             input_vocab_size=self.input_vocab_size + self.data_params['incr'],
-            target_vocab_size=self.target_vocab_size + self.data_params['incr'],
+            target_vocab_size=self.num_classes,
             max_pe_input=self.model_params['max_pe_input'],
             max_pe_target=self.model_params['max_pe_target'] - 1,
             drop_rate=self.model_params['drop_rate'],
+            share_emb=self.model_params['share_emb'],
         )
 
     def set_callbacks(self):
@@ -187,13 +190,19 @@ class BaseModel:
 
             self.__finish_train = True
 
-    def loss2(self, y_true, y_pred, from_logits=True, label_smoothing=0):
+    def loss(self, y_true, y_pred, from_logits=True, label_smoothing=0):
         # reshape y_true to (batch_size, max_tar_seq_len)
         y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
         mask = tf.expand_dims(tf.cast(tf.logical_not(tf.equal(y_true, 0)), y_pred.dtype), axis=-1)
         y_true = tf.cast(tf.one_hot(tf.cast(y_true, tf.int32), y_pred.shape[-1]), y_pred.dtype)
 
         epison = 0.0001
+
+        # label smoothing
+        label_smoothing = 0.1
+        num_classes = tf.cast(self.num_classes, y_pred.dtype)
+        y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
+
         loss = - (y_true * tf.math.log(y_pred + epison) + (1 - y_true) * tf.math.log(1 - y_pred + epison))
 
         loss *= mask
@@ -201,7 +210,7 @@ class BaseModel:
         loss = tf.reduce_mean(loss)
         return loss
 
-    def loss(self, y_true, y_pred, from_logits=False, label_smoothing=0):
+    def loss2(self, y_true, y_pred, from_logits=False, label_smoothing=0):
         # reshape y_true to (batch_size, max_tar_seq_len)
         y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
 

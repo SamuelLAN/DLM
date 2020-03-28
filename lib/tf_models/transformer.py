@@ -234,13 +234,14 @@ class Encoder(layers.Layer):
 
 class Decoder(layers.Layer):
     def __init__(self, num_layers, d_model, num_heads, d_ff, target_vocab_size,
-                 maximum_position_encoding, drop_rate=0.1):
+                 maximum_position_encoding, drop_rate=0.1, emb_layer=None):
         super(Decoder, self).__init__()
 
         self.d_model = d_model
         self.num_layers = num_layers
 
-        self.embedding = layers.Embedding(target_vocab_size, d_model)
+        self.embedding = layers.Embedding(target_vocab_size, d_model) \
+            if isinstance(emb_layer, type(None)) else emb_layer
         self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         self.dec_layers = [DecoderLayer(d_model, num_heads, d_ff, drop_rate)
@@ -269,14 +270,15 @@ class Decoder(layers.Layer):
 
 class Transformer(keras.Model):
     def __init__(self, num_layers, d_model, num_heads, d_ff, input_vocab_size,
-                 target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1):
+                 target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False):
         super(Transformer, self).__init__()
 
         self.encoder = Encoder(num_layers, d_model, num_heads, d_ff,
                                input_vocab_size, max_pe_input, drop_rate)
 
+        emb_layer = self.encoder.embedding if share_emb else None
         self.decoder = Decoder(num_layers, d_model, num_heads, d_ff,
-                               target_vocab_size, max_pe_target, drop_rate)
+                               target_vocab_size, max_pe_target, drop_rate, emb_layer)
 
         self.final_layer = layers.Dense(target_vocab_size, activation='softmax')
 
