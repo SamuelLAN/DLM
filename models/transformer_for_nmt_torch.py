@@ -11,7 +11,7 @@ class Model(BaseModel):
     preprocess_pipeline = jr_en.seg_jr_by_mecab_pipeline + tfds_pl.train_tokenizer_pipeline + \
                           tfds_pl.encode_pipeline
     # for test
-    encode_pipeline = tfds_pl.encode_pipeline
+    encode_pipeline = jr_en.seg_jr_by_mecab_pipeline + tfds_pl.encode_pipeline
     encode_pipeline_for_src = jr_en.seg_jr_by_mecab_pipeline + tfds_pl.encode_pipeline_for_src
     encode_pipeline_for_tar = tfds_pl.encode_pipeline_for_src
     decode_pipeline_for_src = tfds_pl.decode_pipeline + jr_en.remove_space_pipeline
