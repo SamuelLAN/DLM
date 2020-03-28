@@ -14,7 +14,7 @@ if gpus:
 
 import os
 import time
-from models.transformer_for_nmt import Model
+from models.transformer_for_nmt_share_emb_zh_en import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root
 from load.zh_en import Loader
