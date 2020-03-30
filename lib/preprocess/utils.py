@@ -5,7 +5,8 @@ import pkuseg
 import chardet
 import zipfile
 import unicodedata
-import MeCab
+# import MeCab
+import tinysegmenter
 import numpy as np
 from gensim import corpora
 import tensorflow_datasets as tfds
@@ -103,8 +104,8 @@ def zh_word_seg_by_jieba(list_of_sentences):
 
 def jr_word_seg_by_mecab(list_of_sentences):
     """ Tokenize japanese words by mecab """
-    wakati = MeCab.Tagger("-Owakati")
-    return list(map(lambda x: list(wakati.parse(x).split()), list_of_sentences))
+    segmenter = tinysegmenter.TinySegmenter()
+    return list(map(lambda x: list(segmenter.tokenize(x)), list_of_sentences))
 
 
 def en_word_seg_by_nltk(list_of_sentences):
