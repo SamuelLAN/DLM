@@ -20,7 +20,7 @@ seg_jr_by_mecab_pipeline = [
 
 if __name__ == '__main__':
     from preprocess import jr_en_data
-    from preprocess import tfds_pl
+    from preprocess import tfds_share_pl
 
     # TODO change this one to jr-en data source
     origin_jr_data, origin_en_data = jr_en_data.jr_en()
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     print('\n------------------- Encoding -------------------------')
     jr_data, en_data, jr_tokenizer, en_tokenizer = utils.pipeline(
-        preprocess_pipeline=seg_pipeline + tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline,
+        preprocess_pipeline=seg_pipeline + tfds_share_pl.train_tokenizer + tfds_share_pl.encode_pipeline,
         lan_data_1=origin_jr_data, lan_data_2=origin_en_data, params=params)
 
     print('\n----------------------------------------------')
@@ -46,14 +46,14 @@ if __name__ == '__main__':
     print(en_tokenizer.vocab_size)
 
     print('\n------------------- Decoding -------------------------')
-    jr_data = utils.pipeline(tfds_pl.decode_pipeline + remove_space_pipeline,
+    jr_data = utils.pipeline(tfds_share_pl.decode_pipeline + remove_space_pipeline,
                              jr_data, None, {'tokenizer': jr_tokenizer})
 
     print('\n------------------- Decoding -------------------------')
-    en_data = utils.pipeline(tfds_pl.decode_pipeline, en_data, None, {'tokenizer': en_tokenizer})
+    en_data = utils.pipeline(tfds_share_pl.decode_pipeline, en_data, None, {'tokenizer': en_tokenizer})
 
     print('\n------------------- Analyzing -------------------------')
-    analyze_pipeline = seg_pipeline + tfds_pl.encode_pipeline[1:3] + [{'output_keys': ['input_1', 'input_2']}]
+    analyze_pipeline = seg_pipeline + tfds_share_pl.encode_pipeline[1:3] + [{'output_keys': ['input_1', 'input_2']}]
     jr_data, en_data = utils.pipeline(analyze_pipeline, origin_jr_data, origin_en_data, {
         'src_tokenizer': jr_tokenizer, 'tar_tokenizer': en_tokenizer}, verbose=0)
 
