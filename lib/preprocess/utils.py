@@ -403,7 +403,7 @@ def combine_multi_space(list_of_sentences):
     return list(map(lambda x: reg.sub(' ', x), list_of_sentences))
 
 
-__reg_delimiter = re.compile(r'[?!,.;]')
+__reg_delimiter = re.compile(r'([?!,.;])')
 __reg_split = re.compile('["“”‘’ ><\[\]{}《》【】（）()]+')
 __reg_space = re.compile(r"[^a-zA-Z?.!,_\-;:'\u4e00-\u9fa5\u30a0-\u30ff\u3040-\u309f\u3000-\u303f\ufb00-\ufffd]+")
 
@@ -425,10 +425,11 @@ def remove_special_chars(string):
     string = string.strip()
 
     # if no end punctuations, add one
-    if string[-1] not in ['.', ',', '?', '!', ';']:
+    if string and string[-1] not in ['.', ',', '?', '!', ';']:
         string += '.'
     return string
 
 
 def remove_noise_for_sentences(list_of_sentences):
     return list(map(remove_special_chars, list_of_sentences))
+

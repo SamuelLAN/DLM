@@ -46,15 +46,14 @@ seg_char_pipeline = [
 
 if __name__ == '__main__':
     from preprocess import wmt_news, UM_Corpus
-    from preprocess import tfds_pl
+    from preprocess import noise_pl, tfds_share_pl
     import numpy as np
     import matplotlib.pyplot as plt
 
     # origin_zh_data, origin_en_data = wmt_news.zh_en()
     origin_zh_data, origin_en_data = UM_Corpus.zh_en()
     params = {
-        'src_vocab_size': 15000,
-        'tar_vocab_size': 2 ** 13,
+        'vocab_size': 45000,
         'max_src_seq_len': 79,
         'max_tar_seq_len': 98,
     }
@@ -63,7 +62,7 @@ if __name__ == '__main__':
 
     print('\n------------------- Encoding -------------------------')
     zh_data, en_data, zh_tokenizer, en_tokenizer = utils.pipeline(
-        preprocess_pipeline=seg_pipeline + tfds_pl.train_tokenizer_pipeline + tfds_pl.encode_pipeline,
+        preprocess_pipeline=seg_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer + tfds_share_pl.encode_pipeline,
         lan_data_1=origin_zh_data, lan_data_2=origin_en_data, params=params)
 
     print('\n----------------------------------------------')
@@ -73,14 +72,14 @@ if __name__ == '__main__':
     print(en_tokenizer.vocab_size)
 
     print('\n------------------- Decoding -------------------------')
-    zh_data = utils.pipeline(tfds_pl.decode_pipeline + remove_space_pipeline,
+    zh_data = utils.pipeline(tfds_share_pl.decode_pipeline + remove_space_pipeline,
                              zh_data, None, {'tokenizer': zh_tokenizer})
 
     print('\n------------------- Decoding -------------------------')
-    en_data = utils.pipeline(tfds_pl.decode_pipeline, en_data, None, {'tokenizer': en_tokenizer})
+    en_data = utils.pipeline(tfds_share_pl.decode_pipeline, en_data, None, {'tokenizer': en_tokenizer})
 
     print('\n------------------- Analyzing -------------------------')
-    analyze_pipeline = seg_pipeline + tfds_pl.encode_pipeline[1:3] + [{'output_keys': ['input_1', 'input_2']}]
+    analyze_pipeline = seg_pipeline + tfds_share_pl.encode_pipeline[1:3] + [{'output_keys': ['input_1', 'input_2']}]
     zh_data, en_data = utils.pipeline(analyze_pipeline, origin_zh_data, origin_en_data, {
         'src_tokenizer': zh_tokenizer, 'tar_tokenizer': en_tokenizer}, verbose=0)
 
