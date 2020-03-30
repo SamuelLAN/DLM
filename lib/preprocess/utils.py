@@ -401,3 +401,34 @@ def analyze(lan_data, lan_name, bin_size=50):
 def combine_multi_space(list_of_sentences):
     reg = re.compile(r'\s+')
     return list(map(lambda x: reg.sub(' ', x), list_of_sentences))
+
+
+__reg_delimiter = re.compile(r'[?!,.;]')
+__reg_split = re.compile('["“”‘’ ><\[\]{}《》【】（）()]+')
+__reg_space = re.compile(r"[^a-zA-Z?.!,_\-;:'\u4e00-\u9fa5\u30a0-\u30ff\u3040-\u309f\u3000-\u303f\ufb00-\ufffd]+")
+
+
+def remove_special_chars(string):
+    # convert chinese punctuations to english punctuations
+    string = string.replace('，', ',').replace('。', '.').replace('！', '!').replace('？', '?').\
+        replace('：', ':').replace('；', ';').replace(':', ' : ')
+
+    # insert space to the front of the delimiter
+    string = __reg_delimiter.sub(r' \1 ', string)
+
+    # replace some special chars to space
+    string = __reg_split.sub(' ', string)
+
+    # replace everything except normal chars to space
+    string = __reg_space.sub(' ', string)
+
+    string = string.strip()
+
+    # if no end punctuations, add one
+    if string[-1] not in ['.', ',', '?', '!', ';']:
+        string += '.'
+    return string
+
+
+def remove_noise_for_sentences(list_of_sentences):
+    return list(map(remove_special_chars, list_of_sentences))
