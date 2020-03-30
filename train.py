@@ -137,7 +137,7 @@ class Train:
 
         start_train_time = time.time()
         train_loss = self.model.calculate_loss_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
-        train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
+        train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode[:5000], self.__train_tar_encode[:5000], 'train')
         # train_bleu = 1.0
         start_test_time = time.time()
         test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
