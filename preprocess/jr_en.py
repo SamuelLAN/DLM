@@ -26,8 +26,7 @@ if __name__ == '__main__':
     origin_jr_data, origin_en_data = jr_en_data.jr_en()
 
     params = {
-        'src_vocab_size': 2 ** 13,
-        'tar_vocab_size': 2 ** 13,
+        'vocab_size': 2 ** 13,
         'max_src_seq_len': 50,
         'max_tar_seq_len': 60,
     }
