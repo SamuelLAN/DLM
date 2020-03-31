@@ -403,18 +403,29 @@ def combine_multi_space(list_of_sentences):
     return list(map(lambda x: reg.sub(' ', x), list_of_sentences))
 
 
-__reg_delimiter = re.compile(r'([?!,.;])')
+__reg_delimiter = re.compile(r'([?!,;:])')
+__reg_spot = re.compile(r'(\.)(?!\d)')
 __reg_split = re.compile('["“”‘’ ><\[\]{}《》【】（）()]+')
-__reg_space = re.compile(r"[^a-zA-Z?.!,_\-;:'\u4e00-\u9fa5\u30a0-\u30ff\u3040-\u309f\u3000-\u303f\ufb00-\ufffd]+")
+__reg_space = re.compile(r"[^\da-zA-Z?.!,_\-;:'\u4e00-\u9fa5\u30a0-\u30ff\u3040-\u309f\u3000-\u303f\ufb00-\ufffd]+")
+__reg_num_space = re.compile(r'(\d+)\s+(\d+)')
+__reg_num_spot = re.compile(r'(\d+)\s+\.\s+(\d+)')
 
 
 def remove_special_chars(string):
     # convert chinese punctuations to english punctuations
-    string = string.replace('，', ',').replace('。', '.').replace('！', '!').replace('？', '?').\
-        replace('：', ':').replace('；', ';').replace(':', ' : ')
+    string = string.replace('，', ',').replace('。', '.').replace('！', '!').replace('？', '?'). \
+        replace('：', ':').replace('；', ';').replace(';', '.')
 
     # insert space to the front of the delimiter
     string = __reg_delimiter.sub(r' \1 ', string)
+    string = __reg_spot.sub(r' \1 ', string)
+
+    # concat noise numbers
+    tmp_string = __reg_num_space.sub(r'\1\2', string)
+    while tmp_string != string:
+        string = tmp_string
+        tmp_string = __reg_num_space.sub(r'\1\2', string)
+    string = __reg_num_spot.sub(r'\1.\2', string)
 
     # replace some special chars to space
     string = __reg_split.sub(' ', string)
@@ -423,6 +434,10 @@ def remove_special_chars(string):
     string = __reg_space.sub(' ', string)
 
     string = string.strip()
+
+    # if end punctuation is , or ;
+    if string and string[-1] in [',', ';']:
+        string = string[:-1] + '.'
 
     # if no end punctuations, add one
     if string and string[-1] not in ['.', ',', '?', '!', ';']:
@@ -433,3 +448,70 @@ def remove_special_chars(string):
 def remove_noise_for_sentences(list_of_sentences):
     return list(map(remove_special_chars, list_of_sentences))
 
+
+def stat_en_words(en_sentences):
+    return sum(list(map(lambda x: len(x.split(' ')), en_sentences)))
+
+
+__reg_sent_delimiter = re.compile(r'[.!?。！？;；](?!\d)')
+__reg_num = re.compile('^\d+$')
+__reg_num_end = re.compile('\d+$')
+
+
+def split_sentences(src_sentences, tar_sentences):
+    sentences = list(zip(src_sentences, tar_sentences))
+    new_sentences = []
+    for index, (src_sent, tar_sent) in enumerate(sentences):
+        src_l = __reg_sent_delimiter.split(src_sent)
+        tar_l = __reg_sent_delimiter.split(tar_sent)
+
+        if not src_l or not tar_l:
+            continue
+
+        if not src_l[-1].strip():
+            src_l = src_l[:-1]
+
+        if not tar_l[-1].strip():
+            tar_l = tar_l[:-1]
+
+        src_delimiters = __reg_sent_delimiter.findall(src_sent)
+        tar_delimiters = __reg_sent_delimiter.findall(tar_sent)
+
+        if len(src_l) != len(tar_l):
+            if len(src_delimiters) == 1:
+                tar_sent = __reg_sent_delimiter.sub(',', tar_sent, count=len(tar_delimiters) - 1)
+                sentences[index] = (src_sent, tar_sent)
+            if len(tar_delimiters) == 1:
+                src_sent = __reg_sent_delimiter.sub(',', src_sent, count=len(src_delimiters) - 1)
+                sentences[index] = (src_sent, tar_sent)
+            continue
+
+        if len(src_l) <= 1:
+            continue
+
+        cur = len(src_l) - 1
+        while cur > 0:
+            if __reg_num.search(src_l[cur]) and __reg_num.search(tar_l[cur]) and \
+                    __reg_num_end.search(src_l[cur - 1]) and __reg_num_end.search(tar_l[cur - 1]) and \
+                    src_delimiters[cur - 1] == '.':
+                src_l[cur - 1] += '.' + src_l[cur]
+                tar_l[cur - 1] += '.' + tar_l[cur]
+                del src_delimiters[cur - 1]
+                cur -= 1
+            cur -= 1
+
+        if len(src_l) <= 1 or abs(len(src_l[0].split(' ')) - len(tar_l[0].split(' '))) > 5:
+            continue
+
+        new_sentences += [(src_l[i] + src_delimiters[i], tar_l[i] + src_delimiters[i])
+                          for i in range(len(src_l)) if i > 0]
+        sentences[index] = (src_l[0] + src_delimiters[0], tar_l[0] + src_delimiters[0])
+
+    sentences += new_sentences
+    src_sentences, tar_sentences = list(zip(*sentences))
+
+    return list(src_sentences), list(tar_sentences)
+
+
+def lower_sentences(list_of_sentences):
+    return list(map(lambda x: x.lower(), list_of_sentences))

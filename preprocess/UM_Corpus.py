@@ -1,27 +1,52 @@
 import os
 import shutil
+from lib.preprocess import utils
 
 __data_dir = r'D:\Data\DLM\data'
 
 
-def get(file_name):
+def get(file_name, domain='*', get_test=False):
+    domain = domain.lower()
     um_path = os.path.join(__data_dir, file_name)
     um_dir = os.path.splitext(um_path)[0]
-    shutil.unpack_archive(um_path, um_dir)
-    um_file_dir = os.path.join(um_dir, 'UM-Corpus', 'data', 'Bilingual')
+
+    # unzip data
+    if not os.path.exists(um_dir):
+        shutil.unpack_archive(um_path, um_dir)
+        os.remove(um_path)
+
+    dir_name = 'Bilingual' if not get_test else 'Testing'
+    um_file_dir = os.path.join(um_dir, 'UM-Corpus', 'data', dir_name)
     um_file_dir_files = os.listdir(um_file_dir)
+
+    # get domain list
+    if not get_test:
+        domain_list = [str(v.split('.')[0]).lower().split('-')[1] for v in um_file_dir_files if
+                       v.split('.')[1].lower() == '.txt']
+        assert domain == '*' or domain in domain_list
+
+    # traverse directory to get data
     lan_1_data, lan_2_data = [], []
-    for file in um_file_dir_files:
-        with open(os.path.join(um_file_dir, file), encoding="utf8", errors='ignore') as f:
-            lines = f.readlines()
-            lan_1_data.extend(lines[1::2])
-            lan_2_data.extend(lines[::2])
-    lan_1_data = list(map(str.strip, lan_1_data))
-    lan_2_data = list(map(str.strip, lan_2_data))[1:]
+    for file_name in um_file_dir_files:
+        # continue if the file is not data
+        if os.path.splitext(file_name)[1].lower() != '.txt':
+            continue
+
+        # check domain
+        if not get_test:
+            tmp_domain = str(file_name.split('.')[0]).lower().split('-')[1]
+            if domain != '*' and domain != tmp_domain:
+                continue
+
+        # read and add data
+        lines = utils.read_lines(os.path.join(um_file_dir, file_name))
+        lan_1_data.extend(lines[1::2])
+        lan_2_data.extend(lines[::2])
+
     return lan_1_data, lan_2_data
 
 
-def zh_en():
+def zh_en(domain='*', get_test=False):
     """
     Return the Chinese-English corpus from WMT-news
     :return
@@ -29,7 +54,7 @@ def zh_en():
         en_data (list): list of sentences
     """
     file_name = 'umcorpus-v1.zip'
-    return get(file_name)
+    return get(file_name, domain, get_test)
 
 
 if __name__ == '__main__':
@@ -48,9 +73,6 @@ if __name__ == '__main__':
             print(lan_2_data[i])
 
 
-    def stat_en_words(_en_data):
-        return sum(list(map(lambda x: len(x.split(' ')), _en_data)))
-
     zh_data, en_data = zh_en()
     len_data = len(en_data)
     sample_rate = 0.05
@@ -58,4 +80,5 @@ if __name__ == '__main__':
     zh_data = zh_data[:end_index]
     en_data = en_data[:end_index]
     show('zh', 'en', zh_data, en_data)
-    print('English words num: {}'.format(stat_en_words(en_data)))
+
+    print('English words num: {}'.format(utils.stat_en_words(en_data)))
