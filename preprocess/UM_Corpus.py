@@ -22,7 +22,7 @@ def get(file_name, domain='*', get_test=False):
     # get domain list
     if not get_test:
         domain_list = [str(v.split('.')[0]).lower().split('-')[1] for v in um_file_dir_files if
-                       v.split('.')[1].lower() == '.txt']
+                       v.split('.')[1].lower() == 'txt']
         assert domain == '*' or domain in domain_list
 
     # traverse directory to get data
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             print(lan_2_data[i])
 
 
-    zh_data, en_data = zh_en()
+    zh_data, en_data = zh_en('news')
     len_data = len(en_data)
     sample_rate = 0.05
     end_index = int(len_data * sample_rate)
