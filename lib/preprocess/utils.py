@@ -403,6 +403,7 @@ def combine_multi_space(list_of_sentences):
     return list(map(lambda x: reg.sub(' ', x), list_of_sentences))
 
 
+__reg_quot = re.compile(r"(?<![sniu])'(?!\w)", re.IGNORECASE)
 __reg_delimiter = re.compile(r'([?!,;:])')
 __reg_spot = re.compile(r'(\.)(?!\d)')
 __reg_split = re.compile('["“”‘’ ><\[\]{}《》【】（）()]+')
@@ -429,6 +430,9 @@ def remove_special_chars(string):
 
     # replace some special chars to space
     string = __reg_split.sub(' ', string)
+
+    # remove quote
+    string = __reg_quot.sub(' ', string)
 
     # replace everything except normal chars to space
     string = __reg_space.sub(' ', string)
@@ -461,6 +465,7 @@ __reg_num_end = re.compile('\d+$')
 def split_sentences(src_sentences, tar_sentences):
     sentences = list(zip(src_sentences, tar_sentences))
     new_sentences = []
+    remove_indices = []
     for index, (src_sent, tar_sent) in enumerate(sentences):
         src_l = __reg_sent_delimiter.split(src_sent)
         tar_l = __reg_sent_delimiter.split(tar_sent)
@@ -478,6 +483,7 @@ def split_sentences(src_sentences, tar_sentences):
         tar_delimiters = __reg_sent_delimiter.findall(tar_sent)
 
         if len(src_l) != len(tar_l):
+            remove_indices.append(index)
             if len(src_delimiters) == 1:
                 tar_sent = __reg_sent_delimiter.sub(',', tar_sent, count=len(tar_delimiters) - 1)
                 sentences[index] = (src_sent, tar_sent)
@@ -506,6 +512,10 @@ def split_sentences(src_sentences, tar_sentences):
         new_sentences += [(src_l[i] + src_delimiters[i], tar_l[i] + src_delimiters[i])
                           for i in range(len(src_l)) if i > 0]
         sentences[index] = (src_l[0] + src_delimiters[0], tar_l[0] + src_delimiters[0])
+
+    remove_indices.sort(reverse=True)
+    for index in remove_indices:
+        del sentences[index]
 
     sentences += new_sentences
     src_sentences, tar_sentences = list(zip(*sentences))
