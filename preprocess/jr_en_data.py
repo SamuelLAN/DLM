@@ -62,13 +62,13 @@ if __name__ == '__main__':
 
     jr_data, en_data = jr_en()
     len_data = len(en_data)
-    sample_rate = 0.05
+    sample_rate = 0.22
     end_index = int(len_data * sample_rate)
     jr_data = jr_data[:end_index]
     en_data = en_data[:end_index]
     show('jr', 'en', jr_data, en_data)
     print('English words num: {}'.format(stat_en_words(en_data)))
 
-    # len of jr data: 22014
-    # len of en data: 22014
-    # English words num: 487971
+    # len of jr data: 96863
+    # len of en data: 96863
+    # English words num: 2053752

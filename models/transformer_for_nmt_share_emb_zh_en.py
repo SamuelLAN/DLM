@@ -16,14 +16,14 @@ class Model(BaseModel):
                           tfds_share_pl.train_tokenizer + tfds_share_pl.encode_pipeline
     # for test
     encode_pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.encode_pipeline
-    encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + \
+    encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise_for_src + \
                               tfds_share_pl.encode_pipeline_for_src
-    encode_pipeline_for_tar = tfds_share_pl.encode_pipeline_for_src
+    encode_pipeline_for_tar = noise_pl.remove_noise_for_src + tfds_share_pl.encode_pipeline_for_src
     decode_pipeline_for_src = tfds_share_pl.decode_pipeline + zh_en.remove_space_pipeline
     decode_pipeline_for_tar = tfds_share_pl.decode_pipeline
 
     data_params = {
-        'vocab_size': 45000,  # approximate
+        'vocab_size': 50000,  # approximate
         # 'src_vocab_size': 16000,  # approximate
         # 'tar_vocab_size': 16000,  # approximate
         'max_src_seq_len': 60,
