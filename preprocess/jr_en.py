@@ -1,5 +1,5 @@
 from lib.preprocess import utils
-from preprocess.zh_en import remove_space_pipeline, seg_char_pipeline
+from preprocess.zh_en import remove_space_pipeline
 
 seg_jr_by_mecab_pipeline = [
     {
@@ -19,7 +19,7 @@ seg_jr_by_mecab_pipeline = [
 ]
 
 if __name__ == '__main__':
-    from preprocess import KFTT
+    from preprocess.corpus import KFTT
     from preprocess import tfds_share_pl
 
     # TODO change this one to jr-en data source

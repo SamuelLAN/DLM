@@ -1,5 +1,5 @@
 import random
-from preprocess import KFTT
+from preprocess.corpus import KFTT
 
 
 class Loader:

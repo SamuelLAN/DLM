@@ -1,5 +1,5 @@
 import random
-from preprocess import wmt_news, europarl
+from preprocess.corpus import wmt_news
 
 
 class Loader:

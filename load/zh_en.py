@@ -1,5 +1,5 @@
 import random
-from preprocess import wmt_news, UM_Corpus
+from preprocess.corpus import wmt_news, um_corpus
 
 
 class Loader:
@@ -25,13 +25,13 @@ class Loader:
         #     # zh_data = []
         #     # en_data = []
         #     for domain, val in domain_dict.items():
-        #         tmp_zh_data, tmp_en_data = UM_Corpus.zh_en(domain)
+        #         tmp_zh_data, tmp_en_data = um_corpus.zh_en(domain)
         #         sample_size = int(val / total * data_size)
         #         zh_data += tmp_zh_data[:sample_size]
         #         en_data += tmp_en_data[:sample_size]
         #
         # else:
-        #     zh_data, en_data = UM_Corpus.zh_en(get_test=True)
+        #     zh_data, en_data = um_corpus.zh_en(get_test=True)
 
         # load data from files
         zh_data, en_data = wmt_news.zh_en()
