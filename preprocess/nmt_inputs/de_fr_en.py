@@ -2,7 +2,7 @@ from lib.preprocess import utils
 
 if __name__ == '__main__':
     from preprocess.corpus import wmt_news
-    from preprocess import tfds_share_pl, noise_pl
+    from preprocess.nmt_inputs import noise_pl, tfds_share_pl
 
     # origin_de_data, origin_en_data = wmt_news.de_en()
     origin_de_data, origin_en_data = wmt_news.fr_en()

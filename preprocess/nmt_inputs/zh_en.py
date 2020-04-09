@@ -46,7 +46,7 @@ seg_char_pipeline = [
 
 if __name__ == '__main__':
     from preprocess.corpus import um_corpus
-    from preprocess import noise_pl, tfds_share_pl
+    from preprocess.nmt_inputs import noise_pl, tfds_share_pl
 
     # origin_zh_data, origin_en_data = wmt_news.zh_en()
     origin_zh_data, origin_en_data = um_corpus.zh_en()

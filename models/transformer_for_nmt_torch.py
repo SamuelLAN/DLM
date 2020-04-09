@@ -1,6 +1,6 @@
-from nltk.translate.bleu_score import sentence_bleu, corpus_bleu
+from nltk.translate.bleu_score import corpus_bleu
 from models.base_model import BaseModel
-from preprocess import jr_en, tfds_pl
+from preprocess.nmt_inputs import jr_en, tfds_pl
 from lib.preprocess import utils
 from lib.utils import create_dir_in_root
 

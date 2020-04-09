@@ -177,7 +177,7 @@ decode_pipeline = [
 
 if __name__ == '__main__':
     from preprocess.corpus import wmt_news
-    from preprocess.zh_en import seg_zh_by_jieba_pipeline, remove_space_pipeline
+    from preprocess.nmt_inputs.zh_en import seg_zh_by_jieba_pipeline, remove_space_pipeline
 
     zh_data, en_data = wmt_news.zh_en()
     params = {
