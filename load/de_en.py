@@ -10,11 +10,11 @@ class Loader:
         de_data, en_data = wmt_news.de_en()
 
         # add more data source
-        # TODO check if you need the europaral data
-        #   also check the combine ratio between wmt_news and europarl
-        de_data_2, en_data_2 = europarl.de_en()
-        de_data += de_data_2
-        en_data += en_data_2
+        # # TODO check if you need the europaral data
+        # #   also check the combine ratio between wmt_news and europarl
+        # de_data_2, en_data_2 = europarl.de_en()
+        # de_data += de_data_2
+        # en_data += en_data_2
 
         # shuffle the data
         random.seed(self.RANDOM_STATE)
