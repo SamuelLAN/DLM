@@ -2,12 +2,11 @@ from lib.preprocess import utils
 import os
 import shutil
 import glob
-
-__data_dir = r'D:\Data\DLM\data'
+from preprocess.config import data_dir
 
 
 def get(url, file_name):
-    kyoto_news_path = os.path.join(__data_dir, file_name)
+    kyoto_news_path = os.path.join(data_dir, file_name)
     kyoto_news_dir = os.path.splitext(kyoto_news_path)[0]
 
     if not os.path.exists(kyoto_news_dir):
