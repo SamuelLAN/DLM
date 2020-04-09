@@ -19,11 +19,11 @@ seg_jr_by_mecab_pipeline = [
 ]
 
 if __name__ == '__main__':
-    from preprocess import jr_en_data
+    from preprocess import KFTT
     from preprocess import tfds_share_pl
 
     # TODO change this one to jr-en data source
-    origin_jr_data, origin_en_data = jr_en_data.jr_en()
+    origin_jr_data, origin_en_data = KFTT.jr_en()
 
     params = {
         'vocab_size': 2 ** 13,

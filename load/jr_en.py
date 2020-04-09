@@ -1,5 +1,5 @@
 import random
-from preprocess import jr_en_data
+from preprocess import KFTT
 
 
 class Loader:
@@ -8,7 +8,7 @@ class Loader:
     def __init__(self, start_ratio=0.0, end_ratio=0.8, sample_rate=1.0):
         # TODO add loading jr_en data
         # load data from files
-        jr_data, en_data = jr_en_data.jr_en()
+        jr_data, en_data = KFTT.jr_en()
 
         # shuffle the data
         random.seed(self.RANDOM_STATE)
