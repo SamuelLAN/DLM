@@ -3,7 +3,7 @@ import os
 import shutil
 import glob
 
-__data_dir = r'D:\Data\DLM\data'
+__data_dir = r''
 
 
 def get(url, file_name):
