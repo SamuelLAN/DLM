@@ -62,6 +62,11 @@ def remove_not_en(string):
 
 def filter_duplicate(_dictionary):
     for word, val_dict in _dictionary.items():
+        delete_list = []
         for key, val in val_dict.items():
             val_dict[key] = list(set(val))
+            if not val_dict[key]:
+                delete_list.append(key)
+        for key in delete_list:
+            del val_dict[key]
     return _dictionary

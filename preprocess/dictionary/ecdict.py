@@ -89,9 +89,9 @@ length = len(data)
 
 for i, v in enumerate(data):
     # show progress
-    # if i % 1000 == 0:
-    #     progress = float(i + 1) / length * 100.
-    #     print('\rprogress: %.2f%% ' % progress, end='')
+    if i % 1000 == 0:
+        progress = float(i + 1) / length * 100.
+        print('\rprogress: %.2f%% ' % progress, end='')
 
     en_word = utils.process(v['en_word'], utils.pipeline)
     # en_meanings = utils.process(v['en_meanings'], utils.pipeline)
@@ -99,8 +99,8 @@ for i, v in enumerate(data):
     zh_translation = utils.process(v['zh_translation'], utils.pipeline)
     pos = utils.process(v['pos'], utils.pipeline)
 
-    if i % 1000 == 0:
-        print(f'\n{en_word:30s} | {en_meanings:20s} | {str(v["en_meanings"]).strip().lower():20s} | {zh_translation:40s} | {pos:20s} |')
+    # if i % 1000 == 0:
+    #     print(f'\n{en_word:30s} | {en_meanings:20s} | {str(v["en_meanings"]).strip().lower():20s} | {zh_translation:40s} | {pos:20s} |')
 
     pos_list = []
 
@@ -139,11 +139,11 @@ for i, v in enumerate(data):
 
     pos_list = unify_pos_symbol(pos_list)
 
-    if i % 1000 == 0:
-        print(en_meanings)
-        print(zh_translation)
-        print(pos_list)
-        # print(en_synonyms)
+    # if i % 1000 == 0:
+    #     print(en_meanings)
+    #     print(zh_translation)
+    #     print(pos_list)
+    #     # print(en_synonyms)
 
     # add data to en_zh_dict
     if en_word not in en_zh_dict:
@@ -166,13 +166,13 @@ for i, v in enumerate(data):
 
 print('\n\nfiltering duplicate elements ...')
 
-utils.filter_duplicate(en_zh_dict)
-utils.filter_duplicate(zh_en_dict)
+en_zh_dict = utils.filter_duplicate(en_zh_dict)
+zh_en_dict = utils.filter_duplicate(zh_en_dict)
 
 print('\nsaving data ... ')
 
-write_json(os.path.join(dict_dir, 'en_zh_dict.json'), en_zh_dict)
-write_json(os.path.join(dict_dir, 'zh_en_dict.json'), zh_en_dict)
+write_json(os.path.join(dict_dir, 'en_zh_dict_from_ecdict.json'), en_zh_dict)
+write_json(os.path.join(dict_dir, 'zh_en_dict_from_ecdict.json'), zh_en_dict)
 
 print('\nanalyzing ...')
 
@@ -180,3 +180,6 @@ print(f'len en_zh_dict: {len(en_zh_dict)}')
 print(f'len zh_en_dict: {len(zh_en_dict)}')
 
 print('\ndone')
+
+# len en_zh_dict: 3322644
+# len zh_en_dict: 2827802
