@@ -61,6 +61,24 @@ def unicode_to_ascii(s):
     return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
 
+def full_2_half(string):
+    ss = []
+    for s in string:
+        rstring = ""
+        for uchar in s:
+            inside_code = ord(uchar)
+            # 全角空格直接转换
+            if inside_code == 12288:
+                inside_code = 32
+
+            # 全角字符（除空格）根据关系转化
+            elif 65281 <= inside_code <= 65374:
+                inside_code -= 65248
+            rstring += chr(inside_code)
+        ss.append(rstring)
+    return ''.join(ss)
+
+
 def decode_2_utf8(string):
     if not isinstance(string, bytes):
         return string
@@ -81,7 +99,7 @@ def read_lines(file_path):
     """ read files and return a list of every line in the file; each line would be decoded to utf8 """
     with open(file_path, 'rb') as f:
         content = f.readlines()
-    return list(map(lambda x: unicode_to_ascii(decode_2_utf8(x)).strip(), content))
+    return list(map(lambda x: full_2_half(unicode_to_ascii(decode_2_utf8(x))).strip(), content))
 
 
 def zh_word_seg_by_pku(list_of_sentences, user_dict=[]):

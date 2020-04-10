@@ -12,8 +12,8 @@ def remove_quote(string):
     return string.replace("'", '').replace('"', '')
 
 
-__reg_bracket_content = re.compile(r'[\[({【（《<][^\])}】）》>]*[\])}】）》>]')
-__reg_bracket = re.compile(r'[\[({【（《<\])}】）》>]')
+__reg_bracket_content = re.compile(r'[\[({【（《<［][^\])}】）》>]*[\])}】）》>］]')
+__reg_bracket = re.compile(r'[\[({【（《<\])}】）》>］［]')
 __reg_space = re.compile(r'\s+')
 
 
@@ -38,6 +38,7 @@ pipeline = [
     lambda x: str(x).lower().strip(),
     lambda x: '' if x == 'nan' else x,
     utils.unicode_to_ascii,
+    utils.full_2_half,
     convert_punctuations,
     remove_quote,
     remove_bracket_content,
@@ -45,7 +46,6 @@ pipeline = [
 ]
 
 __reg_not_zh = re.compile(r'[^\u4e00-\u9fa5\d ;,.，\'"+\-_]+')
-
 __reg_not_en = re.compile(r'[^a-zA-Z\d ;,.\'"+\-_]+')
 __reg_etc = re.compile(r'(,\s*)?(and)?\setc\.$', re.IGNORECASE)
 

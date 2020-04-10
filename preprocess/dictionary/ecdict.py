@@ -39,8 +39,11 @@ data = list(filter(lambda x: len(str(x['zh_translation'])) < 60, data))
 # initialize some useful variables
 __reg_en_split = re.compile(r'[\n;]|\\n')
 __reg_zh_split = re.compile(r'[\n;；,，。或]|\\n')
-__reg_pos_for_meanings = re.compile(r'^([a-z])\.?\s+', re.IGNORECASE)
-__reg_pos_for_translation = re.compile(r'^([a-z]+)\.\s+', re.IGNORECASE)
+__reg_pos_for_meanings = re.compile(r'^([a-z]|adv|adj|prep|noun|verb|vi|vt)\.?\s+', re.IGNORECASE)
+__reg_pos_for_translation = re.compile(r'^([a-z]+)\.[a-z]*\s+', re.IGNORECASE)
+__reg_remove_translation = re.compile('(^表示(?=[\u4e00-\u9fa5])|来源于[\u4e00-\u9fa5]+|含义是)')
+__reg_all_num = re.compile('^\d+$')
+__reg_enter = re.compile(r'\\n   (\w+\s+)')
 
 
 def unify_pos_symbol(_pos_list):
@@ -51,16 +54,16 @@ def unify_pos_symbol(_pos_list):
         _pos_list.append('v')
 
     # replace symbol
-    if 'a' in _pos_list:
+    while 'a' in _pos_list:
         _pos_list.remove('a')
         _pos_list.append('adj')
-    if 'r' in _pos_list:
+    while 'r' in _pos_list:
         _pos_list.remove('r')
         _pos_list.append('adv')
-    if 'i' in _pos_list:
+    while 'i' in _pos_list:
         _pos_list.remove('i')
         _pos_list.append('prep')
-    if 'j' in _pos_list:
+    while 'j' in _pos_list:
         _pos_list.remove('j')
         _pos_list.append('adj')
     return list(set(_pos_list))
@@ -102,10 +105,13 @@ for i, v in enumerate(data):
     pos_list = []
 
     if en_meanings:
+        en_meanings = __reg_enter.sub(r' \1', en_meanings)
         en_meanings = list(map(lambda x: x.strip(), __reg_en_split.split(en_meanings)))
         pos_from_meanings = list(map(lambda x: __reg_pos_for_meanings.findall(x), en_meanings))
         en_meanings = list(map(lambda x: __reg_pos_for_meanings.sub('', x).strip(), en_meanings))
         en_meanings = list(map(lambda x: utils.remove_not_en(x).strip(), en_meanings))
+        en_meanings = list(map(lambda x: __reg_all_num.sub('', x).strip().strip('-').strip(), en_meanings))
+        en_meanings = list(filter(lambda x: len(x.split(' ')) < 30, en_meanings))
         while '' in en_meanings:
             en_meanings.remove('')
         pos_list += functools.reduce(lambda a, b: a + b, pos_from_meanings)
@@ -117,6 +123,8 @@ for i, v in enumerate(data):
         zh_translation = list(map(lambda x: x.strip(), __reg_zh_split.split(zh_translation)))
         pos_from_translation = list(map(lambda x: __reg_pos_for_translation.findall(x), zh_translation))
         zh_translation = list(map(lambda x: __reg_pos_for_translation.sub('', x).strip(), zh_translation))
+        zh_translation = list(map(lambda x: __reg_remove_translation.sub('', x).strip(), zh_translation))
+        zh_translation = list(map(lambda x: __reg_all_num.sub('', x).strip(), zh_translation))
         while '' in zh_translation:
             zh_translation.remove('')
         pos_list += functools.reduce(lambda a, b: a + b, pos_from_translation)
