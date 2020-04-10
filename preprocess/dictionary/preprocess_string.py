@@ -37,6 +37,7 @@ def remove_bracket(string):
 pipeline = [
     lambda x: str(x).lower().strip(),
     lambda x: '' if x == 'nan' else x,
+    utils.unicode_to_ascii,
     convert_punctuations,
     remove_quote,
     remove_bracket_content,
