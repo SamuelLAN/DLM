@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
+print(gpus)
 if gpus:
     try:
         # Currently, memory growth needs to be the same across GPUs
@@ -14,10 +15,10 @@ if gpus:
 
 import os
 import time
-from models.transformer_for_nmt_share_emb_zh_en import Model
+from models.transformer_for_nmt_torch import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root
-from load.zh_en import Loader
+from load.jr_en import Loader
 
 
 class Train:
@@ -183,5 +184,7 @@ class Train:
 
 
 o_train = Train(use_cache=False)
+print("start to train")
 o_train.train()
+print("start to test")
 o_train.test(load_model=False)
