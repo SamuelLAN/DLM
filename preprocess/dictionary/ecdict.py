@@ -111,7 +111,7 @@ for i, v in enumerate(data):
         en_meanings = list(map(lambda x: __reg_pos_for_meanings.sub('', x).strip(), en_meanings))
         en_meanings = list(map(lambda x: utils.remove_not_en(x).strip(), en_meanings))
         en_meanings = list(map(lambda x: __reg_all_num.sub('', x).strip().strip('-').strip(), en_meanings))
-        en_meanings = list(filter(lambda x: len(x.split(' ')) < 30, en_meanings))
+        en_meanings = list(filter(lambda x: len(x.split(' ')) < 25, en_meanings))
         while '' in en_meanings:
             en_meanings.remove('')
         pos_list += functools.reduce(lambda a, b: a + b, pos_from_meanings)
@@ -173,5 +173,10 @@ print('\nsaving data ... ')
 
 write_json(os.path.join(dict_dir, 'en_zh_dict.json'), en_zh_dict)
 write_json(os.path.join(dict_dir, 'zh_en_dict.json'), zh_en_dict)
+
+print('\nanalyzing ...')
+
+print(f'len en_zh_dict: {len(en_zh_dict)}')
+print(f'len zh_en_dict: {len(zh_en_dict)}')
 
 print('\ndone')
