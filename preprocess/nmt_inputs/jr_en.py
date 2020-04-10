@@ -1,5 +1,5 @@
 from lib.preprocess import utils
-from preprocess.zh_en import remove_space_pipeline, seg_char_pipeline
+from preprocess.nmt_inputs.zh_en import remove_space_pipeline
 
 seg_jr_by_mecab_pipeline = [
     {
@@ -19,11 +19,11 @@ seg_jr_by_mecab_pipeline = [
 ]
 
 if __name__ == '__main__':
-    from preprocess import jr_en_data
-    from preprocess import tfds_share_pl
+    from preprocess.corpus import KFTT
+    from preprocess.nmt_inputs import tfds_share_pl
 
     # TODO change this one to jr-en data source
-    origin_jr_data, origin_en_data = jr_en_data.jr_en()
+    origin_jr_data, origin_en_data = KFTT.jr_en()
 
     params = {
         'vocab_size': 2 ** 13,

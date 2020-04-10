@@ -1,8 +1,7 @@
-from nltk.translate.bleu_score import sentence_bleu, corpus_bleu
+from nltk.translate.bleu_score import corpus_bleu
 import tensorflow as tf
-from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from models.base_model import BaseModel
-from preprocess import zh_en, noise_pl, tfds_share_pl
+from preprocess.nmt_inputs import noise_pl, tfds_share_pl, zh_en
 from lib.preprocess import utils
 
 keras = tf.keras

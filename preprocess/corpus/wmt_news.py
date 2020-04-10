@@ -1,11 +1,10 @@
 import os
 from lib.preprocess import utils
-
-__data_dir = 'D:\Data\DLM\data'
+from preprocess.config import data_dir
 
 
 def get(url, file_name, lan_1_name, lan_2_name):
-    wmt_news_path = os.path.join(__data_dir, file_name)
+    wmt_news_path = os.path.join(data_dir, file_name)
     wmt_news_dir = os.path.splitext(wmt_news_path)[0]
     lan_1_file_path = os.path.join(wmt_news_dir, lan_1_name)
     lan_2_file_path = os.path.join(wmt_news_dir, lan_2_name)

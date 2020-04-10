@@ -1,7 +1,6 @@
 import tensorflow as tf
-from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from models.transformer_for_nmt_share_emb_zh_en import Model as BaseModel
-from preprocess import tfds_share_pl, noise_pl
+from preprocess.nmt_inputs import noise_pl, tfds_share_pl
 
 keras = tf.keras
 tfv1 = tf.compat.v1

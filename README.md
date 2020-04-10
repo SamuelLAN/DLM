@@ -43,7 +43,7 @@ fr-en:
 
 - When using the project, <br>
   please remember to modify the "__data_dir" variable <br> 
-  in the top of "[preprocess/wmt-news.py](preprocess/wmt-news.py)" and "[preprocess/europarl.py](preprocess/europarl.py)"
+  in the top of "[preprocess/corpus/wmt-news.py](preprocess/corpus/wmt-news.py)", "[preprocess/corpus/europarl.py](preprocess/corpus/europarl.py)", "[preprocess/corpus/KFTT.py](preprocess/corpus/KFTT.py)", "[preprocess/corpus/um_corpus.py](preprocess/corpus/um_corpus.py)"
 
 ### for training
 

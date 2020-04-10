@@ -1,13 +1,12 @@
 import os
 import shutil
 from lib.preprocess import utils
-
-__data_dir = r'D:\Data\DLM\data'
+from preprocess.config import data_dir
 
 
 def get(file_name, domain='*', get_test=False):
     domain = domain.lower()
-    um_path = os.path.join(__data_dir, file_name)
+    um_path = os.path.join(data_dir, file_name)
     um_dir = os.path.splitext(um_path)[0]
 
     # unzip data

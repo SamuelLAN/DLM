@@ -1,4 +1,5 @@
 import os
+import json
 from six.moves import cPickle as pickle
 
 __cur_path = os.path.split(os.path.abspath(__file__))[0]
@@ -13,6 +14,16 @@ def load_pkl(_path):
 def write_pkl(_path, data):
     with open(_path, 'wb') as f:
         pickle.dump(data, f)
+
+
+def load_json(_path):
+    with open(_path, 'rb', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def write_json(_path, data):
+    with open(_path, 'wb') as f:
+        f.write(json.dumps(data).encode('utf-8'))
 
 
 def create_dir_in_root(*args):
