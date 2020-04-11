@@ -2,12 +2,13 @@ import random
 from functools import reduce
 
 
-def MLM(list_of_words_for_a_sentence, tokenizer, min_num=2, max_num=6, max_ratio=0.2):
+def MLM(list_of_words_for_a_sentence, tokenizer, lan_index, min_num=2, max_num=6, max_ratio=0.2):
     """
     Masked Language Modeling (word level)
     :params
         list_of_words_for_a_sentence (list): ['I', 'am', 'a', 'student']
         tokenizer (object): tfds tokenizer object
+        lan_index (int): index for language embeddings, could be 0 or 1
         min_num (int):
         max_num (int):
         max_ratio (float):
@@ -38,6 +39,6 @@ def MLM(list_of_words_for_a_sentence, tokenizer, min_num=2, max_num=6, max_ratio
         masked_input += [mask_idx] * len(idxs_for_word) if i in indices_to_mask else idxs_for_word
 
     # get index for language embeddings
-    list_of_lan_idx = [0] * len(masked_input)
+    list_of_lan_idx = [lan_index] * len(masked_input)
 
     return masked_input, list_of_tar_token_idx, list_of_lan_idx
