@@ -21,6 +21,13 @@ train_tokenizer = [
         'input_keys': ['input_all', 'vocab_size', 'max_seq_len'],
         'output_keys': 'tokenizer',
     },
+    {
+        'name': 'get_vocab_size',
+        'func': lambda x: x.vocab_size,
+        'input_keys': ['tokenizer'],
+        'output_keys': 'vocab_size',
+        'show_dict': {'vocab_size': 'vocab_size'}
+    },
 ]
 
 encode_pipeline = [

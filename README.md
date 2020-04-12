@@ -14,8 +14,9 @@ Dictionary Language Modeling for cross-lingual pretraining on Neural Machine Tra
 - chardet==3.0.4
 - six==1.12.0
 - matplotlib==3.1.1
-- torch=1.4.0
-- torchvision=0.5.0
+- torch==1.4.0
+- torchvision==0.5.0
+- tinysegmenter==0.4
 
 ### dataset
 
