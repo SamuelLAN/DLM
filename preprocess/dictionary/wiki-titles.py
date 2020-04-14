@@ -49,8 +49,9 @@ for i in range(0,2):
             if len(row) < 2:
                 continue
             if row[0] != row[1]:
-                data[row[0]] = []
-                data[row[0]].append({'translation': row[1]})
+                data[row[0]] = {}
+                data[row[0]]['translation'] = []
+                data[row[0]]['translation'].append(row[1])
     saved_json =  os.path.join(saving_news_dir,names[i] + ".json")
     print("Writing json file for ", names[i])
     with open(saved_json, 'w') as outfile:
