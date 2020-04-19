@@ -201,9 +201,9 @@ class BaseModel:
         # label smoothing
         label_smoothing = 0.1
         num_classes = tf.cast(self.num_classes, y_pred.dtype)
-        y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
+        y_true = y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
 
-        loss = - (y_true * tf.math.log(y_pred + epison) + (1 - y_true) * tf.math.log(1 - y_pred + epison))
+        loss = - (y_true * (1 - y_pred) * tf.math.log(y_pred + epison) + (1 - y_true) * y_pred * tf.math.log(1 - y_pred + epison))
 
         loss *= mask
         loss = tf.reduce_sum(loss, axis=-1)
