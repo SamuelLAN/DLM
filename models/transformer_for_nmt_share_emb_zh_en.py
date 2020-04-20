@@ -22,7 +22,7 @@ class Model(BaseModel):
     decode_pipeline_for_tar = tfds_share_pl.decode_pipeline
 
     data_params = {
-        'vocab_size': 50000,  # approximate
+        'vocab_size': 70000,  # approximate
         # 'src_vocab_size': 16000,  # approximate
         # 'tar_vocab_size': 16000,  # approximate
         'max_src_seq_len': 60,
@@ -41,6 +41,7 @@ class Model(BaseModel):
         'max_pe_target': data_params['max_tar_seq_len'],
         'drop_rate': 0.1,
         'share_emb': True,
+        'share_final': True,
         'use_beam_search': False,
         'top_k': 5,
         'get_random': False,
@@ -49,6 +50,7 @@ class Model(BaseModel):
     train_params = {
         **BaseModel.train_params,
         'learning_rate': 1e-4,
+        # 'learning_rate': 1e-3,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
         'epoch': 500,

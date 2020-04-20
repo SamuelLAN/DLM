@@ -29,6 +29,8 @@ class BaseModel:
         'share_emb': True,
         'top_k': 3,
         'get_random': False,
+        'share_emb': True,
+        'share_final': True,
     }
 
     train_params = {
@@ -114,6 +116,7 @@ class BaseModel:
             max_pe_target=self.model_params['max_pe_target'] - 1,
             drop_rate=self.model_params['drop_rate'],
             share_emb=self.model_params['share_emb'],
+            share_final=self.model_params['share_final'],
         )
 
     def set_callbacks(self):
@@ -203,7 +206,8 @@ class BaseModel:
         num_classes = tf.cast(self.num_classes, y_pred.dtype)
         y_true = y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
 
-        loss = - (y_true * (1 - y_pred) * tf.math.log(y_pred + epison) + (1 - y_true) * y_pred * tf.math.log(1 - y_pred + epison))
+        # loss = - (y_true * (1 - y_pred) * tf.math.log(y_pred + epison) + (1 - y_true) * y_pred * tf.math.log(1 - y_pred + epison))
+        loss = - (y_true * tf.math.log(y_pred + epison) + (1 - y_true) * tf.math.log(1 - y_pred + epison))
 
         loss *= mask
         loss = tf.reduce_sum(loss, axis=-1)

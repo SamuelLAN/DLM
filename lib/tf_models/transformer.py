@@ -270,8 +270,10 @@ class Decoder(layers.Layer):
 
 class Transformer(keras.Model):
     def __init__(self, num_layers, d_model, num_heads, d_ff, input_vocab_size,
-                 target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False):
+                 target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False, share_final=False):
         super(Transformer, self).__init__()
+
+        self.__share_final = share_final
 
         self.encoder = Encoder(num_layers, d_model, num_heads, d_ff,
                                input_vocab_size, max_pe_input, drop_rate)
@@ -315,7 +317,12 @@ class Transformer(keras.Model):
         dec_output, attention_weights = self.decoder(
             tar, enc_output, training, look_ahead_mask, dec_padding_mask)
 
-        final_output = self.final_layer(dec_output)  # (batch_size, tar_seq_len, target_vocab_size)
+        if not self.__share_final:
+            final_output = self.final_layer(dec_output)  # (batch_size, tar_seq_len, target_vocab_size)
+        else:
+            W = tf.squeeze(tf.transpose(self.encoder.embedding.weights), axis=-1)
+            final_output = tf.matmul(dec_output, W)
+            final_output = tf.nn.softmax(final_output, axis=-1)
 
         # return final_output, attention_weights
         return final_output

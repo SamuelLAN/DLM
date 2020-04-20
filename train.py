@@ -183,6 +183,6 @@ class Train:
             f.write(string.encode('utf-8'))
 
 
-o_train = Train(use_cache=False)
+o_train = Train(use_cache=True)
 o_train.train()
 o_train.test(load_model=False)
