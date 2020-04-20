@@ -65,6 +65,9 @@ if __name__ == '__main__':
     show('de', 'en', *de_en())
     show('fr', 'en', *fr_en())
 
+    zh_data, en_data = zh_en()
+    print('English words num: {}'.format(utils.stat_en_words(en_data)))
+
     # len of zh data: 19965
     # len of en data: 19965
     #
