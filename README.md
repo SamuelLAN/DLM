@@ -44,7 +44,7 @@ fr-en:
 
 - When using the project, <br>
   please remember to modify the "__data_dir" variable <br> 
-  in the top of "[preprocess/corpus/wmt-news.py](preprocess/corpus/wmt-news.py)", "[preprocess/corpus/europarl.py](preprocess/corpus/europarl.py)", "[preprocess/corpus/KFTT.py](preprocess/corpus/KFTT.py)", "[preprocess/corpus/um_corpus.py](preprocess/corpus/um_corpus.py)"
+  in the top of "[preprocess/corpus/wmt-news.py](nmt/preprocess/corpus/wmt-news.py)", "[preprocess/corpus/europarl.py](nmt/preprocess/corpus/europarl.py)", "[preprocess/corpus/KFTT.py](nmt/preprocess/corpus/KFTT.py)", "[preprocess/corpus/um_corpus.py](nmt/preprocess/corpus/um_corpus.py)"
 
 ### for training
 
