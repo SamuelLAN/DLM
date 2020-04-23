@@ -241,7 +241,7 @@ class Encoder(layers.Layer):
 
 class Decoder(layers.Layer):
     def __init__(self, num_layers, d_model, num_heads, d_ff, target_vocab_size,
-                 maximum_position_encoding, drop_rate=0.1, emb_layer=None):
+                 maximum_position_encoding, drop_rate=0.1, emb_layer=None, lan_emb_layer=None):
         super(Decoder, self).__init__()
 
         self.d_model = d_model
@@ -253,7 +253,7 @@ class Decoder(layers.Layer):
         self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         # language embedding; vocab_size = 4 because there are two for <start> and <end>
-        self.lan_embedding = layers.Embedding(5, d_model)
+        self.lan_embedding = layers.Embedding(5, d_model) if isinstance(lan_emb_layer, type(None)) else lan_emb_layer
 
         self.dec_layers = [DecoderLayer(d_model, num_heads, d_ff, drop_rate)
                            for _ in range(num_layers)]
@@ -294,6 +294,7 @@ class Transformer(keras.Model):
                                input_vocab_size, max_pe_input, drop_rate)
 
         emb_layer = self.encoder.embedding if share_emb else None
+        lan_emb_layer = self.encoder.lan_embedding if share_emb else None
         self.decoder = Decoder(num_layers, d_model, num_heads, d_ff,
                                target_vocab_size, max_pe_target, drop_rate, emb_layer)
 
