@@ -65,6 +65,7 @@ class Model(BaseModel):
     compile_params = {
         **BaseModel.compile_params,
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
+        'label_smooth': True,
         'metrics': [tf_accuracy],
     }
 
