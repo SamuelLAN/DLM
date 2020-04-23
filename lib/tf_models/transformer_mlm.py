@@ -296,7 +296,7 @@ class Transformer(keras.Model):
         emb_layer = self.encoder.embedding if share_emb else None
         lan_emb_layer = self.encoder.lan_embedding if share_emb else None
         self.decoder = Decoder(num_layers, d_model, num_heads, d_ff,
-                               target_vocab_size, max_pe_target, drop_rate, emb_layer)
+                               target_vocab_size, max_pe_target, drop_rate, emb_layer, lan_emb_layer)
 
         self.final_layer = layers.Dense(target_vocab_size, activation='softmax')
 
