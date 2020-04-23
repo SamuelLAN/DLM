@@ -23,7 +23,7 @@ from pretrain.load.zh_en import Loader
 
 class Train:
 
-    def __init__(self, use_cache=True, with_more_data=False):
+    def __init__(self, use_cache=True):
         # read data from cache ;
         #    if no cache, then load the data and preprocess it, then store it to cache
         cache_name = f'pretrain_preprocessed_data_{md5(Model.data_params)}.pkl'
@@ -41,7 +41,7 @@ class Train:
             self.__vocab_size = data
 
         else:
-            self.__load_data(with_more_data)
+            self.__load_data()
             self.__preprocess()
 
             cache(cache_name, [
@@ -63,14 +63,14 @@ class Train:
         print(f'test_x.shape: {self.__test_x.shape}\ntest_y.shape: {self.__test_y.shape}')
         print(f'test_lan_x.shape: {self.__test_lan_x.shape}\ntest_lan_y.shape: {self.__test_lan_y.shape}')
 
-    def __load_data(self, with_more_data):
+    def __load_data(self):
         """ load the data """
         print('\nLoading data ...')
 
         # load the data
-        tokenizer_loader = Loader(0.0, 1.0, Model.data_params['sample_rate'], with_um_corpus=with_more_data)
-        train_loader = Loader(0.0, 0.9, Model.data_params['sample_rate'], with_um_corpus=with_more_data)
-        test_loader = Loader(0.9, 1.0, Model.data_params['sample_rate'], with_um_corpus=with_more_data)
+        tokenizer_loader = Loader(0.0, 1.0, Model.data_params['sample_ratio'], Model.data_params['sample_um_ratio'])
+        train_loader = Loader(0.0, 0.9, Model.data_params['sample_ratio'], Model.data_params['sample_um_ratio'])
+        test_loader = Loader(0.9, 1.0, Model.data_params['sample_ratio'], Model.data_params['sample_um_ratio'])
 
         # get data for tokenizer; if load from exist model, then do not need to regenerate the tokenizer
         load_model_params = Model.checkpoint_params['load_model']
@@ -208,6 +208,6 @@ class Train:
             f.write(string.encode('utf-8'))
 
 
-o_train = Train(use_cache=True, with_more_data=False)
+o_train = Train(use_cache=True)
 o_train.train()
 o_train.test(load_model=False)

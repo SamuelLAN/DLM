@@ -6,7 +6,7 @@ class Loader:
     RANDOM_STATE = 42
     NMT_TRAIN_RATIO = 0.9
 
-    def __init__(self, start_ratio=0.0, end_ratio=0.9, sample_ratio=1.0, with_um_corpus=True):
+    def __init__(self, start_ratio=0.0, end_ratio=0.9, sample_ratio=1.0, sample_um_ratio=0.01):
         # load data from wmt_news
         zh_data, en_data = wmt_news.zh_en()
 
@@ -19,9 +19,10 @@ class Loader:
         data = self.__split_data(data, 0.0, self.NMT_TRAIN_RATIO)
 
         # if we want more data
-        if with_um_corpus:
+        if sample_um_ratio > 0:
             um_zh_data, um_en_data = um_corpus.zh_en(get_test=False)
-            data += list(zip(um_zh_data, um_en_data))
+            um_data = list(zip(um_zh_data, um_en_data))
+            data += um_data[:int(len(um_data) * sample_um_ratio)]
 
             # shuffle data
             random.seed(self.RANDOM_STATE)

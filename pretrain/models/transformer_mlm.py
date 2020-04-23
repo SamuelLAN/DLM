@@ -27,12 +27,13 @@ class Model(BaseModel):
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 70000,  # approximate
+        'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 10,
         'max_tar_ground_seq_len': 10,
-        'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
+        'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
+        'sample_um_ratio': 0.01,  # sample "sample_rate" percentage of data into dataset; > 0
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
     }
 
@@ -56,7 +57,7 @@ class Model(BaseModel):
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
         'epoch': 400,
-        'early_stop': 30,
+        'early_stop': 10,
     }
 
     compile_params = {
