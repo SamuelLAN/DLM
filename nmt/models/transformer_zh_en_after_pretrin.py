@@ -28,6 +28,7 @@ class Model(BaseModel):
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
+        'input_incr': 4,
     }
 
     model_params = {
