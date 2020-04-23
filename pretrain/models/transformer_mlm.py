@@ -19,6 +19,8 @@ class Model(BaseModel):
         'max_ratio_of_sent_len': 0.2,
         'keep_origin_rate': 0.2,
         'mask_incr': 3,
+        'src_lan_idx': 0,
+        'tar_lan_idx': 1,
     }
 
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
@@ -32,7 +34,7 @@ class Model(BaseModel):
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 10,
         'max_tar_ground_seq_len': 10,
-        'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
+        'sample_ratio': 2.0,  # sample "sample_rate" percentage of data into dataset; > 0
         'sample_um_ratio': 0.01,  # sample "sample_rate" percentage of data into dataset; > 0
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
     }

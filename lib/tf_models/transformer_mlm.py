@@ -212,7 +212,7 @@ class Encoder(layers.Layer):
         self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         # language embedding; vocab_size = 4 because there are two for <start> and <end>
-        self.lan_embedding = layers.Embedding(5, d_model)
+        self.lan_embedding = layers.Embedding(2, d_model)
 
         self.enc_layers = [EncoderLayer(d_model, num_heads, d_ff, drop_rate)
                            for _ in range(num_layers)]
@@ -253,7 +253,7 @@ class Decoder(layers.Layer):
         self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         # language embedding; vocab_size = 4 because there are two for <start> and <end>
-        self.lan_embedding = layers.Embedding(5, d_model) if isinstance(lan_emb_layer, type(None)) else lan_emb_layer
+        self.lan_embedding = layers.Embedding(2, d_model) if isinstance(lan_emb_layer, type(None)) else lan_emb_layer
 
         self.dec_layers = [DecoderLayer(d_model, num_heads, d_ff, drop_rate)
                            for _ in range(num_layers)]
