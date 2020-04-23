@@ -17,20 +17,21 @@ class BaseModel:
     name = 'transformer'
 
     data_params = {
+        'vocab_size': 2 ** 13,  # approximate
         'src_vocab_size': 2 ** 13,  # approximate
         'tar_vocab_size': 2 ** 13,  # approximate
         'max_src_seq_len': 50,
         'max_tar_seq_len': 60,
-        'incr': 3,
+        'input_incr': 3,  # <start>, <end>, <pad>
+        'class_incr': 3,  # <start>, <end>, <pad>
     }
 
     model_params = {
         'drop_rate': 0.1,
-        'share_emb': True,
         'top_k': 3,
         'get_random': False,
         'share_emb': True,
-        'share_final': True,
+        'share_final': False,
     }
 
     train_params = {
@@ -52,6 +53,7 @@ class BaseModel:
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'loss': keras.losses.SparseCategoricalCrossentropy(from_logits=False, reduction='none'),
         'customize_loss': True,
+        'label_smooth': False,
         'metrics': [],
     }
 
@@ -82,7 +84,7 @@ class BaseModel:
         self.name = name if name else self.name
         self.input_vocab_size = input_vocab_size
         self.target_vocab_size = target_vocab_size
-        self.num_classes = self.target_vocab_size + self.data_params['incr']
+        self.num_classes = self.target_vocab_size + self.data_params['class_incr']
         self.__finish_train = finish_train
 
         # create directories for tensorboard files and model files
@@ -104,13 +106,15 @@ class BaseModel:
         self.model_dir = utils.create_dir_in_root('runtime', 'models', self.name, self.TIME)
         self.checkpoint_path = os.path.join(self.model_dir, self.name + self.checkpoint_params['extend_name'])
 
+        self.tokenizer_dir = utils.create_dir_in_root('runtime', 'tokenizer', self.name, self.TIME)
+
     def build(self):
         self.model = Transformer(
             num_layers=self.model_params['num_layers'],
             d_model=self.model_params['dim_model'],
             num_heads=self.model_params['num_heads'],
             d_ff=self.model_params['ff_units'],
-            input_vocab_size=self.input_vocab_size + self.data_params['incr'],
+            input_vocab_size=self.input_vocab_size + self.data_params['input_incr'],
             target_vocab_size=self.num_classes,
             max_pe_input=self.model_params['max_pe_input'],
             max_pe_target=self.model_params['max_pe_target'] - 1,
@@ -201,10 +205,11 @@ class BaseModel:
 
         epison = 0.0001
 
-        # label smoothing
-        label_smoothing = 0.1
-        num_classes = tf.cast(self.num_classes, y_pred.dtype)
-        y_true = y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
+        # # label smoothing
+        if self.compile_params['label_smooth']:
+            label_smoothing = 0.1
+            num_classes = tf.cast(self.num_classes, y_pred.dtype)
+            y_true = y_true * (1.0 - label_smoothing) + (label_smoothing / num_classes)
 
         # loss = - (y_true * (1 - y_pred) * tf.math.log(y_pred + epison) + (1 - y_true) * y_pred * tf.math.log(1 - y_pred + epison))
         loss = - (y_true * tf.math.log(y_pred + epison) + (1 - y_true) * tf.math.log(1 - y_pred + epison))

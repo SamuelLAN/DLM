@@ -128,12 +128,12 @@ class Model(TransformerModel):
     decode_pipeline_for_tar = tfds_pl.decode_pipeline
 
     data_params = {
+        **BaseModel.data_params,
         'src_vocab_size': 15000,  # approximate
         'tar_vocab_size': 2 ** 13,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
-        'incr': 3,
     }
 
     model_params = {

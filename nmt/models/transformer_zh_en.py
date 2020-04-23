@@ -22,13 +22,11 @@ class Model(BaseModel):
     decode_pipeline_for_tar = tfds_share_pl.decode_pipeline
 
     data_params = {
+        **BaseModel.data_params,
         'vocab_size': 70000,  # approximate
-        # 'src_vocab_size': 16000,  # approximate
-        # 'tar_vocab_size': 16000,  # approximate
-        'max_src_seq_len': 60,
-        'max_tar_seq_len': 60,
+        'max_src_seq_len': 70,
+        'max_tar_seq_len': 80,
         'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
-        'incr': 3,
     }
 
     model_params = {
@@ -62,6 +60,7 @@ class Model(BaseModel):
         # 'optimizer': keras.optimizers.Adam(learning_rate=train_params['learning_rate'], beta_1=0.9, beta_2=0.98,
         #                                    epsilon=1e-9),
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
+        'label_smooth': False,
         'metrics': [],
     }
 
@@ -75,7 +74,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [],  # [name, time]
+        'load_model': [name, '2020_04_22_21_26_49'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 

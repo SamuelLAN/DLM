@@ -284,6 +284,17 @@ def filter_exceed_max_seq_len_for_cross_lingual(list_of_list_src_token, list_of_
     return fix_len_list_of_list_src_token, fix_len_list_of_list_tar_token
 
 
+def filter_exceed_max_seq_len_together(max_seq_len, index, *args):
+    """ filter data which exceed max_seq_len """
+    data = list(zip(*args))
+    new_data = []
+    for val in data:
+        list_token = val[index]
+        if len(list_token) <= max_seq_len:
+            new_data.append(val)
+    return list(zip(*new_data))
+
+
 def add_start_end_token_2_string(list_of_sentences):
     """ add <start> <end> token to string """
     return list(map(lambda x: TOKEN_START + ' ' + x + ' ' + TOKEN_END, list_of_sentences))

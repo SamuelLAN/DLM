@@ -1,5 +1,6 @@
 import os
 import json
+import hashlib
 from six.moves import cPickle as pickle
 
 __cur_path = os.path.split(os.path.abspath(__file__))[0]
@@ -63,3 +64,11 @@ def mkdir_time(upper_path, _time):
     if not os.path.isdir(dir_path):
         os.mkdir(dir_path)
     return dir_path
+
+
+def md5(data):
+    if not isinstance(data, str):
+        data = json.dumps(data).encode('utf-8')
+    m = hashlib.md5()
+    m.update(data)
+    return m.hexdigest()

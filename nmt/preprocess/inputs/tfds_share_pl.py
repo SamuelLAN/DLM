@@ -9,7 +9,6 @@ train_tokenizer = [
         'output_keys': 'input_all',
     },
     {
-
         'name': 'find max seq len',
         'func': lambda a, b: max(a, b),
         'input_keys': ['max_src_seq_len', 'max_tar_seq_len'],
@@ -28,6 +27,7 @@ train_tokenizer = [
         'output_keys': 'vocab_size',
         'show_dict': {'vocab_size': 'vocab_size'}
     },
+    {'output_keys': 'tokenizer'}
 ]
 
 encode_pipeline = [
