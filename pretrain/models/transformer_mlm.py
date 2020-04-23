@@ -17,7 +17,7 @@ class Model(BaseModel):
         'min_mask_token': 1,
         'max_mask_token': 4,
         'max_ratio_of_sent_len': 0.2,
-        'keep_origin_rate': 0.2,
+        'keep_origin_rate': 0.1,
         'mask_incr': 3,
         'src_lan_idx': 0,
         'tar_lan_idx': 1,
@@ -32,8 +32,8 @@ class Model(BaseModel):
         'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'max_src_ground_seq_len': 10,
-        'max_tar_ground_seq_len': 10,
+        'max_src_ground_seq_len': 8,
+        'max_tar_ground_seq_len': 8,
         'sample_ratio': 2.0,  # sample "sample_rate" percentage of data into dataset; > 0
         'sample_um_ratio': 0.01,  # sample "sample_rate" percentage of data into dataset; > 0
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
@@ -57,7 +57,7 @@ class Model(BaseModel):
         **BaseModel.train_params,
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
-        'batch_size': 16,
+        'batch_size': 32,
         'epoch': 400,
         'early_stop': 10,
     }
