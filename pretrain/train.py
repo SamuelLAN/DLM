@@ -17,7 +17,7 @@ import os
 import time
 from pretrain.models.transformer_mlm import Model
 from lib.preprocess import utils
-from lib.utils import cache, read_cache, create_dir_in_root, md5
+from lib.utils import cache, read_cache, create_dir_in_root, md5, get_relative_file_path
 from pretrain.load.zh_en import Loader
 
 
@@ -98,8 +98,8 @@ class Train:
 
         # load tokenizer from cache
         else:
-            tokenizer_path = create_dir_in_root('runtime', 'tokenizer',
-                                                load_model_params[0], load_model_params[1], 'tokenizer.pkl')
+            tokenizer_path = get_relative_file_path('runtime', 'tokenizer',
+                                                    load_model_params[0], load_model_params[1], 'tokenizer.pkl')
             self.__tokenizer = read_cache(tokenizer_path)
 
         # preprocess train data
@@ -132,6 +132,9 @@ class Train:
     def train(self):
         print('\nBuilding model ({}) ...'.format(Model.TIME))
         self.model = Model(self.__vocab_size, self.__vocab_size)
+
+        # save tokenizer
+        cache(os.path.join(self.model.tokenizer_dir, 'tokenizer.pkl'), self.__tokenizer)
 
         print('\nTraining model ...')
         start_time = time.time()
