@@ -195,6 +195,7 @@ class Train:
             'real_vocab_size': self.__src_tokenizer.vocab_size,
             'early_stop_at': best_model,
             'shape_of_data': shape_of_data,
+            'initialize_from': self.model.checkpoint_params['load_model'],
         })
 
     def show_examples(self, src_encoded_data, tar_encoded_data, example_num):
