@@ -169,6 +169,22 @@ class Train:
 
         print('\nFinish testing')
 
+        model_list = os.listdir(self.model.model_dir)
+        if model_list:
+            model_list.sort(reverse=True)
+            best_model = model_list[0]
+        else:
+            best_model = ''
+
+        shape_of_data = {
+            'train_size': len(self.__train_src),
+            'test_size': len(self.__test_src),
+            'train_x_shape': self.__train_src_encode.shape,
+            'train_y_shape': self.__train_tar_encode.shape,
+            'test_x_shape': self.__test_src_encode.shape,
+            'test_y_shape': self.__test_tar_encode.shape,
+        }
+
         self.log({
             'train_loss': train_loss,
             'train_bleu': train_bleu,
@@ -176,6 +192,9 @@ class Train:
             'test_bleu': test_bleu,
             'train_examples': train_examples,
             'test_examples': test_examples,
+            'real_vocab_size': self.__src_tokenizer.vocab_size,
+            'early_stop_at': best_model,
+            'shape_of_data': shape_of_data,
         })
 
     def show_examples(self, src_encoded_data, tar_encoded_data, example_num):
