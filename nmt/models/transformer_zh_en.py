@@ -9,7 +9,7 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
-    name = 'transformer_for_nmt_share_emb_zh_word_level'
+    name = 'transformer_for_nmt_share_emb_zh_word_level_wmt_news'
 
     preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + \
                           tfds_share_pl.train_tokenizer + tfds_share_pl.encode_pipeline
@@ -24,8 +24,10 @@ class Model(BaseModel):
     data_params = {
         **BaseModel.data_params,
         'vocab_size': 70000,  # approximate
-        'max_src_seq_len': 70,
-        'max_tar_seq_len': 80,
+        # 'src_vocab_size': 16000,  # approximate
+        # 'tar_vocab_size': 16000,  # approximate
+        'max_src_seq_len': 60,
+        'max_tar_seq_len': 60,
         'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
     }
 
@@ -48,10 +50,9 @@ class Model(BaseModel):
     train_params = {
         **BaseModel.train_params,
         'learning_rate': 1e-4,
-        # 'learning_rate': 1e-3,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 500,
+        'epoch': 400,
         'early_stop': 10,
     }
 
@@ -74,7 +75,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [name, '2020_04_22_21_26_49'],  # [name, time]
+        'load_model': ['transformer_for_MLM_zh_en', '2020_04_23_14_23_48'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 

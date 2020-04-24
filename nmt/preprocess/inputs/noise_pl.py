@@ -50,7 +50,7 @@ remove_noise_for_src = [
         'name': 'split_sentences',
         'func': utils.split_sentences,
         'input_keys': ['input_1', 'input_1'],
-        'output_keys': ['input_1', 'input_2'],
+        'output_keys': ['input_1', 'input_1'],
         'show_dict': {'src_lan': 'input_1'},
     },
     {

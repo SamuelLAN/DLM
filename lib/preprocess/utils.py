@@ -445,7 +445,8 @@ __reg_num_spot = re.compile(r'(\d+)\s+\.\s+(\d+)')
 def remove_special_chars(string):
     # convert chinese punctuations to english punctuations
     string = string.replace('，', ',').replace('。', '.').replace('！', '!').replace('？', '?'). \
-        replace('：', ':').replace('；', ';').replace(';', '.').replace('“', '"').replace('”', '"')
+        replace('：', ':').replace('；', ';').replace(';', '.').replace('“', '"').replace('”', '"').\
+        replace('「', '[').replace('」', ']').replace('、', ',')
 
     # insert space to the front of the delimiter
     string = __reg_delimiter.sub(r' \1 ', string)
