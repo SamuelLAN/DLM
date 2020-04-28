@@ -18,7 +18,7 @@ def write_pkl(_path, data):
 
 
 def load_json(_path):
-    with open(_path, 'rb', encoding='utf-8') as f:
+    with open(_path, 'rb') as f:
         return json.load(f)
 
 

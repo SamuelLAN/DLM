@@ -12,12 +12,15 @@ from gensim import corpora
 import tensorflow_datasets as tfds
 from six.moves.urllib.request import urlretrieve
 from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
 
 TOKEN_START = '<start>'
 TOKEN_END = '<end>'
 TOKEN_CLS = '<cls>'
 TOKEN_PAD = '<pad>'
 TOKEN_UNK = '<unk>'  # for unknown words
+
+__ps = PorterStemmer()
 
 
 def download(url, file_path):
@@ -446,7 +449,7 @@ def remove_special_chars(string):
     # convert chinese punctuations to english punctuations
     string = string.replace('，', ',').replace('。', '.').replace('！', '!').replace('？', '?'). \
         replace('：', ':').replace('；', ';').replace(';', '.').replace('“', '"').replace('”', '"')
-        # .replace('「', '[').replace('」', ']').replace('、', ',')
+    # .replace('「', '[').replace('」', ']').replace('、', ',')
 
     # insert space to the front of the delimiter
     string = __reg_delimiter.sub(r' \1 ', string)
@@ -556,3 +559,7 @@ def split_sentences(src_sentences, tar_sentences):
 
 def lower_sentences(list_of_sentences):
     return list(map(lambda x: x.lower(), list_of_sentences))
+
+
+def stem(word):
+    return __ps.stem(word)
