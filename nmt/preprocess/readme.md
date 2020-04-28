@@ -59,3 +59,6 @@
 - nmt_inputs/de_fr_en.py
 
     provide some preprocess pipeline for de-en or fr-en.
+
+
+http://data.statmt.org/news-commentary/v15/training/news-commentary-v15.en-zh.tsv.gz

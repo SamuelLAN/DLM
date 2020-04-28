@@ -15,10 +15,10 @@ if gpus:
 
 import os
 import time
-from nmt.models.transformer_zh_en_after_pretrin import Model
+from nmt.models.transformer_zh_en import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root, md5
-from nmt.load.zh_en import Loader
+from nmt.load.zh_en_news_commentary import Loader
 
 
 class Train:
@@ -73,8 +73,8 @@ class Train:
         print('\nLoading data ...')
 
         # load the data
-        train_loader = Loader(0.0, 0.9, Model.data_params['sample_rate'])
-        test_loader = Loader(0.9, 1.0, Model.data_params['sample_rate'])
+        train_loader = Loader(0.0, Loader.TRAIN_RATIO, Model.data_params['sample_rate'])
+        test_loader = Loader(Loader.TRAIN_RATIO, 1.0, Model.data_params['sample_rate'])
 
         # load data
         self.__train_src, self.__train_tar = train_loader.data()

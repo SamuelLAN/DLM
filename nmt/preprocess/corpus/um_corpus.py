@@ -72,12 +72,12 @@ if __name__ == '__main__':
             print(lan_2_data[i])
 
 
-    zh_data, en_data = zh_en('news')
-    len_data = len(en_data)
-    sample_rate = 0.05
-    end_index = int(len_data * sample_rate)
-    zh_data = zh_data[:end_index]
-    en_data = en_data[:end_index]
+    zh_data, en_data = zh_en()
+    # len_data = len(en_data)
+    # sample_rate = 0.05
+    # end_index = int(len_data * sample_rate)
+    # zh_data = zh_data[:end_index]
+    # en_data = en_data[:end_index]
     show('zh', 'en', zh_data, en_data)
 
     print('English words num: {}'.format(utils.stat_en_words(en_data)))

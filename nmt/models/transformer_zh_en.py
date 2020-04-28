@@ -3,6 +3,7 @@ import tensorflow as tf
 from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
 from lib.preprocess import utils
+from lib.tf_metrics.pretrain import tf_accuracy
 
 keras = tf.keras
 tfv1 = tf.compat.v1
@@ -23,12 +24,12 @@ class Model(BaseModel):
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 70000,  # approximate
+        'vocab_size': 85000,  # approximate
         # 'src_vocab_size': 16000,  # approximate
         # 'tar_vocab_size': 16000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
+        'sample_rate': 0.066,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
     }
 
     model_params = {
@@ -52,8 +53,8 @@ class Model(BaseModel):
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 400,
-        'early_stop': 10,
+        'epoch': 800,
+        'early_stop': 15,
     }
 
     compile_params = {
@@ -61,21 +62,24 @@ class Model(BaseModel):
         # 'optimizer': keras.optimizers.Adam(learning_rate=train_params['learning_rate'], beta_1=0.9, beta_2=0.98,
         #                                    epsilon=1e-9),
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
-        'label_smooth': False,
-        'metrics': [],
+        'label_smooth': True,
+        'metrics': [tf_accuracy],
     }
 
     monitor_params = {
         **BaseModel.monitor_params,
-        'name': 'val_loss',
-        'mode': 'min',  # for the "name" monitor, the "min" is best;
+        'name': 'tf_accuracy',
+        # 'name': 'val_loss',
+        # 'mode': 'min',  # for the "name" monitor, the "min" is best;
+        'mode': 'max',  # for the "name" monitor, the "min" is best;
         'for_start': 'loss',
         'for_start_value': 1.5,
         'for_start_mode': 'min',
     }
 
     checkpoint_params = {
-        'load_model': ['transformer_for_MLM_zh_en', '2020_04_23_14_23_48'],  # [name, time]
+        'load_model': [],  # [name, time]
+        # 'load_model': [name, '2020_04_25_12_59_02'],  # [name, time] # BLEU 46, for wmt-news
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 
