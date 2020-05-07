@@ -29,7 +29,8 @@ class Model(BaseModel):
         # 'tar_vocab_size': 16000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'sample_rate': 0.066,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
+        'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
+        # 'sample_rate': 0.066,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
     }
 
     model_params = {
@@ -79,6 +80,7 @@ class Model(BaseModel):
 
     checkpoint_params = {
         'load_model': [],  # [name, time]
+        # 'load_model': [name, '2020_04_26_20_26_51'],  # [name, time] # BLEU 21, for news-commentary
         # 'load_model': [name, '2020_04_25_12_59_02'],  # [name, time] # BLEU 46, for wmt-news
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }

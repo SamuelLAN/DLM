@@ -99,6 +99,9 @@ for i, v in enumerate(data):
     zh_translation = utils.process(v['zh_translation'], utils.pipeline)
     pos = utils.process(v['pos'], utils.pipeline)
 
+    if '.' in en_word:
+        continue
+
     # if i % 1000 == 0:
     #     print(f'\n{en_word:30s} | {en_meanings:20s} | {str(v["en_meanings"]).strip().lower():20s} | {zh_translation:40s} | {pos:20s} |')
 

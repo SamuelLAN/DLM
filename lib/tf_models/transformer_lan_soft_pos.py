@@ -57,7 +57,7 @@ class Decoder(layers.Layer):
         # token embedding and position embedding
         self.embedding = layers.Embedding(target_vocab_size, d_model) \
             if isinstance(emb_layer, type(None)) else emb_layer
-        self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
+        # self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         # language embedding; vocab_size = 4 because there are two for <start> and <end>
         self.lan_embedding = layers.Embedding(2, d_model) if isinstance(lan_emb_layer, type(None)) else lan_emb_layer
@@ -66,13 +66,14 @@ class Decoder(layers.Layer):
                            for _ in range(num_layers)]
         self.dropout = layers.Dropout(drop_rate)
 
-    def call(self, x, enc_output, lan_y, training, look_ahead_mask, padding_mask):
+    def call(self, x, enc_output, pos_y, lan_y, training, look_ahead_mask, padding_mask):
         seq_len = tf.shape(x)[1]
         attention_weights = {}
 
         x = self.embedding(x)  # (batch_size, target_seq_len, d_model)
         x *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
-        x += self.pos_encoding[:, :seq_len, :]
+        # x += self.pos_encoding[:, :seq_len, :]
+        x += pos_y
 
         # add lan embedding
         lan_y = self.lan_embedding(lan_y)
@@ -108,7 +109,7 @@ class Transformer(BaseTransformer):
         self.final_layer = layers.Dense(target_vocab_size, activation='softmax')
 
     def call(self, inputs, training=None, mask=None):
-        enc_inp, enc_inp_lan, dec_inp, dec_inp_lan = inputs
+        enc_inp, enc_inp_lan, dec_inp, dec_inp_lan, dec_inp_pos = inputs
 
         if isinstance(mask, type(None)):
             enc_padding_mask, look_ahead_mask, dec_padding_mask = self.create_masks(enc_inp, dec_inp)
@@ -120,7 +121,7 @@ class Transformer(BaseTransformer):
 
         # dec_output.shape == (batch_size, tar_seq_len, d_model)
         dec_output, attention_weights = self.decoder(
-            dec_inp, enc_output, dec_inp_lan, training, look_ahead_mask, dec_padding_mask)
+            dec_inp, enc_output, dec_inp_lan, dec_inp_pos, training, look_ahead_mask, dec_padding_mask)
 
         if not self.__share_final:
             final_output = self.final_layer(dec_output)  # (batch_size, tar_seq_len, target_vocab_size)

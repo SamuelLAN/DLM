@@ -1,30 +1,14 @@
 import tensorflow as tf
 import numpy as np
+from lib.tf_models.pos_embeddings import embedding as pos_embedding
 
 keras = tf.keras
 layers = keras.layers
 
 
-def get_angles(pos, i, d_model):
-    angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d_model))
-    return pos * angle_rates
-
-
 def positional_encoding(position, d_model):
     with tf.name_scope('positional_encoding'):
-        angle_rads = get_angles(np.arange(position)[:, np.newaxis],
-                                np.arange(d_model)[np.newaxis, :],
-                                d_model)
-
-        # apply sin to even indices in the array; 2i
-        angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
-
-        # apply cos to odd indices in the array; 2i+1
-        angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
-
-        pos_encoding = angle_rads[np.newaxis, ...]
-
-        return tf.cast(pos_encoding, dtype=tf.float32)
+        return tf.cast(pos_embedding(position, d_model), dtype=tf.float32)
 
 
 def create_padding_mask(seq):
