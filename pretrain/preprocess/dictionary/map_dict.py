@@ -8,6 +8,14 @@ __en_zh_dict = load_json(merged_en_zh_dict_path)
 __zh_en_dict = load_json(merged_zh_en_dict_path)
 __stem_dict = load_json(merged_stem_dict_path)
 
+filter_zh_word = {
+    '的': True,
+}
+
+filter_en_word = {
+    'the': True,
+}
+
 
 def __merge_dict(dict_list):
     if not dict_list:
@@ -38,12 +46,15 @@ def __get_info(info, info_key='*'):
 
 
 def zh_word(token, info_key='*'):
-    if token in __zh_en_dict:
-        return __get_info(__zh_en_dict[token], info_key)
-    return {} if info_key == '*' else []
+    if token in filter_zh_word or token not in __zh_en_dict:
+        return {} if info_key == '*' else []
+    return __get_info(__zh_en_dict[token], info_key)
 
 
 def en_word(token, info_key='*'):
+    if token in filter_zh_word:
+        return {} if info_key == '*' else []
+
     if token in __en_zh_dict:
         return __get_info(__en_zh_dict[token], info_key)
 

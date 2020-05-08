@@ -73,7 +73,7 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
                                                              map_4_gram_pos)
 
     # only sample one word or phrase that can be mapped with dictionary
-    sample = random.sample(samples_to_be_selected, 1)
+    sample = random.sample(samples_to_be_selected, 1)[0]
 
     # get token index
     mask_idx = _tokenizer.vocab_size + mask_incr
