@@ -13,6 +13,7 @@ import tensorflow_datasets as tfds
 from six.moves.urllib.request import urlretrieve
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
+from lib.preprocess.zh_hans.langconv import Converter
 
 TOKEN_START = '<start>'
 TOKEN_END = '<end>'
@@ -563,3 +564,8 @@ def lower_sentences(list_of_sentences):
 
 def stem(word):
     return __ps.stem(word)
+
+
+def zh_traditional_2_simplified(sentence):
+    sentence = Converter('zh-hans').convert(sentence)
+    return sentence

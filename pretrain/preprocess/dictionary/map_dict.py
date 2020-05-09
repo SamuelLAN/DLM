@@ -10,6 +10,8 @@ __stem_dict = load_json(merged_stem_dict_path)
 
 filter_zh_word = {
     '的': True,
+    '就': True,
+    '来': True,
 }
 
 filter_en_word = {
@@ -52,7 +54,7 @@ def zh_word(token, info_key='*'):
 
 
 def en_word(token, info_key='*'):
-    if token in filter_zh_word:
+    if token in filter_zh_word or len(token) <= 1:
         return {} if info_key == '*' else []
 
     if token in __en_zh_dict:
@@ -109,7 +111,7 @@ def en_phrase(list_of_tokens, info_key='*'):
         phrase_list = phrase_list * len_stems
         phrase_list = [v + ' ' + stems[int(i / len_phrase)] for i, v in enumerate(phrase_list)]
 
-    infos = [__en_zh_dict[phrase] for phrase in phrase_list if phrase in __en_zh_dict]
+    infos = [__en_zh_dict[_phrase] for _phrase in phrase_list if _phrase in __en_zh_dict]
 
     if not infos:
         return {} if info_key == '*' else []

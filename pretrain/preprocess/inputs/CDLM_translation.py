@@ -1,5 +1,4 @@
 import random
-import copy
 import numpy as np
 from functools import reduce
 from pretrain.preprocess.dictionary import map_dict
@@ -13,8 +12,9 @@ def CDLM_translation_list_of_list_of_words(list_of_list_of_words, _tokenizer, zh
         list_of_list_of_words
     ))
 
-    list_input, list_output, list_lan_input, list_lan_output, list_pos_output = list(zip(*data))
-    return list_input, list_output, list_lan_input, list_lan_output, list_pos_output
+    data = list(filter(lambda x: x[0] and x[1] and x[3] and x[4], data))
+    list_input, list_output, list_lan_input, list_lan_output, list_soft_pos_output = list(zip(*data))
+    return list_input, list_output, list_lan_input, list_lan_output, list_soft_pos_output
 
 
 def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_lan_idx, is_zh,
@@ -37,7 +37,7 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
     """
 
     # get n grams
-    list_of_token = list(map(lambda x: x.strip(), list_of_words_for_a_sentence))
+    list_of_token = list(map(lambda x: x.strip(), list_of_words_for_a_sentence[:-1]))
     list_of_2_gram = map_dict.n_grams(list_of_token, 2)
     list_of_3_gram = map_dict.n_grams(list_of_token, 3)
     list_of_4_gram = map_dict.n_grams(list_of_token, 4)
@@ -60,7 +60,7 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
 
     # if no map with dictionary
     if not map_word_pos and not map_2_gram_pos and not map_3_gram_pos and not map_4_gram_pos:
-        return
+        return [], [], [], [], []
 
     # BPE for each word
     list_of_list_token_idx = list(map(lambda x: _tokenizer.encode(x), list_of_words_for_a_sentence))
@@ -85,7 +85,7 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
     _lan_input = []
     _output = []
     _lan_output = []
-    _pos_output = []
+    _soft_pos_output = []
 
     n = sample[1] - sample[0]
     if n == 4:
@@ -96,9 +96,23 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         translations = list_of_info_for_2_gram[sample[0]]
     else:
         translations = list_of_info_for_word[sample[0]]
-    translations_ids = list(map(lambda x: tokenizer.encode(x + ' '), translations))
 
-    mode = random.randint(0, 2)
+    # filter some noise of the translations
+    translations = list(filter(lambda x: x, translations))
+    if is_zh:
+        translations = list(filter(lambda x: (x[0] != '-' or x[-1] != '-') and len(x) > 1, translations))
+        if len(translations) >= 8:
+            tmp_translations = list(filter(lambda x: len(x) >= 5, translations))
+            if tmp_translations:
+                translations = tmp_translations
+    if not translations:
+        return [], [], [], [], []
+
+    # apply BPE for the translations
+    translations_ids = list(map(lambda x: _tokenizer.encode(x + ' '), translations))
+
+    # mode = random.randint(0, 2)
+    mode = 0
     # replace the masked word with <mask>, and
     #    let the ground truth be its corresponding translation
     if mode == 0:
@@ -110,11 +124,11 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         while index < len_words:
             if index == sample[0]:
                 len_tokens = sum([len(list_of_list_token_idx[i]) for i in range(sample[0], sample[1])])
-                pos_for_mask = [len(_input), len(_input) + len_words]
+                pos_for_mask = [len(_input), len(_input) + len_tokens]
                 if random.random() < keep_origin_rate:
                     _input += reduce(lambda a, b: a + b, list_of_list_token_idx[sample[0]: sample[1]])
                 else:
-                    _input += [mask_idx] * len_words
+                    _input += [mask_idx] * len_tokens
                 _lan_input += [tar_lan_idx] * len_tokens
                 index = sample[1]
                 continue
@@ -123,23 +137,25 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
             _lan_input += [src_lan_idx] * len(list_of_list_token_idx[index])
             index += 1
 
-        translations_ids = list(map(lambda x: [sep_idx] + x, translations_ids))
+        translations_ids.sort()
+        new_translations_ids = list(map(lambda x: [sep_idx] + x, translations_ids[:3]))
 
         # get token idxs for output
-        _output = reduce(lambda a, b: a + b, translations_ids)
+        _output = reduce(lambda a, b: a + b, new_translations_ids)
         _output.pop(0)
 
         # get language index for output
         _lan_output = [tar_lan_idx] * len(_output)
 
         # get soft position for output
-        _pos_output = list(map(
-            lambda x: list(map(int, np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
-            translations_ids
+        # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
+        _soft_pos_output = list(map(
+            lambda x: list(map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
+            new_translations_ids
         ))
-        _pos_output = reduce(lambda a, b: a + b, _pos_output)
-        _pos_output[1] = _pos_output[0]
-        _pos_output.pop(0)
+        _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
+        # _soft_pos_output[1] = _soft_pos_output[0]
+        _soft_pos_output.pop(0)
 
     # replace the masked word with <mask>, and
     #    let the ground truth be the original word
@@ -152,8 +168,8 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         while index < len_words:
             if index == sample[0]:
                 len_tokens = sum([len(list_of_list_token_idx[i]) for i in range(sample[0], sample[1])])
-                pos_for_mask = [len(_input), len(_input) + len_words]
-                _input += [mask_idx] * len_words
+                pos_for_mask = [len(_input), len(_input) + len_tokens]
+                _input += [mask_idx] * len_tokens
                 _lan_input += [src_lan_idx] * len_tokens
                 index = sample[1]
                 continue
@@ -170,7 +186,7 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         _lan_output = [src_lan_idx] * len(_output)
 
         # get soft position for output
-        _pos_output = list(range(*pos_for_mask))
+        _soft_pos_output = list(range(*pos_for_mask))
 
     # replace the masked word with its translation, and let the ground truth be its original word
     elif mode == 2:
@@ -181,11 +197,9 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
 
         while index < len_words:
             if index == sample[0]:
-                len_tokens = sum([len(list_of_list_token_idx[i]) for i in range(sample[0], sample[1])])
-
                 pos_for_mask = [len(_input)]
 
-                tmp_input = random.sample(translations_ids, 1)
+                tmp_input = random.sample(translations_ids, 1)[0]
                 _input += tmp_input
 
                 pos_for_mask.append(len(_input))
@@ -206,14 +220,16 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         _lan_output = [src_lan_idx] * len(_output)
 
         # get soft position for output
-        _pos_output = list(map(int, np.linspace(pos_for_mask[0], pos_for_mask[1], len(_output))))
+        _soft_pos_output = list(
+            map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(_output))))
+        # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
 
     # # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
     # #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
     # elif mode == 3:
     #     pass
 
-    return _input, _output, _lan_input, _lan_output, _pos_output
+    return _input, _output, _lan_input, _lan_output, _soft_pos_output
 
 
 def get_pl(keep_origin_rate, src_lan_idx=3, tar_lan_idx=4, mask_incr=3, sep_incr=4):
@@ -230,7 +246,7 @@ def get_pl(keep_origin_rate, src_lan_idx=3, tar_lan_idx=4, mask_incr=3, sep_incr
                           'pos_for_gt_1': 'pos_for_gt_1'},
         },
         {
-            'name': 'CDLM_translation_for_lan_1',
+            'name': 'CDLM_translation_for_lan_2',
             'func': CDLM_translation_list_of_list_of_words,
             'input_keys': ['input_2', 'tokenizer', tar_lan_idx, src_lan_idx, False,
                            keep_origin_rate, mask_incr, sep_incr],
@@ -258,12 +274,13 @@ if __name__ == '__main__':
     }
 
     pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
-    pipeline += pl.sent_2_tokens + get_pl(0.2, 3, 4, 3, 4) + pl.encode + [
-        {'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'tokenizer']}
+    pipeline += pl.sent_2_tokens + get_pl(0.2, 3, 4, 3, 4) + pl.CDLM_encode + [
+        {'output_keys': [
+            'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1', 'tokenizer']}
     ]
 
     print('\n------------------- Encoding -------------------------')
-    x, y, lan_x, lan_y, tokenizer = utils.pipeline(
+    x, y, lan_x, lan_y, soft_pos_y, tokenizer = utils.pipeline(
         preprocess_pipeline=pipeline,
         lan_data_1=origin_zh_data[:1000], lan_data_2=origin_en_data[:1000], params=params)
 
@@ -272,6 +289,7 @@ if __name__ == '__main__':
     print(y.shape)
     print(lan_x.shape)
     print(lan_y.shape)
+    print(soft_pos_y.shape)
 
     print('\n------------------- Decoding zh -------------------------')
     x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})

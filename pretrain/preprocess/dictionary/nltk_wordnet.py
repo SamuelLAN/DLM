@@ -4,12 +4,12 @@ from lib.utils import write_json
 from pretrain.preprocess.dictionary import preprocess_string as utils
 from pretrain.preprocess.config import dictionary_dir
 
-write_dict_path = os.path.join(dictionary_dir, 'nltk_wordnet.txt')
+write_dict_path = os.path.join(dictionary_dir, 'en_zh_dict_nltk.json')
 
 dictionary = dict()
 for word in wn.words():
 
-    word_details = dict()
+    word_details = {}
     syns = wn.synsets(word)
     src_synonyms = set()
     for x in syns:
@@ -25,13 +25,21 @@ for word in wn.words():
     pos = list(set(
         filter(None, list(map(lambda x: x.name().split(".")[1] if (word == x.name().split(".")[0]) else None, syns)))))
 
+    pos = list(filter(lambda x: x, pos))
+    src_meanings = list(filter(lambda x: x, src_meanings))
+    src_synonyms = list(filter(lambda x: x, src_synonyms))
+
     if pos:
         word_details["pos"] = pos
+
     if src_meanings:
         word_details["src_meanings"] = src_meanings
 
     if src_synonyms:
         word_details["src_synonyms"] = list(src_synonyms)
+
+    if not word_details:
+        continue
 
     # convert coding and full 2 half
     word = utils.process(word, utils.weak_pl)

@@ -1,5 +1,6 @@
 import re
 from lib.preprocess import utils
+from lib.preprocess.utils import zh_traditional_2_simplified
 
 
 def process(string, _pipeline):
@@ -40,6 +41,7 @@ pipeline = [
     utils.unicode_to_ascii,
     utils.full_2_half,
     convert_punctuations,
+    zh_traditional_2_simplified,
     remove_quote,
     remove_bracket_content,
     lambda x: x.strip(),
@@ -51,6 +53,7 @@ weak_pl = [
     utils.unicode_to_ascii,
     utils.full_2_half,
     convert_punctuations,
+    zh_traditional_2_simplified,
     lambda x: x.strip(),
 ]
 
