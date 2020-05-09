@@ -21,6 +21,16 @@ def __filter_noise(val):
     for k, l in val.items():
         l = list(map(lambda x: process(x, pipeline), l))
         l = list(filter(lambda x: x, l))
+
+        if k == 'translation' and len(l) >= 5:
+            l = list(filter(lambda x: '.' not in x, l))
+
+        if k == 'translation' and len(l) >= 5 and len(list(filter(lambda x: len(x) >= 5, l))) >= 3:
+            l = list(filter(lambda x: len(x) >= 5, l))
+
+        if not l:
+            continue
+
         val[k] = l
     return val
 
@@ -65,6 +75,7 @@ for file_name in os.listdir(zh_en_dir):
 
     print(f'merging dict {file_name} ...')
 
+    mode = 0 if '_v_all' not in file_name else 1
     length = len(tmp_dict)
     i = 0
     for key, val in tmp_dict.items():
@@ -72,7 +83,7 @@ for file_name in os.listdir(zh_en_dir):
             progress = float(i + 1) / length * 100.
             print('\rprogress: %.2f%% ' % progress, end='')
 
-        __merge_dict(zh_en_dict, key, val)
+        __merge_dict(zh_en_dict, key, val, mode)
         i += 1
 
 print('\nwriting data to files ...')
