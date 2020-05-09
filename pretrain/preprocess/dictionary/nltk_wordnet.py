@@ -4,7 +4,10 @@ from lib.utils import write_json
 from pretrain.preprocess.dictionary import preprocess_string as utils
 from pretrain.preprocess.config import dictionary_dir
 
-write_dict_path = os.path.join(dictionary_dir, 'en_zh_dict_nltk.json')
+nltk_dir = os.path.join(dictionary_dir, 'nltk')
+if not os.path.exists(nltk_dir):
+    os.mkdir(nltk_dir)
+write_dict_path = os.path.join(nltk_dir, 'en_zh_dict_nltk.json')
 
 dictionary = dict()
 for word in wn.words():
@@ -47,3 +50,5 @@ for word in wn.words():
     dictionary[word] = word_details
 
 write_json(write_dict_path, dictionary)
+
+print('done')
