@@ -2,10 +2,11 @@ import numpy as np
 from functools import reduce
 from lib.preprocess.utils import stem
 from lib.utils import load_json
-from pretrain.preprocess.config import merged_en_zh_dict_path, merged_zh_en_dict_path, merged_stem_dict_path
+from pretrain.preprocess.config import filtered_union_en_zh_dict_path, filtered_union_zh_en_dict_path, merged_stem_dict_path
+from pretrain.preprocess.dictionary.preprocess_string import filter_duplicate
 
-__en_zh_dict = load_json(merged_en_zh_dict_path)
-__zh_en_dict = load_json(merged_zh_en_dict_path)
+__en_zh_dict = load_json(filtered_union_en_zh_dict_path)
+__zh_en_dict = load_json(filtered_union_zh_en_dict_path)
 __stem_dict = load_json(merged_stem_dict_path)
 
 filter_zh_word = {
@@ -32,7 +33,7 @@ def __merge_dict(dict_list):
                     info[k] = v
                 else:
                     info[k] += v
-        return info
+        return filter_duplicate(info)
 
 
 def __get_info(info, info_key='*'):
@@ -54,13 +55,13 @@ def zh_word(token, info_key='*'):
 
 
 def en_word(token, info_key='*'):
-    if token in filter_zh_word or len(token) <= 1:
+    if token in filter_en_word or len(token) <= 1:
         return {} if info_key == '*' else []
 
     if token in __en_zh_dict:
         return __get_info(__en_zh_dict[token], info_key)
 
-    stem_token = stem(token)
+    stem_token = stem(token) if token not in __stem_dict else token
     if stem_token in __stem_dict:
         words = __stem_dict[stem_token]
         infos = list(map(lambda x: __en_zh_dict[x], words))
@@ -71,7 +72,10 @@ def en_word(token, info_key='*'):
 
         # only get specific information
         infos = list(map(lambda x: x[info_key] if info_key in x and x[info_key] else [], infos))
-        return reduce(lambda a, b: a + b, infos)
+        infos = list(filter(lambda x: x, infos))
+
+        if infos:
+            return list(set(reduce(lambda a, b: a + b, infos)))
 
     return {} if info_key == '*' else []
 
@@ -98,31 +102,16 @@ def en_phrase(list_of_tokens, info_key='*'):
         return en_word(list_of_tokens[0], info_key)
 
     _phrase = ' '.join(list_of_tokens)
-    if _phrase in __en_zh_dict:
-        return __get_info(__en_zh_dict[_phrase], info_key)
+    phrase_info = en_word(_phrase, info_key)
+    if phrase_info:
+        return phrase_info
 
-    list_of_list_stems = list(map(stem, list_of_tokens))
+    stem_phrase = ' '.join(list(map(stem, list_of_tokens)))
+    phrase_info = en_word(stem_phrase, info_key)
+    if phrase_info:
+        return phrase_info
 
-    phrase_list = list_of_list_stems[0]
-
-    for stems in list_of_list_stems[1:]:
-        len_stems = len(stems)
-        len_phrase = len(phrase_list)
-        phrase_list = phrase_list * len_stems
-        phrase_list = [v + ' ' + stems[int(i / len_phrase)] for i, v in enumerate(phrase_list)]
-
-    infos = [__en_zh_dict[_phrase] for _phrase in phrase_list if _phrase in __en_zh_dict]
-
-    if not infos:
-        return {} if info_key == '*' else []
-
-    # if get all information
-    if info_key == '*':
-        return __merge_dict(infos)
-
-    # only get specific information
-    infos = list(map(lambda x: x[info_key] if info_key in x and x[info_key] else [], infos))
-    return reduce(lambda a, b: a + b, infos)
+    return {} if info_key == '*' else []
 
 
 def phrase(list_of_tokens, info_key='*'):
@@ -155,6 +144,7 @@ def merge_conflict_samples(length, *args):
 
     return samples
 
+
 # print('\nfinish loading dictionary')
 #
 # a = 'apples'
@@ -162,12 +152,12 @@ def merge_conflict_samples(length, *args):
 # c = '毛泽东'
 # d = '茅台'
 # e = 'iphone'
-# f = ['take', 'it', 'easy']
-# g = ['calm', 'down', 'man']
+# f = ['takes', 'its', 'easy']
+# g = ['calms', 'down']
 # h = ['苹果', '手机', '你好']
 #
 # zhs = [
-#     b, c, d, '知识', '抛弃', '炮台', '酒精', '医用口罩', '语文课本', '奥巴马', '公寓',
+#     b, c, d, '知识', '抛弃', '炮台', '酒精', '医用口罩', '语文课本', '奥巴马', '公寓', '邓小平',
 # ]
 # ens = [
 #     a, e, 'abandoned', 'abandon', 'drink', 'Trump', 'Obama', 'Berkshire',
@@ -176,11 +166,9 @@ def merge_conflict_samples(length, *args):
 # for zh in zhs:
 #     print(zh, zh_word(zh, 'translation'))
 #
-#
 # for en in ens:
 #     print(en, en_word(en, 'translation'))
 #
-# print(en_phrase(f, 'translation'), f)
-# print(en_phrase(g, 'translation'), g)
-# print(zh_phrase(h, 'translation'), h)
-#
+# print(f, en_phrase(f, 'translation'))
+# print(g, en_phrase(g, 'translation'))
+# print(h, zh_phrase(h, 'translation'))

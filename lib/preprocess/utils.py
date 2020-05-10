@@ -206,7 +206,11 @@ def decode_subword_idx_2_tokens_by_tfds(tokenizer, list_of_list_token_idx):
             ...
         ]
     """
-    return list(map(lambda x: list(map(lambda a: tokenizer.decode([a]), x)), list_of_list_token_idx))
+    # return list(map(lambda x: list(map(lambda a: tokenizer.decode([a]), x)), list_of_list_token_idx))
+    return list(map(lambda x: list(map(
+        lambda a: tokenizer.decode([a]) if a <= tokenizer.vocab_size else '<spe> ',
+        x
+    )), list_of_list_token_idx))
 
 
 def doc_2_idx(list_of_doc, dictionary=None, keep_n=5000):

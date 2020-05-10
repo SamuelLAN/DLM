@@ -1,10 +1,10 @@
 import os
-from pretrain.preprocess.config import dictionary_dir
+from pretrain.preprocess.config import dictionary_dir, filtered_union_en_zh_dict_path, merged_stem_dict_path
 from lib.preprocess import utils
 from lib.utils import load_json, write_json
 
-dictionary_path = os.path.join(dictionary_dir, 'ecdict', 'en_zh_dict_from_ecdict.json')
-stem_dictionary_path = os.path.join(dictionary_dir, 'stem_dictionary.json')
+dictionary_path = filtered_union_en_zh_dict_path
+stem_dictionary_path = merged_stem_dict_path
 
 print(f'loading dictionary from {dictionary_path} ...')
 
@@ -12,9 +12,24 @@ dictionary = load_json(dictionary_path)
 
 print('getting stems ...')
 
+
+def __stem_for_phrase(x):
+    if not x:
+        return ''
+
+    l = x.split(' ')
+    if len(l) == 1:
+        return utils.stem(x)
+
+    l = list(map(lambda a: utils.stem(a.strip()), l))
+    x = ' '.join(l)
+    return x
+
+
 stem_words = list(dictionary.keys())
-stem_words = list(filter(lambda x: len(x.split(' ')) <= 1, stem_words))
-stem_words = list(map(lambda x: [utils.stem(x), x], stem_words))
+# stem_words = list(filter(lambda x: len(x.split(' ')) <= 1, stem_words))
+# stem_words = list(map(lambda x: [utils.stem(x), x], stem_words))
+stem_words = list(map(lambda x: [__stem_for_phrase(x), x], stem_words))
 stem_words = list(filter(lambda x: x[0] != x[1], stem_words))
 
 print('converting to dict ...')

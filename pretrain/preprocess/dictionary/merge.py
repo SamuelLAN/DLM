@@ -6,8 +6,8 @@ from lib.utils import load_json, write_json
 zh_en_dir = os.path.join(dictionary_dir, 'zh_en')
 en_zh_dir = os.path.join(dictionary_dir, 'en_zh')
 
-merged_zh_en_dict_path = os.path.join(dictionary_dir, 'zh_en_merged.json')
-merged_en_zh_dict_path = os.path.join(dictionary_dir, 'en_zh_merged.json')
+merged_zh_en_dict_path = os.path.join(dictionary_dir, 'zh_en_merged_v_all.json')
+merged_en_zh_dict_path = os.path.join(dictionary_dir, 'en_zh_merged_v_all.json')
 
 
 def __check_has_val(val):
@@ -63,28 +63,38 @@ def __merge_dict(_merged_dict, key, val, mode=0):
     return _merged_dict
 
 
+def traverse_dict_and_merge(_dict_dir, _merged_dict):
+    for file_name in os.listdir(_dict_dir):
+        file_path = os.path.join(_dict_dir, file_name)
+
+        print(f'\nloading dictionary from {file_path} ...')
+
+        tmp_dict = load_json(file_path)
+
+        print(f'merging dict {file_name} ...')
+
+        mode = 0 if '_v_all' not in file_name else 1
+        # if mode == 1:
+        #     continue
+
+        length = len(tmp_dict)
+        i = 0
+        for key, val in tmp_dict.items():
+            if i % 50 == 0:
+                progress = float(i + 1) / length * 100.
+                print('\rprogress: %.2f%% ' % progress, end='')
+
+            _merged_dict = __merge_dict(_merged_dict, key, val, mode)
+            i += 1
+
+    return _merged_dict
+
+
 zh_en_dict = {}
 en_zh_dict = {}
 
-for file_name in os.listdir(zh_en_dir):
-    file_path = os.path.join(zh_en_dir, file_name)
-
-    print(f'\nloading dictionary from {file_path} ...')
-
-    tmp_dict = load_json(file_path)
-
-    print(f'merging dict {file_name} ...')
-
-    mode = 0 if '_v_all' not in file_name else 1
-    length = len(tmp_dict)
-    i = 0
-    for key, val in tmp_dict.items():
-        if i % 50 == 0:
-            progress = float(i + 1) / length * 100.
-            print('\rprogress: %.2f%% ' % progress, end='')
-
-        __merge_dict(zh_en_dict, key, val, mode)
-        i += 1
+traverse_dict_and_merge(zh_en_dir, zh_en_dict)
+traverse_dict_and_merge(en_zh_dir, en_zh_dict)
 
 print('\nwriting data to files ...')
 
