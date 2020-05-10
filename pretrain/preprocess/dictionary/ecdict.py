@@ -174,8 +174,8 @@ zh_en_dict = utils.filter_duplicate(zh_en_dict)
 
 print('\nsaving data ... ')
 
-write_json(os.path.join(dict_dir, 'en_zh_dict_from_ecdict.json'), en_zh_dict)
-write_json(os.path.join(dict_dir, 'zh_en_dict_from_ecdict.json'), zh_en_dict)
+write_json(os.path.join(dict_dir, 'en_zh_dict_from_ecdict_v_all.json'), en_zh_dict)
+write_json(os.path.join(dict_dir, 'zh_en_dict_from_ecdict_v_all.json'), zh_en_dict)
 
 print('\nanalyzing ...')
 
