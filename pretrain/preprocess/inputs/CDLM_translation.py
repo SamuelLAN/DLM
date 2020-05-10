@@ -111,8 +111,10 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
     # apply BPE for the translations
     translations_ids = list(map(lambda x: _tokenizer.encode(x + ' '), translations))
 
-    # mode = random.randint(0, 2)
-    mode = 0
+    mode = random.randint(0, 2)
+    start = _tokenizer.vocab_size + 1
+    end = _tokenizer.vocab_size + 2
+
     # replace the masked word with <mask>, and
     #    let the ground truth be its corresponding translation
     if mode == 0:
@@ -157,6 +159,9 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         # _soft_pos_output[1] = _soft_pos_output[0]
         _soft_pos_output.pop(0)
 
+        start = _tokenizer.vocab_size + 5
+        end = _tokenizer.vocab_size + 6
+
     # replace the masked word with <mask>, and
     #    let the ground truth be the original word
     if mode == 1:
@@ -187,6 +192,9 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
 
         # get soft position for output
         _soft_pos_output = list(range(*pos_for_mask))
+
+        start = _tokenizer.vocab_size + 7
+        end = _tokenizer.vocab_size + 8
 
     # replace the masked word with its translation, and let the ground truth be its original word
     elif mode == 2:
@@ -224,10 +232,20 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
             map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(_output))))
         # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
 
-    # # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
-    # #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
+        start = _tokenizer.vocab_size + 9
+        end = _tokenizer.vocab_size + 10
+
+    # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
+    #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
     # elif mode == 3:
     #     pass
+
+    # add <start> <end> token
+    _input = [start] + _input + [end]
+    _output = [start] + _output + [end]
+    _lan_input = _lan_input[:1] + _lan_input + _lan_input[-1:]
+    _lan_output = _lan_output[:1] + _lan_output + _lan_output[-1:]
+    _soft_pos_output = _soft_pos_output[:1] + _soft_pos_output + _soft_pos_output[-1:]
 
     return _input, _output, _lan_input, _lan_output, _soft_pos_output
 

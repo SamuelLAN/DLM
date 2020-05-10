@@ -37,7 +37,7 @@ def MLM(list_of_words_for_a_sentence, _tokenizer, lan_index,
     # get indices to mask
     len_words = len(list_of_list_token_idx)
     indices_to_mask = random.sample(
-        range(len_words),
+        range(len_words - 1),
         min(random.randint(min_num, max_num), max(round(len_words * max_ratio), 1))
     )
 
@@ -54,9 +54,16 @@ def MLM(list_of_words_for_a_sentence, _tokenizer, lan_index,
         else:
             masked_input += idxs_for_word
 
-    # get index for language embeddings
-    list_of_lan_idx_for_input = [lan_index] * len(masked_input)
-    list_of_lan_idx_for_gt = [lan_index] * len(list_of_tar_token_idx)
+    # get index for language embeddings; and add start, end token
+    list_of_lan_idx_for_input = [lan_index] * int(len(masked_input) + 2)
+    list_of_lan_idx_for_gt = [lan_index] * int(len(list_of_tar_token_idx) + 2)
+
+    start = _tokenizer.vocab_size + 1
+    end = _tokenizer.vocab_size + 2
+
+    # add start end token
+    masked_input = [start] + masked_input + [end]
+    list_of_tar_token_idx = [start] + list_of_tar_token_idx + [end]
 
     return masked_input, list_of_tar_token_idx, list_of_lan_idx_for_input, list_of_lan_idx_for_gt
 
@@ -102,7 +109,7 @@ if __name__ == '__main__':
     }
 
     pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
-    pipeline += pl.sent_2_tokens + get_pl(1, 6, 0.2, 0.2, 3, 4, 3) + pl.encode + [
+    pipeline += pl.sent_2_tokens + get_pl(1, 4, 0.2, 0.4, 0, 1, 3) + pl.MLM_encode + [
         {'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'tokenizer']}
     ]
 
