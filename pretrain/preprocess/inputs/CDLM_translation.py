@@ -2,23 +2,76 @@ import random
 import numpy as np
 from functools import reduce
 from pretrain.preprocess.dictionary import map_dict
+from pretrain.preprocess.config import Ids, LanIds
+from pretrain.preprocess.inputs.TLM import TLM_concat
 
 
-def CDLM_translation_list_of_list_of_words(list_of_list_of_words, _tokenizer, zh_lan_idx, en_lan_idx, is_zh,
-                                           keep_origin_rate=0.2, mask_incr=3, sep_incr=4):
-    """ MLM for batch data """
+def CDLM_MLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2):
+    zh_data = list(map(lambda x: CDLM_translation(x, _tokenizer, True, keep_origin_rate), list_of_zh_words))
+    en_data = list(map(lambda x: CDLM_translation(x, _tokenizer, False, keep_origin_rate), list_of_en_words))
+
+    data = zh_data + en_data
+    data = list(filter(lambda x: x[0] and x[1] and x[2] and x[3] and x[4], data))
+
+    _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = list(zip(*data))
+    return _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs
+
+
+def CDLM_TLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2):
+    data = list(zip(list_of_zh_words, list_of_en_words))
     data = list(map(
-        lambda x: CDLM_translation(x, _tokenizer, zh_lan_idx, en_lan_idx, is_zh, keep_origin_rate, mask_incr, sep_incr),
-        list_of_list_of_words
-    ))
+        lambda x: CDLM_translation_for_zh_en(x[0], x[1], _tokenizer, keep_origin_rate), data))
 
-    data = list(filter(lambda x: x[0] and x[1] and x[3] and x[4], data))
-    list_input, list_output, list_lan_input, list_lan_output, list_soft_pos_output = list(zip(*data))
-    return list_input, list_output, list_lan_input, list_lan_output, list_soft_pos_output
+    data = list(filter(lambda x: x[0][0] and x[0][1], data))
+    data = list(map(lambda x: TLM_concat(*x), data))
+
+    _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = list(zip(*data))
+    return _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs
 
 
-def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_lan_idx, is_zh,
-                     keep_origin_rate=0.2, mask_incr=3, sep_incr=4):
+def CDLM_combine_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2, TLM_ratio=0.7):
+    data = []
+    for i in range(len(list_of_zh_words)):
+        list_of_zh_word = list_of_zh_words[i]
+        list_of_en_word = list_of_en_words[i]
+
+        # if TLM sample
+        if random.random() < TLM_ratio:
+            _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = CDLM_translation_for_zh_en(
+                list_of_zh_word, list_of_en_word, _tokenizer, keep_origin_rate
+            )
+
+            if not _inputs[0] or not _inputs[1] or not _soft_pos_outputs[0] or not _soft_pos_outputs[1]:
+                continue
+
+            data.append(TLM_concat(_inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs))
+
+        # MLM sample
+        else:
+            zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output = CDLM_translation(
+                list_of_zh_word, _tokenizer, True, keep_origin_rate)
+            en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output = CDLM_translation(
+                list_of_en_word, _tokenizer, False, keep_origin_rate)
+
+            if zh_input and zh_output and zh_lan_input and zh_lan_output and zh_soft_pos_output:
+                data.append([zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output])
+            if en_input and en_output and en_lan_input and en_lan_output and en_soft_pos_output:
+                data.append([en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output])
+
+    _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = list(zip(*data))
+    return _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs
+
+
+def CDLM_translation_for_zh_en(list_of_zh_word, list_of_en_word, _tokenizer, keep_origin_rate=0.2):
+    zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output = CDLM_translation(
+        list_of_zh_word, _tokenizer, True, keep_origin_rate)
+    en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output = CDLM_translation(
+        list_of_en_word, _tokenizer, False, keep_origin_rate)
+    return [zh_input, en_input], [zh_output, en_output], [zh_lan_input, en_lan_input], \
+           [zh_lan_output, en_lan_output], [zh_soft_pos_output, en_soft_pos_output]
+
+
+def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0.2):
     """
 
     :params
@@ -76,10 +129,10 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
     sample = random.sample(samples_to_be_selected, 1)[0]
 
     # get token index
-    mask_idx = _tokenizer.vocab_size + mask_incr
-    sep_idx = _tokenizer.vocab_size + sep_incr
-    src_lan_idx = zh_lan_idx if is_zh else en_lan_idx
-    tar_lan_idx = en_lan_idx if is_zh else zh_lan_idx
+    mask_idx = _tokenizer.vocab_size + Ids.mask
+    sep_idx = _tokenizer.vocab_size + Ids.sep
+    src_lan_idx = LanIds.zh if is_zh else LanIds.en
+    tar_lan_idx = LanIds.en if is_zh else LanIds.zh
 
     _input = []
     _lan_input = []
@@ -112,8 +165,9 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
     translations_ids = list(map(lambda x: _tokenizer.encode(x + ' '), translations))
 
     mode = random.randint(0, 2)
-    start = _tokenizer.vocab_size + 1
-    end = _tokenizer.vocab_size + 2
+    # mode = 0
+    start = _tokenizer.vocab_size + Ids.start_nmt
+    end = _tokenizer.vocab_size + Ids.end_nmt
 
     # replace the masked word with <mask>, and
     #    let the ground truth be its corresponding translation
@@ -159,8 +213,8 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         # _soft_pos_output[1] = _soft_pos_output[0]
         _soft_pos_output.pop(0)
 
-        start = _tokenizer.vocab_size + 5
-        end = _tokenizer.vocab_size + 6
+        start = _tokenizer.vocab_size + Ids.start_cdlm_t_0
+        end = _tokenizer.vocab_size + Ids.end_cdlm_t_0
 
     # replace the masked word with <mask>, and
     #    let the ground truth be the original word
@@ -174,7 +228,10 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
             if index == sample[0]:
                 len_tokens = sum([len(list_of_list_token_idx[i]) for i in range(sample[0], sample[1])])
                 pos_for_mask = [len(_input), len(_input) + len_tokens]
-                _input += [mask_idx] * len_tokens
+                if random.random() < keep_origin_rate:
+                    _input += reduce(lambda a, b: a + b, list_of_list_token_idx[sample[0]: sample[1]])
+                else:
+                    _input += [mask_idx] * len_tokens
                 _lan_input += [src_lan_idx] * len_tokens
                 index = sample[1]
                 continue
@@ -193,8 +250,8 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
         # get soft position for output
         _soft_pos_output = list(range(*pos_for_mask))
 
-        start = _tokenizer.vocab_size + 7
-        end = _tokenizer.vocab_size + 8
+        start = _tokenizer.vocab_size + Ids.start_cdlm_t_1
+        end = _tokenizer.vocab_size + Ids.end_cdlm_t_1
 
     # replace the masked word with its translation, and let the ground truth be its original word
     elif mode == 2:
@@ -232,8 +289,8 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
             map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(_output))))
         # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
 
-        start = _tokenizer.vocab_size + 9
-        end = _tokenizer.vocab_size + 10
+        start = _tokenizer.vocab_size + Ids.start_cdlm_t_2
+        end = _tokenizer.vocab_size + Ids.end_cdlm_t_2
 
     # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
     #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
@@ -250,28 +307,44 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, zh_lan_idx, en_la
     return _input, _output, _lan_input, _lan_output, _soft_pos_output
 
 
-def get_pl(keep_origin_rate, src_lan_idx=3, tar_lan_idx=4, mask_incr=3, sep_incr=4):
-    """ Get MLM pipeline """
+def MLM_pl(keep_origin_rate):
     return [
         {
-            'name': 'CDLM_translation_for_lan_1',
-            'func': CDLM_translation_list_of_list_of_words,
-            'input_keys': ['input_1', 'tokenizer', src_lan_idx, tar_lan_idx, True,
-                           keep_origin_rate, mask_incr, sep_incr],
+            'name': 'CDLM_translation_MLM_sample',
+            'func': CDLM_MLM_sample,
+            'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
             'show_dict': {'input_1': 'input_1', 'ground_truth_1': 'ground_truth_1',
                           'lan_idx_for_input_1': 'lan_idx_for_input_1', 'lan_idx_for_gt_1': 'lan_idx_for_gt_1',
                           'pos_for_gt_1': 'pos_for_gt_1'},
         },
+    ]
+
+
+def TLM_pl(keep_origin_rate):
+    return [
         {
-            'name': 'CDLM_translation_for_lan_2',
-            'func': CDLM_translation_list_of_list_of_words,
-            'input_keys': ['input_2', 'tokenizer', tar_lan_idx, src_lan_idx, False,
-                           keep_origin_rate, mask_incr, sep_incr],
-            'output_keys': ['input_2', 'ground_truth_2', 'lan_idx_for_input_2', 'lan_idx_for_gt_2', 'pos_for_gt_2'],
-            'show_dict': {'input_2': 'input_2', 'ground_truth_2': 'ground_truth_2',
-                          'lan_idx_for_input_2': 'lan_idx_for_input_2', 'lan_idx_for_gt_2': 'lan_idx_for_gt_2',
-                          'pos_for_gt_2': 'pos_for_gt_2'},
+            'name': 'CDLM_translation_MLM_sample',
+            'func': CDLM_TLM_sample,
+            'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate],
+            'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
+            'show_dict': {'input_1': 'input_1', 'ground_truth_1': 'ground_truth_1',
+                          'lan_idx_for_input_1': 'lan_idx_for_input_1', 'lan_idx_for_gt_1': 'lan_idx_for_gt_1',
+                          'pos_for_gt_1': 'pos_for_gt_1'},
+        },
+    ]
+
+
+def combine_pl(keep_origin_rate, TLM_ratio=0.5):
+    return [
+        {
+            'name': 'CDLM_translation_combine_sample',
+            'func': CDLM_combine_sample,
+            'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate, TLM_ratio],
+            'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
+            'show_dict': {'input_1': 'input_1', 'ground_truth_1': 'ground_truth_1',
+                          'lan_idx_for_input_1': 'lan_idx_for_input_1', 'lan_idx_for_gt_1': 'lan_idx_for_gt_1',
+                          'pos_for_gt_1': 'pos_for_gt_1'},
         },
     ]
 
@@ -281,6 +354,10 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.load.token_translation import Loader
+
+    token_loader = Loader(0.0, 1.0)
+    token_zh_data, token_en_data = token_loader.data()
 
     origin_zh_data, origin_en_data = wmt_news.zh_en()
     params = {
@@ -291,8 +368,13 @@ if __name__ == '__main__':
         'max_tar_ground_seq_len': 8,
     }
 
-    pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
-    pipeline += pl.sent_2_tokens + get_pl(0.2, 3, 4, 3, 4) + pl.CDLM_encode + [
+    tokenizer_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
+    tokenizer = utils.pipeline(tokenizer_pl,
+                               token_zh_data + origin_zh_data[:1000], token_en_data + origin_en_data[:1000], params)
+
+    # pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
+    pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
+    pipeline += pl.sent_2_tokens + combine_pl(0.2) + pl.CDLM_encode + [
         {'output_keys': [
             'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1', 'tokenizer']}
     ]
@@ -300,7 +382,7 @@ if __name__ == '__main__':
     print('\n------------------- Encoding -------------------------')
     x, y, lan_x, lan_y, soft_pos_y, tokenizer = utils.pipeline(
         preprocess_pipeline=pipeline,
-        lan_data_1=origin_zh_data[:1000], lan_data_2=origin_en_data[:1000], params=params)
+        lan_data_1=origin_zh_data[:1000], lan_data_2=origin_en_data[:1000], params={**params, 'tokenizer': tokenizer})
 
     print('\n----------------------------------------------')
     print(x.shape)
@@ -309,6 +391,6 @@ if __name__ == '__main__':
     print(lan_y.shape)
     print(soft_pos_y.shape)
 
-    print('\n------------------- Decoding zh -------------------------')
+    print('\n------------------- Decoding -------------------------')
     x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
     y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
