@@ -29,7 +29,7 @@ class Loader:
                 data.append([zh, en])
                 data.append([en, zh])
 
-        data = list(set(data))
+        # TODO remove duplicate
 
         # reproduce the process that nmt would go through in order to get its train set; shuffle the data
         random.seed(self.RANDOM_STATE)
