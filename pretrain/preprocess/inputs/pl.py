@@ -40,14 +40,12 @@ filter_exceed_len_inp = [
         'func': utils.filter_exceed_max_seq_len_together,
         'input_keys': ['max_src_seq_len', 0, 'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
         'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
-        'show_dict': {'lan_idx_for_gt_1': 'lan_idx_for_gt_1'},
     },
     {
         'name': 'filter_exceed_max_seq_len_with_max_tar_seq_len',
         'func': utils.filter_exceed_max_seq_len_together,
         'input_keys': ['max_tar_seq_len', 0, 'input_2', 'ground_truth_2', 'lan_idx_for_input_2', 'lan_idx_for_gt_2'],
         'output_keys': ['input_2', 'ground_truth_2', 'lan_idx_for_input_2', 'lan_idx_for_gt_2'],
-        'show_dict': {'lan_idx_for_gt_2': 'lan_idx_for_gt_2'},
     },
 ]
 
@@ -58,7 +56,6 @@ MLM_filter_exceed_lan_gt = [
         'input_keys': ['max_src_ground_seq_len', 1, 'input_1', 'ground_truth_1', 'lan_idx_for_input_1',
                        'lan_idx_for_gt_1'],
         'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
-        'show_dict': {'lan_idx_for_gt_1': 'lan_idx_for_gt_1'},
     },
     {
         'name': 'filter_exceed_max_seq_len_with_max_tar_ground_seq_len',
@@ -66,6 +63,29 @@ MLM_filter_exceed_lan_gt = [
         'input_keys': ['max_tar_ground_seq_len', 1, 'input_2', 'ground_truth_2', 'lan_idx_for_input_2',
                        'lan_idx_for_gt_2'],
         'output_keys': ['input_2', 'ground_truth_2', 'lan_idx_for_input_2', 'lan_idx_for_gt_2'],
+    },
+]
+
+TLM_filter_exceed = [
+    {
+        'name': 'update vocab_size',
+        'func': lambda a: a.vocab_size,
+        'input_keys': ['tokenizer'],
+        'output_keys': 'vocab_size',
+        'show_dict': {'vocab_size': 'vocab_size'},
+    },
+    {
+        'name': 'filter_exceed_max_seq_len_with_max_seq_len',
+        'func': utils.filter_exceed_max_seq_len_together,
+        'input_keys': ['max_src_seq_len', 0, 'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
+        'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
+    },
+    {
+        'name': 'filter_exceed_max_seq_len_with_max_ground_seq_len',
+        'func': utils.filter_exceed_max_seq_len_together,
+        'input_keys': ['max_src_ground_seq_len', 1, 'input_1', 'ground_truth_1', 'lan_idx_for_input_1',
+                       'lan_idx_for_gt_1'],
+        'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
     },
 ]
 
@@ -151,6 +171,8 @@ MLM_add_pad = [
     },
 ]
 
+TLM_add_pad = MLM_add_pad[0::2]
+
 CDLM_add_pad = [
     {
         'name': 'add_pad_token_to_pos_gt_for_src',
@@ -182,6 +204,18 @@ MLM_encode = [
                        'lan_idx_for_input_1', 'lan_idx_for_input_2', 'lan_idx_for_gt_1', 'lan_idx_for_gt_2'],
         'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
     },
+]
+
+TLM_encode = [
+    *TLM_filter_exceed,
+    *TLM_add_pad,
+    {
+        'name': 'merge_src_tar_lan',
+        'func': lambda *args: list(map(lambda x: np.array(x), args)),
+        'input_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
+        'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
+    },
+    {'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'tokenizer']},
 ]
 
 CDLM_encode = [

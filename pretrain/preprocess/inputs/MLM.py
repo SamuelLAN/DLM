@@ -1,12 +1,13 @@
 import random
 from functools import reduce
+from pretrain.preprocess.config import Ids, LanIds
 
 
 def MLM_list_of_list_of_words(list_of_list_of_words, _tokenizer, lan_index,
-                              min_num=2, max_num=6, max_ratio=0.2, keep_origin_rate=0.2, mask_incr=3):
+                              min_num=2, max_num=6, max_ratio=0.2, keep_origin_rate=0.2):
     """ MLM for batch data """
     data = list(map(
-        lambda x: MLM(x, _tokenizer, lan_index, min_num, max_num, max_ratio, keep_origin_rate, mask_incr),
+        lambda x: MLM(x, _tokenizer, lan_index, min_num, max_num, max_ratio, keep_origin_rate),
         list_of_list_of_words
     ))
     list_masked_input, list_of_list_tar_token_idx, list_of_lan_idx_for_input, list_of_lan_idx_for_gt = list(zip(*data))
@@ -14,7 +15,7 @@ def MLM_list_of_list_of_words(list_of_list_of_words, _tokenizer, lan_index,
 
 
 def MLM(list_of_words_for_a_sentence, _tokenizer, lan_index,
-        min_num=1, max_num=6, max_ratio=0.2, keep_origin_rate=0.2, mask_incr=3):
+        min_num=1, max_num=6, max_ratio=0.2, keep_origin_rate=0.2):
     """
     Masked Language Modeling (word level)
     :params
@@ -40,12 +41,13 @@ def MLM(list_of_words_for_a_sentence, _tokenizer, lan_index,
         range(len_words - 1),
         min(random.randint(min_num, max_num), max(round(len_words * max_ratio), 1))
     )
+    indices_to_mask.sort()
 
     # get ground truth
     list_of_tar_token_idx = reduce(lambda x, y: x + y, [list_of_list_token_idx[i] for i in indices_to_mask])
 
     # get masked input
-    mask_idx = _tokenizer.vocab_size + mask_incr
+    mask_idx = _tokenizer.vocab_size + Ids.mask
     masked_input = []
     for i in range(len_words):
         idxs_for_word = list_of_list_token_idx[i]
@@ -68,15 +70,14 @@ def MLM(list_of_words_for_a_sentence, _tokenizer, lan_index,
     return masked_input, list_of_tar_token_idx, list_of_lan_idx_for_input, list_of_lan_idx_for_gt
 
 
-def get_pl(min_mask_token, max_mask_token, max_ratio_of_sent_len, keep_origin_rate,
-           src_lan_idx=3, tar_lan_idx=4, mask_incr=3):
+def get_pl(min_mask_token, max_mask_token, max_ratio_of_sent_len, keep_origin_rate):
     """ Get MLM pipeline """
     return [
         {
             'name': 'MLM_for_lan_1',
             'func': MLM_list_of_list_of_words,
-            'input_keys': ['input_1', 'tokenizer', src_lan_idx,
-                           min_mask_token, max_mask_token, max_ratio_of_sent_len, keep_origin_rate, mask_incr],
+            'input_keys': ['input_1', 'tokenizer', LanIds.zh,
+                           min_mask_token, max_mask_token, max_ratio_of_sent_len, keep_origin_rate],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
             'show_dict': {'input_1': 'input_1', 'ground_truth_1': 'ground_truth_1',
                           'lan_idx_for_input_1': 'lan_idx_for_input_1', 'lan_idx_for_gt_1': 'lan_idx_for_gt_1'},
@@ -84,8 +85,8 @@ def get_pl(min_mask_token, max_mask_token, max_ratio_of_sent_len, keep_origin_ra
         {
             'name': 'MLM_for_lan_2',
             'func': MLM_list_of_list_of_words,
-            'input_keys': ['input_2', 'tokenizer', tar_lan_idx,
-                           min_mask_token, max_mask_token, max_ratio_of_sent_len, keep_origin_rate, mask_incr],
+            'input_keys': ['input_2', 'tokenizer', LanIds.en,
+                           min_mask_token, max_mask_token, max_ratio_of_sent_len, keep_origin_rate],
             'output_keys': ['input_2', 'ground_truth_2', 'lan_idx_for_input_2', 'lan_idx_for_gt_2'],
             'show_dict': {'input_2': 'input_2', 'ground_truth_2': 'ground_truth_2',
                           'lan_idx_for_input_2': 'lan_idx_for_input_2', 'lan_idx_for_gt_2': 'lan_idx_for_gt_2'},
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     }
 
     pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
-    pipeline += pl.sent_2_tokens + get_pl(1, 4, 0.2, 0.4, 0, 1, 3) + pl.MLM_encode + [
+    pipeline += pl.sent_2_tokens + get_pl(1, 4, 0.2, 0.2) + pl.MLM_encode + [
         {'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'tokenizer']}
     ]
 
