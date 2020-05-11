@@ -17,6 +17,13 @@ filter_zh_word = {
 
 filter_en_word = {
     'the': True,
+    'as': True,
+    'on': True,
+    'in': True,
+    'a': True,
+    'of': True,
+    'for': True,
+    'to': True,
 }
 
 
@@ -55,7 +62,7 @@ def zh_word(token, info_key='*'):
 
 
 def en_word(token, info_key='*'):
-    if token in filter_en_word or len(token) <= 1:
+    if token in filter_en_word or len(token) <= 3:
         return {} if info_key == '*' else []
 
     if token in __en_zh_dict:

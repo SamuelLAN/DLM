@@ -5,6 +5,12 @@ from pretrain.preprocess.dictionary import map_dict
 from pretrain.preprocess.config import Ids, LanIds
 from pretrain.preprocess.inputs.TLM import TLM_concat
 
+ratio_mode_0 = 0.6
+ratio_mode_1 = 0.15
+ratio_mode_2 = 0.25
+
+ratio_mode_0_1 = ratio_mode_0 + ratio_mode_1
+
 
 def CDLM_MLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2):
     zh_data = list(map(lambda x: CDLM_translation(x, _tokenizer, True, keep_origin_rate), list_of_zh_words))
@@ -164,8 +170,10 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
     # apply BPE for the translations
     translations_ids = list(map(lambda x: _tokenizer.encode(x + ' '), translations))
 
-    mode = random.randint(0, 2)
-    # mode = 0
+    mode = random.random()
+    mode = 0 if mode <= ratio_mode_0 else (1 if mode <= ratio_mode_0_1 else 2)
+    # mode = random.randint(0, 2)
+
     start = _tokenizer.vocab_size + Ids.start_nmt
     end = _tokenizer.vocab_size + Ids.end_nmt
 
@@ -368,12 +376,12 @@ if __name__ == '__main__':
         'max_tar_ground_seq_len': 8,
     }
 
-    tokenizer_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
-    tokenizer = utils.pipeline(tokenizer_pl,
-                               token_zh_data + origin_zh_data[:1000], token_en_data + origin_en_data[:1000], params)
+    # tokenizer_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
+    # tokenizer = utils.pipeline(tokenizer_pl,
+    #                            token_zh_data + list(origin_zh_data[:1000]), token_en_data + list(origin_en_data[:1000]), params)
 
-    # pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
-    pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
+    pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
+    # pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
     pipeline += pl.sent_2_tokens + combine_pl(0.2) + pl.CDLM_encode + [
         {'output_keys': [
             'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1', 'tokenizer']}
@@ -382,7 +390,9 @@ if __name__ == '__main__':
     print('\n------------------- Encoding -------------------------')
     x, y, lan_x, lan_y, soft_pos_y, tokenizer = utils.pipeline(
         preprocess_pipeline=pipeline,
-        lan_data_1=origin_zh_data[:1000], lan_data_2=origin_en_data[:1000], params={**params, 'tokenizer': tokenizer})
+        lan_data_1=origin_zh_data[:1000], lan_data_2=origin_en_data[:1000], params={**params,
+                                                                                    # 'tokenizer': tokenizer
+                                                                                    })
 
     print('\n----------------------------------------------')
     print(x.shape)

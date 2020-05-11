@@ -60,6 +60,6 @@ class Loader:
             return data * int(sample_rate) + data[: int(len_data * (sample_rate - int(sample_rate)))]
 
     def data(self):
-        return self.__src_data, self.__tar_data
+        return list(self.__src_data), list(self.__tar_data)
 
 
