@@ -18,7 +18,7 @@ import time
 from pretrain.models.transformer_mlm import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root, md5, get_relative_file_path
-from pretrain.load.zh_en import Loader
+from pretrain.load.zh_en_wmt_news import Loader
 
 
 class Train:

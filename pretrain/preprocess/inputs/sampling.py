@@ -1,4 +1,4 @@
-def __sample(_list, ratio):
+def sample(_list, ratio):
     """ sample data from list_of_sentences """
     if ratio <= 0:
         return []
@@ -9,8 +9,20 @@ def __sample(_list, ratio):
                _list[: int(len(_list) * (ratio - int(ratio)))]
 
 
-def sampling(src_data, tar_data, src_ratio=1.0, tar_ratio=1.0, dual_ratio=1.0):
-    src_list = __sample(src_data, src_ratio)
-    tar_list = __sample(tar_data, tar_ratio)
-    dual_list = __sample(list(zip(src_data, tar_data)), dual_ratio)
-    return src_list, tar_list, dual_list
+def sample_together(src_data, tar_data, ratio=1.0):
+    if ratio == 1.0:
+        return src_data, tar_data
+    src_list = sample(src_data, ratio)
+    tar_list = sample(tar_data, ratio)
+    return src_list, tar_list
+
+
+def sample_pl(ratio=1.0):
+    return [
+        {
+            'name': 'sample data',
+            'func': sample_together,
+            'input_keys': ['input_1', 'input_2', ratio],
+            'output_keys': ['input_1', 'input_2'],
+        },
+    ]

@@ -1,5 +1,5 @@
 import random
-from nmt.preprocess.corpus import wmt_news, um_corpus
+from nmt.preprocess.corpus import um_corpus
 
 
 class Loader:
@@ -30,7 +30,7 @@ class Loader:
                 en_data = []
                 for domain, val in domain_dict.items():
                     tmp_zh_data, tmp_en_data = um_corpus.zh_en(domain)
-                    sample_size = int(val / total * data_size)
+                    sample_size = int(val / total * int(data_size))
                     zh_data += tmp_zh_data[:sample_size]
                     en_data += tmp_en_data[:sample_size]
 

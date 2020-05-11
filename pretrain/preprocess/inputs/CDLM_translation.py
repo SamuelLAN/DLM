@@ -5,6 +5,8 @@ from pretrain.preprocess.dictionary import map_dict
 from pretrain.preprocess.config import Ids, LanIds
 from pretrain.preprocess.inputs.TLM import TLM_concat
 
+random_state = 42
+
 ratio_mode_0 = 0.6
 ratio_mode_1 = 0.15
 ratio_mode_2 = 0.25
@@ -19,6 +21,9 @@ def CDLM_MLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_
     data = zh_data + en_data
     data = list(filter(lambda x: x[0] and x[1] and x[2] and x[3] and x[4], data))
 
+    random.seed(random_state)
+    random.shuffle(data)
+
     _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = list(zip(*data))
     return _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs
 
@@ -30,6 +35,9 @@ def CDLM_TLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_
 
     data = list(filter(lambda x: x[0][0] and x[0][1], data))
     data = list(map(lambda x: TLM_concat(*x), data))
+
+    random.seed(random_state)
+    random.shuffle(data)
 
     _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = list(zip(*data))
     return _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs
@@ -364,6 +372,7 @@ if __name__ == '__main__':
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
     from pretrain.load.token_translation import Loader
+    from pretrain.preprocess.inputs.sampling import sample_pl
 
     token_loader = Loader(0.0, 1.0)
     token_zh_data, token_en_data = token_loader.data()
@@ -383,7 +392,7 @@ if __name__ == '__main__':
 
     pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
     # pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
-    pipeline += pl.sent_2_tokens + combine_pl(0.2) + pl.CDLM_encode + [
+    pipeline += pl.sent_2_tokens + sample_pl(2.0) + combine_pl(0.2) + pl.CDLM_encode + [
         {'output_keys': [
             'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1', 'tokenizer']}
     ]
