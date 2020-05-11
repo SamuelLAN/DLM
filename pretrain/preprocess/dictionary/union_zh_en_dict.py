@@ -10,7 +10,7 @@ __zh_en_dict = load_json(filtered_zh_en_dict_path)
 
 print('union dictionary ... ')
 
-delete_ens = list(filter(lambda x: '-' in x, __en_zh_dict.keys()))
+delete_ens = list(filter(lambda x: '-' in x or '/' in x or ' or ' in x, __en_zh_dict.keys()))
 for en in delete_ens:
     del __en_zh_dict[en]
 

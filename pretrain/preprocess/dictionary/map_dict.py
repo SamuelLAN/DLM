@@ -1,9 +1,13 @@
+import re
 import numpy as np
 from functools import reduce
 from lib.preprocess.utils import stem
 from lib.utils import load_json
-from pretrain.preprocess.config import filtered_union_en_zh_dict_path, filtered_union_zh_en_dict_path, merged_stem_dict_path
+from pretrain.preprocess.config import filtered_union_en_zh_dict_path, filtered_union_zh_en_dict_path, \
+    merged_stem_dict_path
 from pretrain.preprocess.dictionary.preprocess_string import filter_duplicate
+
+__reg_d = re.compile(r'^\d+(\.\d+)?$')
 
 __en_zh_dict = load_json(filtered_union_en_zh_dict_path)
 __zh_en_dict = load_json(filtered_union_zh_en_dict_path)
@@ -24,6 +28,9 @@ filter_en_word = {
     'of': True,
     'for': True,
     'to': True,
+    'over': True,
+    'towards': True,
+    'with': True,
 }
 
 
@@ -56,13 +63,13 @@ def __get_info(info, info_key='*'):
 
 
 def zh_word(token, info_key='*'):
-    if token in filter_zh_word or token not in __zh_en_dict:
+    if token in filter_zh_word or token not in __zh_en_dict or __reg_d.search(token):
         return {} if info_key == '*' else []
     return __get_info(__zh_en_dict[token], info_key)
 
 
 def en_word(token, info_key='*'):
-    if token in filter_en_word or len(token) <= 3:
+    if token in filter_en_word or len(token) <= 2 or __reg_d.search(token):
         return {} if info_key == '*' else []
 
     if token in __en_zh_dict:
@@ -150,7 +157,6 @@ def merge_conflict_samples(length, *args):
             pos[start: end] = len(samples)
 
     return samples
-
 
 # print('\nfinish loading dictionary')
 #

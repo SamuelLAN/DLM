@@ -126,10 +126,10 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
 
     # get all words or phrases that can be mapped with dictionary
     samples_to_be_selected = map_dict.merge_conflict_samples(len(list_of_words_for_a_sentence),
-                                                             map_word_pos,
-                                                             map_2_gram_pos,
+                                                             map_4_gram_pos,
                                                              map_3_gram_pos,
-                                                             map_4_gram_pos)
+                                                             map_2_gram_pos,
+                                                             map_word_pos)
 
     # only sample one word or phrase that can be mapped with dictionary
     sample = random.sample(samples_to_be_selected, 1)[0]
@@ -155,6 +155,7 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
         translations = list_of_info_for_2_gram[sample[0]]
     else:
         translations = list_of_info_for_word[sample[0]]
+        translations = list(filter(lambda x: x != list_of_words_for_a_sentence[sample[0]], translations))
 
     # filter some noise of the translations
     translations = list(filter(lambda x: x, translations))
@@ -219,7 +220,7 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
         ))
         _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
         # _soft_pos_output[1] = _soft_pos_output[0]
-        _soft_pos_output.pop(0)
+        # _soft_pos_output.pop(0)
 
         start = _tokenizer.vocab_size + Ids.start_cdlm_t_0
         end = _tokenizer.vocab_size + Ids.end_cdlm_t_0
