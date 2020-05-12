@@ -144,6 +144,36 @@ encode_pipeline_for_src = [
     },
 ]
 
+from pretrain.preprocess.dictionary.map_dict import decode_pos_id
+from pretrain.preprocess.config import Ids
+
+
+def decode_subword_idx_2_tokens_by_tfds(_tokenizer, list_of_list_token_idx):
+    """
+    decode subword_idx to string
+    :param
+        tokenizer (tfds object): a subword tokenizer built from corpus by tfds
+        list_of_list_token_idx (list): [
+            [12, 43, 2, 346, 436, 87, 876],   # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+            [32, 57, 89, 98, 96, 37],         # correspond to ['You', 'are', 'my', 'fri', 'end', 's'],
+            ...
+        ]
+    :return
+        list_of_list_token (list): [
+            ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+            ['You', 'are', 'my', 'fri', 'end', 's'],
+            ...
+        ]
+    """
+    # return list(map(lambda x: list(map(lambda a: tokenizer.decode([a]), x)), list_of_list_token_idx))
+    return list(map(lambda x: list(map(
+        lambda a: _tokenizer.decode([a]) if a <= _tokenizer.vocab_size else (
+            decode_pos_id(a, _tokenizer.vocab_size + Ids.end_cdlm_pos_2) + ' ' if decode_pos_id(
+                a, _tokenizer.vocab_size + Ids.end_cdlm_pos_2) else '<spe> '),
+        x
+    )), list_of_list_token_idx))
+
+
 decode_pipeline = [
     {
         'name': 'get_vocab_size',
@@ -160,7 +190,7 @@ decode_pipeline = [
     # },
     {
         'name': 'get_start_end_ids',
-        'func': lambda x: [0, x + 1, x + 2] + list(range(x + 5, x + 21)),
+        'func': lambda x: [0, x + 1, x + 2] + list(range(x + 5, x + 11)),
         'input_keys': ['vocab_size'],
         'output_keys': 'start_end_ids',
     },
@@ -194,7 +224,7 @@ decode_pipeline = [
     # },
     {
         'name': 'decode_subword_idx_2_tokens_by_tfds',
-        'func': utils.decode_subword_idx_2_tokens_by_tfds,
+        'func': decode_subword_idx_2_tokens_by_tfds,
         'input_keys': ['tokenizer', 'input_1'],
         'output_keys': 'input_1',
         'show_dict': {'lan': 'input_1'},

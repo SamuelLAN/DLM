@@ -60,8 +60,8 @@ def MLM(list_of_words_for_a_sentence, _tokenizer, lan_index,
     list_of_lan_idx_for_input = [lan_index] * int(len(masked_input) + 2)
     list_of_lan_idx_for_gt = [lan_index] * int(len(list_of_tar_token_idx) + 2)
 
-    start = _tokenizer.vocab_size + 1
-    end = _tokenizer.vocab_size + 2
+    start = _tokenizer.vocab_size + Ids.start_nmt
+    end = _tokenizer.vocab_size + Ids.end_nmt
 
     # add start end token
     masked_input = [start] + masked_input + [end]

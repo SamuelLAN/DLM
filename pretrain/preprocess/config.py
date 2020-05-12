@@ -22,26 +22,31 @@ filtered_pos_union_zh_en_dict_path = os.path.join(dictionary_dir, 'filtered_pos_
 
 # vocabulary index
 class Ids:
+    multi_task = False
+
     start_nmt = 1
     end_nmt = 2
     mask = 3
     sep = 4
-    start_cdlm_t_0 = 5
-    end_cdlm_t_0 = 6
-    start_cdlm_t_1 = 7
-    end_cdlm_t_1 = 8
+    start_mlm = 5
+    end_mlm = 6
+    start_cdlm_t_0 = 7
+    end_cdlm_t_0 = 8
     start_cdlm_t_2 = 9
     end_cdlm_t_2 = 10
-    start_cdlm_pos = 11
-    end_cdlm_pos = 12
-    start_cdlm_ner = 13
-    end_cdlm_ner = 14
-    start_cdlm_synonym = 15
-    end_cdlm_synonym = 16
-    start_cdlm_def = 17
-    end_cdlm_def = 18
+    start_cdlm_pos_0 = 11 if multi_task else 7
+    end_cdlm_pos_0 = 12 if multi_task else 8
+    start_cdlm_pos_2 = 13 if multi_task else 9
+    end_cdlm_pos_2 = 14 if multi_task else 10
+    start_cdlm_ner = 15 if multi_task else 7
+    end_cdlm_ner = 16 if multi_task else 8
+    start_cdlm_synonym = 17 if multi_task else 7
+    end_cdlm_synonym = 18 if multi_task else 8
+    start_cdlm_def = 19 if multi_task else 7
+    end_cdlm_def = 20 if multi_task else 8
 
 
 class LanIds:
     zh = 0
     en = 1
+    POS = 2

@@ -69,6 +69,9 @@ for k in delete_zhs:
 for k in delete_ens:
     del __en_zh_dict[k]
 
+__en_zh_dict = filter_duplicate(__en_zh_dict)
+__zh_en_dict = filter_duplicate(__zh_en_dict)
+
 write_json(filtered_pos_union_en_zh_dict_path, __en_zh_dict)
 write_json(filtered_pos_union_zh_en_dict_path, __zh_en_dict)
 

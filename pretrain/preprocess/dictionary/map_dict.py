@@ -37,6 +37,23 @@ pos_dict = {'abbr': 1, 'adj': 2, 'adv': 3, 'art': 4, 'aux': 5, 'c': 6, 'comb': 7
             'int': 11, 'interj': 12, 'n': 13, 'num': 14, 'o': 15, 'phr': 16, 'pref': 17, 'prep': 18, 'pron': 19,
             's': 20, 'st': 21, 'u': 22, 'v': 23}
 
+reverse_pos_dict = {1: 'abbr', 2: 'adj', 3: 'adv', 4: 'art', 5: 'aux', 6: 'c', 7: 'comb', 8: 'conj', 9: 'det',
+                    10: 'inc', 11: 'int', 12: 'interj', 13: 'n', 14: 'num', 15: 'o', 16: 'phr', 17: 'pref', 18: 'prep',
+                    19: 'pron', 20: 's', 21: 'st', 22: 'u', 23: 'v'}
+
+
+def pos_id(pos, offset):
+    if not pos or pos not in pos_dict:
+        return
+    return pos_dict[pos] + offset
+
+
+def decode_pos_id(_pos_id, offset):
+    _id = _pos_id - offset
+    if _id not in reverse_pos_dict:
+        return
+    return reverse_pos_dict[_id]
+
 
 def __merge_dict(dict_list):
     if not dict_list:
