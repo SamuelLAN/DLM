@@ -3,14 +3,14 @@ import numpy as np
 from functools import reduce
 from lib.preprocess.utils import stem
 from lib.utils import load_json
-from pretrain.preprocess.config import filtered_union_en_zh_dict_path, filtered_union_zh_en_dict_path, \
+from pretrain.preprocess.config import filtered_pos_union_en_zh_dict_path, filtered_pos_union_zh_en_dict_path, \
     merged_stem_dict_path
 from pretrain.preprocess.dictionary.preprocess_string import filter_duplicate
 
 __reg_d = re.compile(r'^\d+(\.\d+)?$')
 
-__en_zh_dict = load_json(filtered_union_en_zh_dict_path)
-__zh_en_dict = load_json(filtered_union_zh_en_dict_path)
+__en_zh_dict = load_json(filtered_pos_union_en_zh_dict_path)
+__zh_en_dict = load_json(filtered_pos_union_zh_en_dict_path)
 __stem_dict = load_json(merged_stem_dict_path)
 
 filter_zh_word = {
@@ -32,6 +32,10 @@ filter_en_word = {
     'towards': True,
     'with': True,
 }
+
+pos_dict = {'abbr': 1, 'adj': 2, 'adv': 3, 'art': 4, 'aux': 5, 'c': 6, 'comb': 7, 'conj': 8, 'det': 9, 'inc': 10,
+            'int': 11, 'interj': 12, 'n': 13, 'num': 14, 'o': 15, 'phr': 16, 'pref': 17, 'prep': 18, 'pron': 19,
+            's': 20, 'st': 21, 'u': 22, 'v': 23}
 
 
 def __merge_dict(dict_list):
@@ -185,3 +189,21 @@ def merge_conflict_samples(length, *args):
 # print(f, en_phrase(f, 'translation'))
 # print(g, en_phrase(g, 'translation'))
 # print(h, zh_phrase(h, 'translation'))
+
+
+# pos_list = []
+#
+# for zh, val in __zh_en_dict.items():
+#     if 'pos' not in val or not val['pos']:
+#         continue
+#     pos_list += val['pos']
+#     pos_list = list(set(pos_list))
+#
+# for en, val in __en_zh_dict.items():
+#     if 'pos' not in val or not val['pos']:
+#         continue
+#     pos_list += val['pos']
+#     pos_list = list(set(pos_list))
+#
+# print(pos_list)
+# print(len(pos_list))

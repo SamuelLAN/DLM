@@ -48,6 +48,7 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.preprocess.inputs.sampling import sample_pl
 
     origin_zh_data, origin_en_data = wmt_news.zh_en()
     params = {
@@ -59,7 +60,7 @@ if __name__ == '__main__':
     }
 
     pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
-    pipeline += pl.sent_2_tokens + get_pl(1, 4, 0.2, 0.2) + pl.TLM_encode + [
+    pipeline += pl.sent_2_tokens + sample_pl(3.0) + get_pl(1, 4, 0.2, 0.2) + pl.TLM_encode + [
         {'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'tokenizer']}
     ]
 

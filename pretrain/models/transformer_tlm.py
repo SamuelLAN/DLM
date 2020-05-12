@@ -1,7 +1,7 @@
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
-from pretrain.preprocess.inputs import MLM, pl
+from pretrain.preprocess.inputs import TLM, pl, sampling
 from lib.tf_models.transformer_mlm import Transformer
 from lib.tf_metrics.pretrain import tf_accuracy
 import tensorflow as tf
@@ -11,31 +11,30 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
-    name = 'transformer_for_MLM_zh_en'
+    name = 'transformer_for_TLM_zh_en'
 
-    MLM_params = {
-        'min_mask_token': 1,
-        'max_mask_token': 4,
-        'max_ratio_of_sent_len': 0.2,
+    TLM_params = {
+        'min_num': 1,
+        'max_num': 3,
+        'max_ratio': 0.2,
         'keep_origin_rate': 0.2,
-        'mask_incr': 3,
-        'src_lan_idx': 0,
-        'tar_lan_idx': 1,
     }
+
+    sample_rate = 3.0
 
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
-    MLM_pl = preprocess_pl + pl.sent_2_tokens + MLM.get_pl(**MLM_params) + pl.encode
+    TLM_pl = preprocess_pl + pl.sent_2_tokens + sampling.sample_pl(sample_rate) + TLM.get_pl(**TLM_params) + \
+             pl.TLM_encode
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 90000,  # approximate
+        'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 10,
         'max_tar_ground_seq_len': 10,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
-        'sample_um_ratio': 0.05,  # sample "sample_rate" percentage of data into dataset; > 0
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
     }
 

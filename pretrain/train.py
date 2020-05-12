@@ -15,10 +15,11 @@ if gpus:
 
 import os
 import time
-from pretrain.models.transformer_mlm import Model
+from pretrain.models.transformer_tlm import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root, md5, get_relative_file_path
-from pretrain.load.zh_en_wmt_news import Loader
+from pretrain.load.zh_en_wmt_news import Loader as Loader_wmt_news
+from pretrain.load.zh_en_news_commentary import Loader as Loader_news_commentary
 
 
 class Train:
@@ -68,9 +69,9 @@ class Train:
         print('\nLoading data ...')
 
         # load the data
-        tokenizer_loader = Loader(0.0, 1.0, Model.data_params['sample_ratio'], Model.data_params['sample_um_ratio'])
-        train_loader = Loader(0.0, 0.9, Model.data_params['sample_ratio'], Model.data_params['sample_um_ratio'])
-        test_loader = Loader(0.9, 1.0, Model.data_params['sample_ratio'], Model.data_params['sample_um_ratio'])
+        tokenizer_loader = Loader_wmt_news(0.0, 1.0, Model.data_params['sample_ratio'])
+        train_loader = Loader_wmt_news(0.0, 0.9, Model.data_params['sample_ratio'])
+        test_loader = Loader_wmt_news(0.9, 1.0, Model.data_params['sample_ratio'])
 
         # get data for tokenizer; if load from exist model, then do not need to regenerate the tokenizer
         load_model_params = Model.checkpoint_params['load_model']
@@ -104,7 +105,7 @@ class Train:
 
         # preprocess train data
         self.__train_x, self.__train_y, self.__train_lan_x, self.__train_lan_y = utils.pipeline(
-            Model.MLM_pl,
+            Model.TLM_pl,
             self.__train_src,
             self.__train_tar,
             {**Model.data_params, 'tokenizer': self.__tokenizer},
@@ -112,7 +113,7 @@ class Train:
 
         # preprocess test data
         self.__test_x, self.__test_y, self.__test_lan_x, self.__test_lan_y = utils.pipeline(
-            Model.MLM_pl,
+            Model.TLM_pl,
             self.__test_src,
             self.__test_tar,
             {**Model.data_params, 'tokenizer': self.__tokenizer},

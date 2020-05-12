@@ -374,8 +374,8 @@ if __name__ == '__main__':
     from pretrain.load.token_translation import Loader
     from pretrain.preprocess.inputs.sampling import sample_pl
 
-    token_loader = Loader(0.0, 1.0)
-    token_zh_data, token_en_data = token_loader.data()
+    # token_loader = Loader(0.0, 1.0)
+    # token_zh_data, token_en_data = token_loader.data()
 
     origin_zh_data, origin_en_data = wmt_news.zh_en()
     params = {

@@ -93,7 +93,8 @@ class Decoder(layers.Layer):
 class Transformer(BaseTransformer):
     def __init__(self, num_layers, d_model, num_heads, d_ff, input_vocab_size,
                  target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False, share_final=False):
-        super(Transformer, self).__init__()
+        super(Transformer, self).__init__(num_layers, d_model, num_heads, d_ff, input_vocab_size, target_vocab_size,
+                                          max_pe_input, max_pe_target, drop_rate, share_emb, share_final)
 
         self.__share_final = share_final
 

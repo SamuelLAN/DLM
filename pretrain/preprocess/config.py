@@ -16,6 +16,9 @@ filtered_zh_en_dict_path = os.path.join(dictionary_dir, 'filtered_zh_en_merged.j
 filtered_union_en_zh_dict_path = os.path.join(dictionary_dir, 'filtered_en_zh_merged_union.json')
 filtered_union_zh_en_dict_path = os.path.join(dictionary_dir, 'filtered_zh_en_merged_union.json')
 
+filtered_pos_union_en_zh_dict_path = os.path.join(dictionary_dir, 'filtered_pos_en_zh_merged_union.json')
+filtered_pos_union_zh_en_dict_path = os.path.join(dictionary_dir, 'filtered_pos_zh_en_merged_union.json')
+
 
 # vocabulary index
 class Ids:
