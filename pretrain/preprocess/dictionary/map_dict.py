@@ -6,6 +6,7 @@ from lib.utils import load_json
 from pretrain.preprocess.config import filtered_pos_union_en_zh_dict_path, filtered_pos_union_zh_en_dict_path, \
     merged_stem_dict_path
 from pretrain.preprocess.dictionary.preprocess_string import filter_duplicate
+from pretrain.preprocess.config import NERIds
 
 __reg_d = re.compile(r'^\d+(\.\d+)?$')
 
@@ -33,13 +34,26 @@ filter_en_word = {
     'with': True,
 }
 
-pos_dict = {'abbr': 1, 'adj': 2, 'adv': 3, 'art': 4, 'aux': 5, 'c': 6, 'comb': 7, 'conj': 8, 'det': 9, 'inc': 10,
-            'int': 11, 'interj': 12, 'n': 13, 'num': 14, 'o': 15, 'phr': 16, 'pref': 17, 'prep': 18, 'pron': 19,
-            's': 20, 'st': 21, 'u': 22, 'v': 23}
+pos_dict = {'abbr_B': 1, 'abbr_I': 2, 'abbr_O': 3, 'adj_B': 4, 'adj_I': 5, 'adj_O': 6, 'adv_B': 7, 'adv_I': 8,
+            'adv_O': 9, 'art_B': 10, 'art_I': 11, 'art_O': 12, 'aux_B': 13, 'aux_I': 14, 'aux_O': 15, 'c_B': 16,
+            'c_I': 17, 'c_O': 18, 'comb_B': 19, 'comb_I': 20, 'comb_O': 21, 'conj_B': 22, 'conj_I': 23, 'conj_O': 24,
+            'det_B': 25, 'det_I': 26, 'det_O': 27, 'inc_B': 28, 'inc_I': 29, 'inc_O': 30, 'int_B': 31, 'int_I': 32,
+            'int_O': 33, 'interj_B': 34, 'interj_I': 35, 'interj_O': 36, 'n_B': 37, 'n_I': 38, 'n_O': 39, 'num_B': 40,
+            'num_I': 41, 'num_O': 42, 'o_B': 43, 'o_I': 44, 'o_O': 45, 'phr_B': 46, 'phr_I': 47, 'phr_O': 48,
+            'pref_B': 49, 'pref_I': 50, 'pref_O': 51, 'prep_B': 52, 'prep_I': 53, 'prep_O': 54, 'pron_B': 55,
+            'pron_I': 56, 'pron_O': 57, 's_B': 58, 's_I': 59, 's_O': 60, 'st_B': 61, 'st_I': 62, 'st_O': 63, 'u_B': 64,
+            'u_I': 65, 'u_O': 66, 'v_B': 67, 'v_I': 68, 'v_O': 69}
 
-reverse_pos_dict = {1: 'abbr', 2: 'adj', 3: 'adv', 4: 'art', 5: 'aux', 6: 'c', 7: 'comb', 8: 'conj', 9: 'det',
-                    10: 'inc', 11: 'int', 12: 'interj', 13: 'n', 14: 'num', 15: 'o', 16: 'phr', 17: 'pref', 18: 'prep',
-                    19: 'pron', 20: 's', 21: 'st', 22: 'u', 23: 'v'}
+reverse_pos_dict = {1: 'abbr_B', 2: 'abbr_I', 3: 'abbr_O', 4: 'adj_B', 5: 'adj_I', 6: 'adj_O', 7: 'adv_B', 8: 'adv_I',
+                    9: 'adv_O', 10: 'art_B', 11: 'art_I', 12: 'art_O', 13: 'aux_B', 14: 'aux_I', 15: 'aux_O', 16: 'c_B',
+                    17: 'c_I', 18: 'c_O', 19: 'comb_B', 20: 'comb_I', 21: 'comb_O', 22: 'conj_B', 23: 'conj_I',
+                    24: 'conj_O', 25: 'det_B', 26: 'det_I', 27: 'det_O', 28: 'inc_B', 29: 'inc_I', 30: 'inc_O',
+                    31: 'int_B', 32: 'int_I', 33: 'int_O', 34: 'interj_B', 35: 'interj_I', 36: 'interj_O', 37: 'n_B',
+                    38: 'n_I', 39: 'n_O', 40: 'num_B', 41: 'num_I', 42: 'num_O', 43: 'o_B', 44: 'o_I', 45: 'o_O',
+                    46: 'phr_B', 47: 'phr_I', 48: 'phr_O', 49: 'pref_B', 50: 'pref_I', 51: 'pref_O', 52: 'prep_B',
+                    53: 'prep_I', 54: 'prep_O', 55: 'pron_B', 56: 'pron_I', 57: 'pron_O', 58: 's_B', 59: 's_I',
+                    60: 's_O', 61: 'st_B', 62: 'st_I', 63: 'st_O', 64: 'u_B', 65: 'u_I', 66: 'u_O', 67: 'v_B',
+                    68: 'v_I', 69: 'v_O'}
 
 
 def pos_id(pos, offset):
@@ -53,6 +67,20 @@ def decode_pos_id(_pos_id, offset):
     if _id not in reverse_pos_dict:
         return
     return reverse_pos_dict[_id]
+
+
+def decode_ner_id(_ner_id, offset):
+    _id = _ner_id - offset
+    if _id == NERIds.B:
+        return 'B'
+    elif _id == NERIds.M:
+        return 'M'
+    elif _id == NERIds.E:
+        return 'E'
+    elif _id == NERIds.O:
+        return 'O'
+    else:
+        return
 
 
 def __merge_dict(dict_list):

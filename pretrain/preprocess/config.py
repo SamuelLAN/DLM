@@ -38,15 +38,25 @@ class Ids:
     end_cdlm_pos_0 = 12 if multi_task else 8
     start_cdlm_pos_2 = 13 if multi_task else 9
     end_cdlm_pos_2 = 14 if multi_task else 10
-    start_cdlm_ner = 15 if multi_task else 7
-    end_cdlm_ner = 16 if multi_task else 8
-    start_cdlm_synonym = 17 if multi_task else 7
-    end_cdlm_synonym = 18 if multi_task else 8
-    start_cdlm_def = 19 if multi_task else 7
-    end_cdlm_def = 20 if multi_task else 8
+    start_cdlm_ner_0 = 15 if multi_task else 7
+    end_cdlm_ner_0 = 16 if multi_task else 8
+    start_cdlm_ner_2 = 17 if multi_task else 9
+    end_cdlm_ner_2 = 18 if multi_task else 10
+    start_cdlm_synonym = 19 if multi_task else 7
+    end_cdlm_synonym = 20 if multi_task else 8
+    start_cdlm_def = 21 if multi_task else 7
+    end_cdlm_def = 22 if multi_task else 8
+
+
+class NERIds:
+    B = 1
+    M = 2
+    E = 3
+    O = 4
 
 
 class LanIds:
     zh = 0
     en = 1
     POS = 2
+    NER = 3 if Ids.multi_task else 2

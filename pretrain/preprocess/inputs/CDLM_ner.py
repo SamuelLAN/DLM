@@ -2,23 +2,24 @@ import random
 import numpy as np
 from functools import reduce
 from pretrain.preprocess.dictionary import map_dict
-from pretrain.preprocess.config import Ids, LanIds
+from pretrain.preprocess.config import Ids, LanIds, NERIds
 from pretrain.preprocess.inputs.TLM import TLM_concat
 
 random_state = 42
 
 ratio_mode_0 = 0.3
 ratio_mode_1 = 0.15
-ratio_mode_2 = 0.55
+ratio_mode_2 = 0.5
 
 ratio_mode_0_1 = ratio_mode_0 + ratio_mode_1
 
 
-def CDLM_MLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
+def CDLM_MLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2,
+                    max_ratio=0.2, max_num=4):
     zh_data = list(map(
-        lambda x: CDLM_pos(x, _tokenizer, True, keep_origin_rate, max_ratio, max_num), list_of_zh_words))
+        lambda x: CDLM_ner(x, _tokenizer, True, keep_origin_rate, max_ratio, max_num), list_of_zh_words))
     en_data = list(map(
-        lambda x: CDLM_pos(x, _tokenizer, False, keep_origin_rate, max_ratio, max_num), list_of_en_words))
+        lambda x: CDLM_ner(x, _tokenizer, False, keep_origin_rate, max_ratio, max_num), list_of_en_words))
 
     data = zh_data + en_data
     data = list(filter(lambda x: x[0] and x[1] and x[2] and x[3] and x[4], data))
@@ -30,10 +31,11 @@ def CDLM_MLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_
     return _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs
 
 
-def CDLM_TLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
+def CDLM_TLM_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_origin_rate=0.2,
+                    max_ratio=0.2, max_num=4):
     data = list(zip(list_of_zh_words, list_of_en_words))
     data = list(map(
-        lambda x: CDLM_pos_for_zh_en(x[0], x[1], _tokenizer, keep_origin_rate, max_ratio, max_num), data))
+        lambda x: CDLM_ner_for_zh_en(x[0], x[1], _tokenizer, keep_origin_rate, max_ratio, max_num), data))
 
     data = list(filter(lambda x: x[0][0] and x[0][1], data))
     data = list(map(lambda x: TLM_concat(*x), data))
@@ -54,7 +56,7 @@ def CDLM_combine_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_ori
 
         # if TLM sample
         if random.random() < TLM_ratio:
-            _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = CDLM_pos_for_zh_en(
+            _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs = CDLM_ner_for_zh_en(
                 list_of_zh_word, list_of_en_word, _tokenizer, keep_origin_rate, max_ratio, max_num
             )
 
@@ -65,9 +67,9 @@ def CDLM_combine_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_ori
 
         # MLM sample
         else:
-            zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output = CDLM_pos(
+            zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output = CDLM_ner(
                 list_of_zh_word, _tokenizer, True, keep_origin_rate, max_ratio, max_num)
-            en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output = CDLM_pos(
+            en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output = CDLM_ner(
                 list_of_en_word, _tokenizer, False, keep_origin_rate, max_ratio, max_num)
 
             if zh_input and zh_output and zh_lan_input and zh_lan_output and zh_soft_pos_output:
@@ -79,30 +81,30 @@ def CDLM_combine_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_ori
     return _inputs, _outputs, _lan_inputs, _lan_outputs, _soft_pos_outputs
 
 
-def CDLM_pos_for_zh_en(list_of_zh_word, list_of_en_word, _tokenizer, keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
-    zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output = CDLM_pos(
+def CDLM_ner_for_zh_en(list_of_zh_word, list_of_en_word, _tokenizer, keep_origin_rate=0.2,
+                       max_ratio=0.2, max_num=4):
+    zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output = CDLM_ner(
         list_of_zh_word, _tokenizer, True, keep_origin_rate, max_ratio, max_num)
-    en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output = CDLM_pos(
+    en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output = CDLM_ner(
         list_of_en_word, _tokenizer, False, keep_origin_rate, max_ratio, max_num)
     return [zh_input, en_input], [zh_output, en_output], [zh_lan_input, en_lan_input], \
            [zh_lan_output, en_lan_output], [zh_soft_pos_output, en_soft_pos_output]
 
 
-def get_POS_ids(x, offset, len_words):
-    if len_words == 1:
-        return [map_dict.pos_id(x + '_O', offset)]
-    else:
-        return [map_dict.pos_id(x + '_B', offset)] + [map_dict.pos_id(x + '_I', offset)] * (len_words - 1)
-
-
-def get_POSs_ids(POSs, sample, list_of_list_token_idx, offset):
+def get_ner_ids(sample, offset, list_of_list_token_idx):
     words = list_of_list_token_idx[sample[0]: sample[1]]
     words = reduce(lambda a, b: a + b, words)
-    len_words = len(words)
-    return list(map(lambda x: get_POS_ids(x, offset, len_words), POSs))
+
+    n = len(words)
+    if n == 1:
+        return [NERIds.O + offset]
+    elif n == 2:
+        return [NERIds.B + offset, NERIds.E + offset]
+    else:
+        return [NERIds.B + offset] + [NERIds.M + offset] * (n - 2) + [NERIds.E + offset]
 
 
-def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
+def CDLM_ner(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
     """
 
     :params
@@ -122,26 +124,46 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
 
     # get n grams
     list_of_token = list(map(lambda x: x.strip(), list_of_words_for_a_sentence[:-1]))
+    list_of_2_gram = map_dict.n_grams(list_of_token, 2)
+    list_of_3_gram = map_dict.n_grams(list_of_token, 3)
+    list_of_4_gram = map_dict.n_grams(list_of_token, 4)
 
     # map dictionary
     map_word = map_dict.zh_word if is_zh else map_dict.en_word
-    info_key = 'pos'
+    map_phrase = map_dict.zh_phrase if is_zh else map_dict.en_phrase
+    info_key = 'translation'
 
     list_of_info_for_word = list(map(lambda x: map_word(x, info_key), list_of_token))
+    list_of_info_for_2_gram = list(map(lambda x: map_phrase(x, info_key), list_of_2_gram))
+    list_of_info_for_3_gram = list(map(lambda x: map_phrase(x, info_key), list_of_3_gram))
+    list_of_info_for_4_gram = list(map(lambda x: map_phrase(x, info_key), list_of_4_gram))
 
     # find the position that the corresponding word can be mapped with dictionary
     map_word_pos = map_dict.map_pos(list_of_info_for_word, 1)
+    map_2_gram_pos = map_dict.map_pos(list_of_info_for_2_gram, 2)
+    map_3_gram_pos = map_dict.map_pos(list_of_info_for_3_gram, 3)
+    map_4_gram_pos = map_dict.map_pos(list_of_info_for_4_gram, 4)
 
     # if no map with dictionary
-    if not map_word_pos:
+    if not map_word_pos and not map_2_gram_pos and not map_3_gram_pos and not map_4_gram_pos:
         return [], [], [], [], []
 
     # BPE for each word
     list_of_list_token_idx = list(map(lambda x: _tokenizer.encode(x), list_of_words_for_a_sentence))
 
     # get all words or phrases that can be mapped with dictionary
-    samples_to_be_selected = map_dict.merge_conflict_samples(len(list_of_words_for_a_sentence),
-                                                             map_word_pos)
+    if map_2_gram_pos or map_3_gram_pos or map_4_gram_pos:
+        samples_to_be_selected = map_dict.merge_conflict_samples(len(list_of_words_for_a_sentence),
+                                                                 map_4_gram_pos,
+                                                                 map_3_gram_pos,
+                                                                 map_2_gram_pos)
+
+    else:
+        samples_to_be_selected = map_dict.merge_conflict_samples(len(list_of_words_for_a_sentence),
+                                                                 map_4_gram_pos,
+                                                                 map_3_gram_pos,
+                                                                 map_2_gram_pos,
+                                                                 map_word_pos)
 
     mode = random.random()
     mode = 0 if mode <= ratio_mode_0 else (1 if mode <= ratio_mode_0_1 else 2)
@@ -170,29 +192,25 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
     _lan_output = []
     _soft_pos_output = []
 
-    POSs = list_of_info_for_word[sample[0]]
-    POSs_list = [list_of_info_for_word[_sample[0]] for _sample in samples]
+    # for mode 0, we only need one sample
+    offset = _tokenizer.vocab_size + Ids.end_cdlm_ner_2
+    ner_ids = get_ner_ids(sample, offset, list_of_list_token_idx)
 
-    if not POSs and not POSs_list:
+    # for mode 1 and 2, we would need multiple samples
+    ner_ids_list = [get_ner_ids(_sample, offset, list_of_list_token_idx) for _sample in samples]
+
+    if not ner_ids and not ner_ids_list:
         return [], [], [], [], []
 
-    offset = _tokenizer.vocab_size + Ids.end_cdlm_pos_2
-
-    POS_ids = get_POSs_ids(POSs, sample, list_of_list_token_idx, offset)
-    POS_ids_list = [get_POSs_ids(_POSs, samples[i], list_of_list_token_idx, offset) for i, _POSs in
-                    enumerate(POSs_list)]
-    # POS_ids = list(map(lambda x: map_dict.pos_id(x, offset), POSs))
-    # POS_ids_list = [list(map(lambda x: map_dict.pos_id(x, offset), _POSs)) for _POSs in POSs_list]
-
-    mode = random.random()
-    mode = 0 if mode <= ratio_mode_0 else (1 if mode <= ratio_mode_0_1 else 2)
+    # mode = random.random()
+    # mode = 0 if mode <= ratio_mode_0 else (1 if mode <= ratio_mode_0_1 else 2)
     # mode = random.randint(0, 2)
 
     start = _tokenizer.vocab_size + Ids.start_nmt
     end = _tokenizer.vocab_size + Ids.end_nmt
 
     # replace the masked word with <mask>, and
-    #    let the ground truth be its corresponding POS
+    #    let the ground truth be its corresponding NER
     if mode == 0:
 
         index = 0
@@ -215,21 +233,29 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
             _lan_input += [src_lan_idx] * len(list_of_list_token_idx[index])
             index += 1
 
-        POS_ids.sort()
-        POS_ids = list(map(lambda x: [sep_idx] + x, POS_ids[:3]))
+        # translations_ids.sort()
+        # new_translations_ids = list(map(lambda x: [sep_idx] + x, translations_ids[:3]))
 
         # get token idxs for output
-        _output = reduce(lambda a, b: a + b, POS_ids)
-        _output.pop(0)
+        _output = ner_ids
 
         # get language index for output
-        _lan_output = [LanIds.POS] * len(_output)
+        _lan_output = [LanIds.NER] * len(_output)
 
         # get soft position for output
-        _soft_pos_output = pos_for_mask[:1] * len(_output)
+        # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
+        _soft_pos_output = list(
+            map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(_output))))
+        # _soft_pos_output = list(map(
+        #     lambda x: list(map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
+        #     new_translations_ids
+        # ))
+        # _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
+        # _soft_pos_output[1] = _soft_pos_output[0]
+        # _soft_pos_output.pop(0)
 
-        start = _tokenizer.vocab_size + Ids.start_cdlm_pos_0
-        end = _tokenizer.vocab_size + Ids.end_cdlm_pos_0
+        start = _tokenizer.vocab_size + Ids.start_cdlm_ner_0
+        end = _tokenizer.vocab_size + Ids.end_cdlm_ner_0
 
     # replace the masked word with <mask>, and
     #    let the ground truth be the original word
@@ -275,7 +301,7 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
         start = _tokenizer.vocab_size + Ids.start_mlm
         end = _tokenizer.vocab_size + Ids.end_mlm
 
-    # replace the masked word with its POS, and let the ground truth be its original word
+    # replace the masked word with its translation, and let the ground truth be its original word
     elif mode == 2:
 
         index = 0
@@ -289,14 +315,12 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
 
                 _pos = [len(_input)]
 
-                tmp_input = random.sample(POS_ids_list[sample_idx], 1)
-                tmp_input = reduce(lambda a, b: a + b, tmp_input)
-                _input += tmp_input
+                _input += ner_ids_list[sample_idx]
 
                 _pos.append(len(_input))
                 pos_for_mask.append(_pos)
 
-                _lan_input += [LanIds.POS] * len(tmp_input)
+                _lan_input += [LanIds.NER] * len(ner_ids_list[sample_idx])
                 index = sample_end
                 continue
 
@@ -328,8 +352,8 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
         #     map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(_output))))
         # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
 
-        start = _tokenizer.vocab_size + Ids.start_cdlm_pos_2
-        end = _tokenizer.vocab_size + Ids.end_cdlm_pos_2
+        start = _tokenizer.vocab_size + Ids.start_cdlm_ner_2
+        end = _tokenizer.vocab_size + Ids.end_cdlm_ner_2
 
     # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
     #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
@@ -349,7 +373,7 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
 def MLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
     return [
         {
-            'name': 'CDLM_translation_MLM_sample',
+            'name': 'CDLM_ner_MLM_sample',
             'func': CDLM_MLM_sample,
             'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate, max_ratio, max_num],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
@@ -363,7 +387,7 @@ def MLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
 def TLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
     return [
         {
-            'name': 'CDLM_translation_MLM_sample',
+            'name': 'CDLM_ner_MLM_sample',
             'func': CDLM_TLM_sample,
             'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate, max_ratio, max_num],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
@@ -377,7 +401,7 @@ def TLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
 def combine_pl(keep_origin_rate=0.2, TLM_ratio=0.5, max_ratio=0.2, max_num=4):
     return [
         {
-            'name': 'CDLM_translation_combine_sample',
+            'name': 'CDLM_ner_combine_sample',
             'func': CDLM_combine_sample,
             'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate, TLM_ratio, max_ratio, max_num],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
@@ -404,8 +428,8 @@ if __name__ == '__main__':
         'vocab_size': 40000,
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'max_src_ground_seq_len': 16,
-        'max_tar_ground_seq_len': 16,
+        'max_src_ground_seq_len': 12,
+        'max_tar_ground_seq_len': 12,
     }
 
     # tokenizer_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer

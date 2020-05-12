@@ -144,7 +144,7 @@ encode_pipeline_for_src = [
     },
 ]
 
-from pretrain.preprocess.dictionary.map_dict import decode_pos_id
+from pretrain.preprocess.dictionary.map_dict import decode_pos_id, decode_ner_id
 from pretrain.preprocess.config import Ids
 
 
@@ -169,6 +169,8 @@ def decode_subword_idx_2_tokens_by_tfds(_tokenizer, list_of_list_token_idx):
     return list(map(lambda x: list(map(
         lambda a: _tokenizer.decode([a]) if a <= _tokenizer.vocab_size else (
             decode_pos_id(a, _tokenizer.vocab_size + Ids.end_cdlm_pos_2) + ' ' if decode_pos_id(
+                # decode_ner_id(a, _tokenizer.vocab_size + Ids.end_cdlm_ner_2) + ' ' if decode_ner_id(
+                #     a, _tokenizer.vocab_size + Ids.end_cdlm_ner_2) else '<spe> '),
                 a, _tokenizer.vocab_size + Ids.end_cdlm_pos_2) else '<spe> '),
         x
     )), list_of_list_token_idx))
