@@ -3,7 +3,7 @@ from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
 from pretrain.preprocess.inputs import TLM, pl, sampling
 from lib.tf_models.transformer_mlm import Transformer
-from lib.tf_metrics.pretrain import tf_accuracy
+from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 import tensorflow as tf
 
 keras = tf.keras
@@ -64,7 +64,7 @@ class Model(BaseModel):
         **BaseModel.compile_params,
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'label_smooth': True,
-        'metrics': [tf_accuracy],
+        'metrics': [tf_accuracy, tf_perplexity],
     }
 
     monitor_params = {

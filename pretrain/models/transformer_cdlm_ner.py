@@ -1,10 +1,10 @@
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
-from pretrain.preprocess.inputs import CDLM_pos
+from pretrain.preprocess.inputs import CDLM_ner
 from pretrain.preprocess.inputs.sampling import sample_pl
 from pretrain.preprocess.inputs.pl import CDLM_encode, sent_2_tokens
 from pretrain.preprocess.inputs.decode import decode_pl as d_pl
-from lib.tf_metrics.pretrain import tf_accuracy
+from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 from pretrain.preprocess.config import Ids
 from pretrain.models.transformer_cdlm_translate import Model as BaseModel
 import tensorflow as tf
@@ -26,7 +26,7 @@ class Model(BaseModel):
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 80000,  # approximate
+        'vocab_size': 10000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 16,
@@ -40,8 +40,8 @@ class Model(BaseModel):
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
     encode_pl = preprocess_pl + sent_2_tokens + sample_pl(data_params['over_sample_rate']) + \
-                CDLM_pos.combine_pl(**pretrain_params) + CDLM_encode
-    decode_pl = d_pl('')
+                CDLM_ner.combine_pl(**pretrain_params) + CDLM_encode
+    decode_pl = d_pl('ner')
 
     model_params = {
         **BaseModel.model_params,
@@ -55,6 +55,7 @@ class Model(BaseModel):
         'drop_rate': 0.1,
         'share_emb': True,
         'share_final': False,
+        'lan_vocab_size': 3,
     }
 
     train_params = {
@@ -70,7 +71,7 @@ class Model(BaseModel):
         **BaseModel.compile_params,
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'label_smooth': True,
-        'metrics': [tf_accuracy],
+        'metrics': [tf_accuracy, tf_perplexity],
     }
 
     monitor_params = {

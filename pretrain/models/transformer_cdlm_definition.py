@@ -1,10 +1,10 @@
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
-from pretrain.preprocess.inputs import CDLM_pos
+from pretrain.preprocess.inputs import CDLM_definition
 from pretrain.preprocess.inputs.sampling import sample_pl
 from pretrain.preprocess.inputs.pl import CDLM_encode, sent_2_tokens
 from pretrain.preprocess.inputs.decode import decode_pl as d_pl
-from lib.tf_metrics.pretrain import tf_accuracy
+from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 from pretrain.preprocess.config import Ids
 from pretrain.models.transformer_cdlm_translate import Model as BaseModel
 import tensorflow as tf
@@ -40,7 +40,7 @@ class Model(BaseModel):
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
     encode_pl = preprocess_pl + sent_2_tokens + sample_pl(data_params['over_sample_rate']) + \
-                CDLM_pos.combine_pl(**pretrain_params) + CDLM_encode
+                CDLM_definition.combine_pl(**pretrain_params) + CDLM_encode
     decode_pl = d_pl('')
 
     model_params = {
@@ -55,6 +55,7 @@ class Model(BaseModel):
         'drop_rate': 0.1,
         'share_emb': True,
         'share_final': False,
+        'lan_vocab_size': 2,
     }
 
     train_params = {
@@ -70,7 +71,7 @@ class Model(BaseModel):
         **BaseModel.compile_params,
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'label_smooth': True,
-        'metrics': [tf_accuracy],
+        'metrics': [tf_accuracy, tf_perplexity],
     }
 
     monitor_params = {
@@ -80,7 +81,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [],  # [name, time]
+        'load_model': ['transformer_CDLM_definition_wmt_news', '2020_05_13_17_28_56'],  # [name, time]
         # 'load_model': ['transformer_for_MLM_zh_en', '2020_04_26_15_19_16'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }

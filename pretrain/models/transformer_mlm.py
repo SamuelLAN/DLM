@@ -6,7 +6,7 @@ from pretrain.preprocess.inputs.sampling import sample_pl
 from pretrain.preprocess.inputs.decode import decode_pl as d_pl
 from lib.preprocess import utils
 from lib.tf_models.transformer_mlm import Transformer
-from lib.tf_metrics.pretrain import tf_accuracy
+from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 import tensorflow as tf
 
 keras = tf.keras
@@ -68,7 +68,7 @@ class Model(BaseModel):
         **BaseModel.compile_params,
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'label_smooth': True,
-        'metrics': [tf_accuracy],
+        'metrics': [tf_accuracy, tf_perplexity],
     }
 
     monitor_params = {

@@ -1,3 +1,4 @@
+import copy
 import random
 import numpy as np
 from functools import reduce
@@ -176,7 +177,8 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
     if not POSs and not POSs_list:
         return [], [], [], [], []
 
-    offset = _tokenizer.vocab_size + Ids.end_cdlm_pos_2
+    # if Ids.multi_task:
+    offset = _tokenizer.vocab_size + Ids.offset_pos
 
     POS_ids = get_POSs_ids(POSs, sample, list_of_list_token_idx, offset)
     POS_ids_list = [get_POSs_ids(_POSs, samples[i], list_of_list_token_idx, offset) for i, _POSs in
@@ -217,16 +219,24 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
 
         POS_ids.sort()
         POS_ids = list(map(lambda x: [sep_idx] + x, POS_ids[:3]))
+        new_POS_ids = copy.deepcopy(POS_ids)
 
         # get token idxs for output
-        _output = reduce(lambda a, b: a + b, POS_ids)
+        _output = reduce(lambda a, b: a + b, new_POS_ids)
         _output.pop(0)
 
         # get language index for output
         _lan_output = [LanIds.POS] * len(_output)
 
         # get soft position for output
-        _soft_pos_output = pos_for_mask[:1] * len(_output)
+        _soft_pos_output = list(map(
+            lambda x: list(map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
+            POS_ids
+        ))
+        _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
+        _soft_pos_output[1] = _soft_pos_output[0]
+        _soft_pos_output.pop(0)
+        # _soft_pos_output = pos_for_mask[:1] * len(_output)
 
         start = _tokenizer.vocab_size + Ids.start_cdlm_pos_0
         end = _tokenizer.vocab_size + Ids.end_cdlm_pos_0

@@ -1,3 +1,4 @@
+import copy
 import random
 import numpy as np
 from functools import reduce
@@ -303,7 +304,8 @@ def CDLM_synonym(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_ra
             index += 1
 
         synonyms_ids.sort()
-        new_synonyms_ids = list(map(lambda x: [sep_idx] + x, synonyms_ids[:3]))
+        synonyms_ids = list(map(lambda x: [sep_idx] + x, synonyms_ids[:3]))
+        new_synonyms_ids = copy.deepcopy(synonyms_ids)
 
         # get token idxs for output
         _output = reduce(lambda a, b: a + b, new_synonyms_ids)
@@ -316,11 +318,11 @@ def CDLM_synonym(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_ra
         # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
         _soft_pos_output = list(map(
             lambda x: list(map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
-            new_synonyms_ids
+            synonyms_ids
         ))
         _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
-        # _soft_pos_output[1] = _soft_pos_output[0]
-        # _soft_pos_output.pop(0)
+        _soft_pos_output[1] = _soft_pos_output[0]
+        _soft_pos_output.pop(0)
 
         start = _tokenizer.vocab_size + Ids.start_cdlm_synonym_0
         end = _tokenizer.vocab_size + Ids.end_cdlm_synonym_0

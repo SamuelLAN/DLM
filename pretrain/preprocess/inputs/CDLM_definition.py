@@ -1,3 +1,4 @@
+import copy
 import random
 import numpy as np
 from functools import reduce
@@ -242,7 +243,8 @@ def CDLM_definition(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin
         index += 1
 
     definitions_ids.sort()
-    new_definitions_ids = list(map(lambda x: [sep_idx] + x, definitions_ids[:2]))
+    definitions_ids = list(map(lambda x: [sep_idx] + x, definitions_ids[:2]))
+    new_definitions_ids = copy.deepcopy(definitions_ids)
 
     # get token idxs for output
     _output = reduce(lambda a, b: a + b, new_definitions_ids)
@@ -255,11 +257,11 @@ def CDLM_definition(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin
     # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
     _soft_pos_output = list(map(
         lambda x: list(map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
-        new_definitions_ids
+        definitions_ids
     ))
     _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
-    # _soft_pos_output[1] = _soft_pos_output[0]
-    # _soft_pos_output.pop(0)
+    _soft_pos_output[1] = _soft_pos_output[0]
+    _soft_pos_output.pop(0)
 
     start = _tokenizer.vocab_size + Ids.start_cdlm_def
     end = _tokenizer.vocab_size + Ids.end_cdlm_def

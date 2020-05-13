@@ -11,10 +11,10 @@ def decode_one_idx(x, _tokenizer, mode=''):
     else:
         tok = '<sep>'
         if mode == 'pos':
-            tok = decode_pos_id(x, v_size + Ids.end_cdlm_pos_2)
+            tok = decode_pos_id(x, v_size + Ids.offset_pos)
 
         elif mode == 'ner':
-            tok = decode_ner_id(x, v_size + Ids.end_cdlm_ner_2)
+            tok = decode_ner_id(x, v_size + Ids.offset_ner)
 
         if tok:
             return tok + ' '

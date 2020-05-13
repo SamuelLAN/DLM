@@ -193,7 +193,7 @@ def CDLM_ner(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
     _soft_pos_output = []
 
     # for mode 0, we only need one sample
-    offset = _tokenizer.vocab_size + Ids.end_cdlm_ner_2
+    offset = _tokenizer.vocab_size + Ids.offset_ner
     ner_ids = get_ner_ids(sample, offset, list_of_list_token_idx)
 
     # for mode 1 and 2, we would need multiple samples

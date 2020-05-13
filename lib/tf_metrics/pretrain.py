@@ -10,5 +10,6 @@ def tf_accuracy(y_true, y_pred):
 
 def tf_perplexity(y_true, y_pred):
     with tf.name_scope('perplexity'):
-        return tf.exp(- tf.reduce_sum(tf.math.log(y_pred) * y_true) / tf.cast(y_true.shape[0], dtype=tf.float32),
-                      name='perplexity')
+        y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
+        y_true = tf.cast(tf.one_hot(tf.cast(y_true, tf.int32), y_pred.shape[-1]), y_pred.dtype)
+        return tf.exp(tf.losses.categorical_crossentropy(y_true, y_pred))

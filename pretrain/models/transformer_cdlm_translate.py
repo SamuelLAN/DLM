@@ -7,7 +7,7 @@ from pretrain.preprocess.inputs.pl import CDLM_encode, sent_2_tokens
 from pretrain.preprocess.inputs.decode import decode_pl as d_pl
 from lib.tf_models.transformer_lan_soft_pos import Transformer
 from lib.tf_models.pos_embeddings import embedding as pos_embeddings
-from lib.tf_metrics.pretrain import tf_accuracy
+from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 from pretrain.preprocess.config import Ids
 import tensorflow as tf
 import numpy as np
@@ -73,13 +73,16 @@ class Model(BaseModel):
         **BaseModel.compile_params,
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'label_smooth': True,
-        'metrics': [tf_accuracy],
+        'metrics': [tf_accuracy, tf_perplexity],
     }
 
     monitor_params = {
         **BaseModel.monitor_params,
         'name': 'val_tf_accuracy',
         'mode': 'max',  # for the "name" monitor, the "min" is best;
+        'for_start': 'tf_accuracy',
+        'for_start_value': 0.05,
+        'for_start_mode': 'max',
     }
 
     checkpoint_params = {
