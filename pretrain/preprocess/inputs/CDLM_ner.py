@@ -301,7 +301,7 @@ def CDLM_ner(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
         start = _tokenizer.vocab_size + Ids.start_mlm
         end = _tokenizer.vocab_size + Ids.end_mlm
 
-    # replace the masked word with its translation, and let the ground truth be its original word
+    # replace the masked word with its ner, and let the ground truth be its original word
     elif mode == 2:
 
         index = 0
@@ -355,7 +355,7 @@ def CDLM_ner(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
         start = _tokenizer.vocab_size + Ids.start_cdlm_ner_2
         end = _tokenizer.vocab_size + Ids.end_cdlm_ner_2
 
-    # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
+    # replace the masked word with its ner, let the ground truth be the tag of the source sequence;
     #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
     # elif mode == 3:
     #     pass

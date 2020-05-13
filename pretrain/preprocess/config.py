@@ -42,8 +42,10 @@ class Ids:
     end_cdlm_ner_0 = 16 if multi_task else 8
     start_cdlm_ner_2 = 17 if multi_task else 9
     end_cdlm_ner_2 = 18 if multi_task else 10
-    start_cdlm_synonym = 19 if multi_task else 7
-    end_cdlm_synonym = 20 if multi_task else 8
+    start_cdlm_synonym_0 = 19 if multi_task else 7
+    end_cdlm_synonym_0 = 20 if multi_task else 8
+    start_cdlm_synonym_2 = 21 if multi_task else 9
+    end_cdlm_synonym_2 = 22 if multi_task else 10
     start_cdlm_def = 21 if multi_task else 7
     end_cdlm_def = 22 if multi_task else 8
 
