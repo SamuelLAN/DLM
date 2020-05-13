@@ -49,6 +49,7 @@ if __name__ == '__main__':
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
     from pretrain.preprocess.inputs.sampling import sample_pl
+    from pretrain.preprocess.inputs.decode import decode_pl
 
     origin_zh_data, origin_en_data = wmt_news.zh_en()
     params = {
@@ -76,5 +77,5 @@ if __name__ == '__main__':
     print(lan_y.shape)
 
     print('\n------------------- Decoding zh -------------------------')
-    x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
-    y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
+    x = utils.pipeline(decode_pl(''), x, None, {'tokenizer': tokenizer})
+    y = utils.pipeline(decode_pl(''), y, None, {'tokenizer': tokenizer})

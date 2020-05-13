@@ -326,6 +326,7 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.preprocess.inputs.decode import decode_pl
     from pretrain.load.token_translation import Loader
     from pretrain.preprocess.inputs.sampling import sample_pl
 
@@ -367,5 +368,5 @@ if __name__ == '__main__':
     print(soft_pos_y.shape)
 
     print('\n------------------- Decoding -------------------------')
-    x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
-    y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
+    x = utils.pipeline(decode_pl(''), x, None, {'tokenizer': tokenizer})
+    y = utils.pipeline(decode_pl(''), y, None, {'tokenizer': tokenizer})

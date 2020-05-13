@@ -82,7 +82,7 @@ def CDLM_combine_sample(list_of_zh_words, list_of_en_words, _tokenizer, keep_ori
 
 
 def CDLM_synonym_for_zh_en(list_of_zh_word, list_of_en_word, _tokenizer, keep_origin_rate=0.2,
-                               max_ratio=0.2, max_num=4):
+                           max_ratio=0.2, max_num=4):
     zh_input, zh_output, zh_lan_input, zh_lan_output, zh_soft_pos_output = CDLM_synonym(
         list_of_zh_word, _tokenizer, True, keep_origin_rate, max_ratio, max_num)
     en_input, en_output, en_lan_input, en_lan_output, en_soft_pos_output = CDLM_synonym(
@@ -213,8 +213,6 @@ def CDLM_synonym(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_ra
         ))
     samples.sort()
 
-    samples_start, samples_end = list(zip(*samples))
-
     # get token index
     mask_idx = _tokenizer.vocab_size + Ids.mask
     sep_idx = _tokenizer.vocab_size + Ids.sep
@@ -230,7 +228,7 @@ def CDLM_synonym(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_ra
 
     # for mode 0, we only need one sample
     synonyms = get_synonyms(sample, list_of_info_for_4_gram, list_of_info_for_3_gram, list_of_info_for_2_gram,
-                                list_of_info_for_word, list_of_words_for_a_sentence, is_zh)
+                            list_of_info_for_word, list_of_words_for_a_sentence, is_zh)
 
     # for mode 1 and 2, we would need multiple samples
     synonyms_list = [
@@ -252,6 +250,11 @@ def CDLM_synonym(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_ra
     if not synonyms and not synonyms_list:
         return [], [], [], [], []
 
+    if samples:
+        samples_start, samples_end = list(zip(*samples))
+    else:
+        samples_start = samples_end = []
+
     # apply BPE for the synonyms
     synonyms_ids = list(map(lambda x: _tokenizer.encode(x + ' '), synonyms))
     synonyms_ids_list = list(map(
@@ -261,6 +264,12 @@ def CDLM_synonym(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_ra
 
     if not synonyms_list and synonyms:
         mode = 0
+    elif not synonyms:
+        mode = random.random()
+        if mode < (ratio_mode_1 / (ratio_mode_1 + ratio_mode_2)):
+            mode = 1
+        else:
+            mode = 2
 
     # mode = random.random()
     # mode = 0 if mode <= ratio_mode_0 else (1 if mode <= ratio_mode_0_1 else 2)
@@ -477,6 +486,7 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.preprocess.inputs.decode import decode_pl
     from pretrain.load.token_translation import Loader
     from pretrain.preprocess.inputs.sampling import sample_pl
 
@@ -518,5 +528,5 @@ if __name__ == '__main__':
     print(soft_pos_y.shape)
 
     print('\n------------------- Decoding -------------------------')
-    x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
-    y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
+    x = utils.pipeline(decode_pl(''), x, None, {'tokenizer': tokenizer})
+    y = utils.pipeline(decode_pl(''), y, None, {'tokenizer': tokenizer})

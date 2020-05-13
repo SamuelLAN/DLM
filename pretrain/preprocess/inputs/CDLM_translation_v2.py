@@ -1,3 +1,4 @@
+import copy
 import random
 import numpy as np
 from functools import reduce
@@ -183,8 +184,6 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
         ))
     samples.sort()
 
-    samples_start, samples_end = list(zip(*samples))
-
     # get token index
     mask_idx = _tokenizer.vocab_size + Ids.mask
     sep_idx = _tokenizer.vocab_size + Ids.sep
@@ -221,6 +220,11 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
     if not translations and not translations_list:
         return [], [], [], [], []
 
+    if samples:
+        samples_start, samples_end = list(zip(*samples))
+    else:
+        samples_start = samples_end = []
+
     # apply BPE for the translations
     translations_ids = list(map(lambda x: _tokenizer.encode(x + ' '), translations))
     translations_ids_list = list(map(
@@ -230,6 +234,12 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
 
     if not translations_list and translations:
         mode = 0
+    elif not translations:
+        mode = random.random()
+        if mode < (ratio_mode_1 / (ratio_mode_1 + ratio_mode_2)):
+            mode = 1
+        else:
+            mode = 2
 
     # mode = random.random()
     # mode = 0 if mode <= ratio_mode_0 else (1 if mode <= ratio_mode_0_1 else 2)
@@ -263,7 +273,8 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
             index += 1
 
         translations_ids.sort()
-        new_translations_ids = list(map(lambda x: [sep_idx] + x, translations_ids[:3]))
+        translations_ids = list(map(lambda x: [sep_idx] + x, translations_ids[:3]))
+        new_translations_ids = copy.deepcopy(translations_ids)
 
         # get token idxs for output
         _output = reduce(lambda a, b: a + b, new_translations_ids)
@@ -276,11 +287,11 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
         # _soft_pos_output = [pos_for_mask[0]] * int(len(_output))
         _soft_pos_output = list(map(
             lambda x: list(map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
-            new_translations_ids
+            translations_ids
         ))
         _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
         # _soft_pos_output[1] = _soft_pos_output[0]
-        # _soft_pos_output.pop(0)
+        _soft_pos_output.pop(0)
 
         start = _tokenizer.vocab_size + Ids.start_cdlm_t_0
         end = _tokenizer.vocab_size + Ids.end_cdlm_t_0
@@ -389,6 +400,16 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
     # elif mode == 3:
     #     pass
 
+    if np.sum(np.array(_soft_pos_output) > 60) and len(_input) <= 60:
+        print('\n###################################')
+        print(list_of_words_for_a_sentence)
+        print(len(_input), _input)
+        print(len(_output), _output)
+        print(len(_lan_input), _lan_input)
+        print(len(_lan_output), _lan_output)
+        print(len(_soft_pos_output), _soft_pos_output)
+        print('')
+
     # add <start> <end> token
     _input = [start] + _input + [end]
     _output = [start] + _output + [end]
@@ -446,6 +467,7 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.preprocess.inputs.decode import decode_pl
     from pretrain.load.token_translation import Loader
     from pretrain.preprocess.inputs.sampling import sample_pl
 
@@ -454,7 +476,7 @@ if __name__ == '__main__':
 
     origin_zh_data, origin_en_data = wmt_news.zh_en()
     params = {
-        'vocab_size': 45000,
+        'vocab_size': 10000,
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 12,
@@ -475,7 +497,7 @@ if __name__ == '__main__':
     print('\n------------------- Encoding -------------------------')
     x, y, lan_x, lan_y, soft_pos_y, tokenizer = utils.pipeline(
         preprocess_pipeline=pipeline,
-        lan_data_1=origin_zh_data[:1000], lan_data_2=origin_en_data[:1000], params={**params,
+        lan_data_1=origin_zh_data, lan_data_2=origin_en_data, params={**params,
                                                                                     # 'tokenizer': tokenizer
                                                                                     })
 
@@ -487,5 +509,9 @@ if __name__ == '__main__':
     print(soft_pos_y.shape)
 
     print('\n------------------- Decoding -------------------------')
-    x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
-    y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
+    x = utils.pipeline(decode_pl(''), x[:2], None, {'tokenizer': tokenizer})
+    y = utils.pipeline(decode_pl(''), y[:2], None, {'tokenizer': tokenizer})
+    print(x[0])
+    print(soft_pos_y[0])
+    print(x[1])
+    print(soft_pos_y[1])

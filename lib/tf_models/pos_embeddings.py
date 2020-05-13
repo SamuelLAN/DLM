@@ -7,6 +7,10 @@ def __get_angles(pos, i, d_model):
 
 
 def embedding(max_position, d_model):
+    """
+    return:
+        pos_encoding (np.array): shape is [1, max_position, d_model]
+    """
     angle_rads = __get_angles(np.arange(max_position)[:, np.newaxis],
                               np.arange(d_model)[np.newaxis, :],
                               d_model)

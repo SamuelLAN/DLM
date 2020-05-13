@@ -2,6 +2,9 @@ from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
 from pretrain.preprocess.inputs import MLM, pl
+from pretrain.preprocess.inputs.sampling import sample_pl
+from pretrain.preprocess.inputs.decode import decode_pl as d_pl
+from lib.preprocess import utils
 from lib.tf_models.transformer_mlm import Transformer
 from lib.tf_metrics.pretrain import tf_accuracy
 import tensorflow as tf
@@ -11,31 +14,30 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
-    name = 'transformer_for_MLM_zh_en'
+    name = 'transformer_MLM'
 
-    MLM_params = {
+    sample_rate = 3.0
+
+    pretrain_params = {
         'min_mask_token': 1,
         'max_mask_token': 4,
         'max_ratio_of_sent_len': 0.2,
         'keep_origin_rate': 0.2,
-        'mask_incr': 3,
-        'src_lan_idx': 0,
-        'tar_lan_idx': 1,
     }
 
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
-    MLM_pl = preprocess_pl + pl.sent_2_tokens + MLM.get_pl(**MLM_params) + pl.encode
+    encode_pl = preprocess_pl + pl.sent_2_tokens + sample_pl(sample_rate) + MLM.get_pl(**pretrain_params) + pl.MLM_encode
+    decode_pl = d_pl('')
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 90000,  # approximate
+        'vocab_size': 10000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'max_src_ground_seq_len': 10,
-        'max_tar_ground_seq_len': 10,
+        'max_src_ground_seq_len': 12,
+        'max_tar_ground_seq_len': 12,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
-        'sample_um_ratio': 0.05,  # sample "sample_rate" percentage of data into dataset; > 0
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
     }
 
@@ -58,7 +60,7 @@ class Model(BaseModel):
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 800,
+        'epoch': 2,
         'early_stop': 20,
     }
 
@@ -76,7 +78,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [],  # [name, time]
+        'load_model': ['transformer_MLM_wmt_news', '2020_05_13_00_07_10'],  # [name, time]
         # 'load_model': ['transformer_for_MLM_zh_en', '2020_04_26_15_19_16'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }

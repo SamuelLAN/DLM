@@ -144,37 +144,6 @@ encode_pipeline_for_src = [
     },
 ]
 
-from pretrain.preprocess.dictionary.map_dict import decode_pos_id, decode_ner_id
-from pretrain.preprocess.config import Ids
-
-
-def decode_subword_idx_2_tokens_by_tfds(_tokenizer, list_of_list_token_idx):
-    """
-    decode subword_idx to string
-    :param
-        tokenizer (tfds object): a subword tokenizer built from corpus by tfds
-        list_of_list_token_idx (list): [
-            [12, 43, 2, 346, 436, 87, 876],   # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
-            [32, 57, 89, 98, 96, 37],         # correspond to ['You', 'are', 'my', 'fri', 'end', 's'],
-            ...
-        ]
-    :return
-        list_of_list_token (list): [
-            ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
-            ['You', 'are', 'my', 'fri', 'end', 's'],
-            ...
-        ]
-    """
-    # return list(map(lambda x: list(map(lambda a: tokenizer.decode([a]), x)), list_of_list_token_idx))
-    return list(map(lambda x: list(map(
-        lambda a: _tokenizer.decode([a]) if a <= _tokenizer.vocab_size else (
-            decode_pos_id(a, _tokenizer.vocab_size + Ids.end_cdlm_pos_2) + ' ' if decode_pos_id(
-                # decode_ner_id(a, _tokenizer.vocab_size + Ids.end_cdlm_ner_2) + ' ' if decode_ner_id(
-                #     a, _tokenizer.vocab_size + Ids.end_cdlm_ner_2) else '<spe> '),
-                a, _tokenizer.vocab_size + Ids.end_cdlm_pos_2) else '<spe> '),
-        x
-    )), list_of_list_token_idx))
-
 
 decode_pipeline = [
     {
@@ -183,33 +152,20 @@ decode_pipeline = [
         'input_keys': ['tokenizer'],
         'output_keys': 'vocab_size',
     },
-    # {
-    #     'name': 'remove_out_of_vocab_token_idx',
-    #     'func': utils.remove_out_of_vocab_token_idx,
-    #     'input_keys': ['input_1', 'vocab_size'],
-    #     'output_keys': 'input_1',
-    #     'show_dict': {'lan': 'input_1'},
-    # },
     {
-        'name': 'get_start_end_ids',
-        'func': lambda x: [0, x + 1, x + 2] + list(range(x + 5, x + 11)),
-        'input_keys': ['vocab_size'],
-        'output_keys': 'start_end_ids',
-    },
-    {
-        'name': 'remove_start_end_ids',
-        'func': utils.remove_some_token_idx,
-        'input_keys': ['input_1', 'start_end_ids'],
+        'name': 'remove_out_of_vocab_token_idx',
+        'func': utils.remove_out_of_vocab_token_idx,
+        'input_keys': ['input_1', 'vocab_size'],
         'output_keys': 'input_1',
         'show_dict': {'lan': 'input_1'},
     },
-    # {
-    #     'name': 'remove_pad_token_idx',
-    #     'func': utils.remove_some_token_idx,
-    #     'input_keys': ['input_1', [0]],
-    #     'output_keys': 'input_1',
-    #     'show_dict': {'lan': 'input_1'},
-    # },
+    {
+        'name': 'remove_pad_token_idx',
+        'func': utils.remove_some_token_idx,
+        'input_keys': ['input_1', [0]],
+        'output_keys': 'input_1',
+        'show_dict': {'lan': 'input_1'},
+    },
     # {
     #     'name': 'decode_to_sentences',
     #     'func': lambda tok, x: list(map(lambda a: tok.decode(a), x)),
@@ -226,7 +182,7 @@ decode_pipeline = [
     # },
     {
         'name': 'decode_subword_idx_2_tokens_by_tfds',
-        'func': decode_subword_idx_2_tokens_by_tfds,
+        'func': utils.decode_subword_idx_2_tokens_by_tfds,
         'input_keys': ['tokenizer', 'input_1'],
         'output_keys': 'input_1',
         'show_dict': {'lan': 'input_1'},

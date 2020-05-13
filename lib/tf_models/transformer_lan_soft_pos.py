@@ -66,7 +66,7 @@ class Decoder(layers.Layer):
                            for _ in range(num_layers)]
         self.dropout = layers.Dropout(drop_rate)
 
-    def call(self, x, enc_output, pos_y, lan_y, training, look_ahead_mask, padding_mask):
+    def call(self, x, enc_output, lan_y, pos_y, training, look_ahead_mask, padding_mask):
         seq_len = tf.shape(x)[1]
         attention_weights = {}
 
@@ -94,7 +94,8 @@ class Decoder(layers.Layer):
 class Transformer(BaseTransformer):
     def __init__(self, num_layers, d_model, num_heads, d_ff, input_vocab_size,
                  target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False, share_final=False):
-        super(Transformer, self).__init__()
+        super(Transformer, self).__init__(num_layers, d_model, num_heads, d_ff, input_vocab_size, target_vocab_size,
+                                          max_pe_input, max_pe_target, drop_rate, share_emb, share_final)
 
         self.__share_final = share_final
 

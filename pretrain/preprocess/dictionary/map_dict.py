@@ -18,6 +18,7 @@ filter_zh_word = {
     '的': True,
     '就': True,
     '来': True,
+    '该': True,
 }
 
 filter_en_word = {

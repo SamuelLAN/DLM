@@ -37,11 +37,14 @@ def MLM(list_of_words_for_a_sentence, _tokenizer, lan_index,
 
     # get indices to mask
     len_words = len(list_of_list_token_idx)
-    indices_to_mask = random.sample(
-        range(len_words - 1),
-        min(random.randint(min_num, max_num), max(round(len_words * max_ratio), 1))
-    )
-    indices_to_mask.sort()
+    if len_words == 1:
+        indices_to_mask = [0]
+    else:
+        indices_to_mask = random.sample(
+            range(len_words - 1),
+            min(random.randint(min_num, max_num), max(round(len_words * max_ratio), 1))
+        )
+        indices_to_mask.sort()
 
     # get ground truth
     list_of_tar_token_idx = reduce(lambda x, y: x + y, [list_of_list_token_idx[i] for i in indices_to_mask])
@@ -99,6 +102,7 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.preprocess.inputs.decode import decode_pl
 
     origin_zh_data, origin_en_data = wmt_news.zh_en()
     params = {
@@ -126,5 +130,5 @@ if __name__ == '__main__':
     print(lan_y.shape)
 
     print('\n------------------- Decoding zh -------------------------')
-    x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
-    y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
+    x = utils.pipeline(decode_pl(''), x, None, {'tokenizer': tokenizer})
+    y = utils.pipeline(decode_pl(''), y, None, {'tokenizer': tokenizer})

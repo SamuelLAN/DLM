@@ -11,21 +11,14 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
-    name = 'transformer_for_TLM_zh_en'
+    name = 'transformer_TLM'
 
-    TLM_params = {
+    pretrain_params = {
         'min_num': 1,
         'max_num': 3,
         'max_ratio': 0.2,
         'keep_origin_rate': 0.2,
     }
-
-    sample_rate = 3.0
-
-    preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
-    tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
-    TLM_pl = preprocess_pl + pl.sent_2_tokens + sampling.sample_pl(sample_rate) + TLM.get_pl(**TLM_params) + \
-             pl.TLM_encode
 
     data_params = {
         **BaseModel.data_params,
@@ -35,8 +28,14 @@ class Model(BaseModel):
         'max_src_ground_seq_len': 10,
         'max_tar_ground_seq_len': 10,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
+        'over_sample_rate': 3.0,
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
     }
+
+    preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
+    tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
+    encode_pl = preprocess_pl + pl.sent_2_tokens + sampling.sample_pl(data_params['over_sample_rate']) + \
+                TLM.get_pl(**pretrain_params) + pl.TLM_encode
 
     model_params = {
         **BaseModel.model_params,
