@@ -1,9 +1,9 @@
 import os
 from pretrain.train.train_CDLM_base import Train as TrainBase
-from pretrain.models.transformer_cdlm_translate import Model
+from pretrain.models.transformer_cdlm_pos import Model
 from pretrain.load.zh_en_wmt_news import Loader
 
-Model.name = 'transformer_CDLM_translate_wmt_news'
+Model.name = 'transformer_CDLM_pos_wmt_news'
 
 
 class Train(TrainBase):
