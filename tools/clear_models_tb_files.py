@@ -18,6 +18,9 @@ for model_name in os.listdir(model_dir):
 
     for _date in os.listdir(tmp_model_dir):
         date_dir = os.path.join(tmp_model_dir, _date)
+        if not os.path.isdir(date_dir):
+            continue
+
         model_list = os.listdir(date_dir)
 
         print(f'\tchecking {_date}')

@@ -149,7 +149,7 @@ class Train(TrainBase):
 
         print('\nTesting model ...')
 
-        train_examples = self.show_examples(35, self.train_x, self.train_lan_x,
+        train_examples = self.show_examples(5, self.train_x, self.train_lan_x,
                                             self.train_y, self.train_lan_y, self.train_pos_y)
         test_examples = self.show_examples(5, self.test_x, self.test_lan_x,
                                            self.test_y, self.test_lan_y, self.test_pos_y)
