@@ -1,4 +1,14 @@
 import os
+import sys
+
+cur_dir = os.path.abspath(os.path.split(__file__)[0])
+sub_sub_root_dir = os.path.split(cur_dir)[0]
+sub_root_dir = os.path.split(sub_sub_root_dir)[0]
+root_dir = os.path.split(sub_root_dir)[0]
+
+sys.path.append(sub_root_dir)
+sys.path.append(root_dir)
+
 from pretrain.preprocess.config import Ids
 
 Ids.multi_task = True
@@ -7,7 +17,6 @@ Ids.cdlm_tasks = ['translation', 'pos', 'ner', 'synonym', 'def']
 from pretrain.models.transformer_cdlm_fully_share import Model
 from pretrain.train.train_CDLM_fully_share_wmt_news import Train as TrainBase
 from pretrain.load.zh_en_news_commentary import Loader
-
 
 Model.name = 'transformer_CDLM_fully_share_news_commentary'
 
