@@ -15,18 +15,18 @@ class Model(BaseModel):
 
     pretrain_params = {
         'min_num': 1,
-        'max_num': 3,
+        'max_num': 4,
         'max_ratio': 0.2,
         'keep_origin_rate': 0.2,
     }
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 10000,  # approximate
+        'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'max_src_ground_seq_len': 10,
-        'max_tar_ground_seq_len': 10,
+        'max_src_ground_seq_len': 24,
+        'max_tar_ground_seq_len': 24,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
         'over_sample_rate': 3.0,
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
@@ -56,7 +56,7 @@ class Model(BaseModel):
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 2,
+        'epoch': 800,
         'early_stop': 20,
     }
 

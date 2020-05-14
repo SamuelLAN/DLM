@@ -26,11 +26,11 @@ class Model(BaseModel):
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 10000,  # approximate
+        'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'max_src_ground_seq_len': 16,
-        'max_tar_ground_seq_len': 16,
+        'max_src_ground_seq_len': 24,
+        'max_tar_ground_seq_len': 24,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
         'over_sample_rate': 3.0,
         'input_incr': Ids.end_cdlm_pos_2 + Ids.pos_ids + 1,  # <start>, <end>, <pad>, <mask>
@@ -63,7 +63,7 @@ class Model(BaseModel):
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 2,
+        'epoch': 800,
         'early_stop': 20,
     }
 
@@ -81,7 +81,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': ['transformer_CDLM_pos_wmt_news', '2020_05_13_18_04_08'],  # [name, time]
+        'load_model': [],  # [name, time]
         # 'load_model': ['transformer_for_MLM_zh_en', '2020_04_26_15_19_16'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }

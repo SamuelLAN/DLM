@@ -24,7 +24,7 @@ class Model(BaseModel):
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 10000,  # approximate
+        'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
@@ -55,8 +55,8 @@ class Model(BaseModel):
         # 'learning_rate': 1e-3,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 2,
-        'early_stop': 10,
+        'epoch': 800,
+        'early_stop': 15,
     }
 
     compile_params = {
@@ -78,7 +78,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': ['transformer_CDLM_fully_share_wmt_news', '2020_05_13_20_12_47'],  # [name, time] # test
+        'load_model': [],  # [name, time] # test
         # 'load_model': ['transformer_CDLM_translate_wmt_news', '2020_05_13_04_33_50'],  # [name, time] # test
         # 'load_model': ['transformer_for_MLM_zh_en', '2020_04_23_15_16_14'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
