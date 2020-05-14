@@ -13,5 +13,5 @@ class Train(TrainBase):
 
 
 o_train = Train(use_cache=True)
-# o_train.train()
-o_train.test(load_model=True)
+o_train.train()
+o_train.test(load_model=False)

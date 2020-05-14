@@ -25,11 +25,11 @@ class Train(TrainBase):
 
         # process before CDLM
         train_src_preprocessed, train_tar_preprocessed = utils.pipeline(
-            self.M.before_encode_pl, self.train_src[:1000], self.train_tar[:1000], self.M.data_params,
+            self.M.before_encode_pl, self.train_src, self.train_tar, self.M.data_params,
         )
 
         test_src_preprocessed, test_tar_preprocessed = utils.pipeline(
-            self.M.before_encode_pl, self.test_src[:1000], self.test_tar[:1000], self.M.data_params,
+            self.M.before_encode_pl, self.test_src, self.test_tar, self.M.data_params,
         )
 
         del self.train_src
