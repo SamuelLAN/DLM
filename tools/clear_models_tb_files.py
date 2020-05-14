@@ -6,6 +6,7 @@ sub_sub_root_dir = os.path.split(cur_dir)[0]
 sub_root_dir = os.path.split(sub_sub_root_dir)[0]
 root_dir = os.path.split(sub_root_dir)[0]
 
+sys.path.append(sub_sub_root_dir)
 sys.path.append(sub_root_dir)
 sys.path.append(root_dir)
 
