@@ -2,14 +2,14 @@ import random
 import numpy as np
 from functools import reduce
 from pretrain.preprocess.dictionary import map_dict
-from pretrain.preprocess.config import Ids, LanIds, NERIds
+from pretrain.preprocess.config import Ids, LanIds, NERIds, SampleRatio
 from pretrain.preprocess.inputs.TLM import TLM_concat
 
 random_state = 42
 
-ratio_mode_0 = 0.3
-ratio_mode_1 = 0.15
-ratio_mode_2 = 0.5
+ratio_mode_0 = SampleRatio.ner['ratio_mode_0']
+ratio_mode_1 = SampleRatio.ner['ratio_mode_1']
+ratio_mode_2 = SampleRatio.ner['ratio_mode_2']
 
 ratio_mode_0_1 = ratio_mode_0 + ratio_mode_1
 

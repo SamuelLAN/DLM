@@ -5,7 +5,7 @@ from pretrain.preprocess.inputs.sampling import sample_pl
 from pretrain.preprocess.inputs.pl import CDLM_encode, sent_2_tokens
 from pretrain.preprocess.inputs.decode import decode_pl as d_pl
 from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
-from pretrain.preprocess.config import Ids
+from pretrain.preprocess.config import Ids, SampleRatio
 from pretrain.models.transformer_cdlm_translate import Model as BaseModel
 import tensorflow as tf
 import numpy as np
@@ -32,9 +32,10 @@ class Model(BaseModel):
         'max_src_ground_seq_len': 24,
         'max_tar_ground_seq_len': 24,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
-        'over_sample_rate': 3.0,
+        'over_sample_rate': 5.0,
         'input_incr': Ids.end_cdlm_pos_2 + Ids.pos_ids + 1,  # <start>, <end>, <pad>, <mask>
         'class_incr': Ids.end_cdlm_pos_2 + Ids.pos_ids + 1,  # <start>, <end>, <pad>, <mask>
+        'sample_params': SampleRatio.pos,
     }
 
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise

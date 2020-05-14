@@ -143,3 +143,29 @@ class LanIds:
     en = 1
     POS = 2
     NER = 3 if Ids.multi_task else 2
+
+
+class SampleRatio:
+    translation = {
+        'ratio_mode_0': 0.3,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.55,
+    }
+
+    pos = {
+        'ratio_mode_0': 0.5,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.35,
+    }
+
+    ner = {
+        'ratio_mode_0': 0.3,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.55,
+    }
+
+    synonym = {
+        'ratio_mode_0': 0.3,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.55,
+    }
