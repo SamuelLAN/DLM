@@ -2,6 +2,7 @@ from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
 from pretrain.preprocess.inputs import TLM, pl, sampling
+from pretrain.preprocess.inputs.decode import decode_pl as d_pl
 from lib.tf_models.transformer_mlm import Transformer
 from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 import tensorflow as tf
@@ -28,7 +29,7 @@ class Model(BaseModel):
         'max_src_ground_seq_len': 24,
         'max_tar_ground_seq_len': 24,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
-        'over_sample_rate': 3.0,
+        'over_sample_rate': 10.0,
         'input_incr': 4,  # <start>, <end>, <pad>, <mask>
     }
 
@@ -36,6 +37,7 @@ class Model(BaseModel):
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
     encode_pl = preprocess_pl + pl.sent_2_tokens + sampling.sample_pl(data_params['over_sample_rate']) + \
                 TLM.get_pl(**pretrain_params) + pl.TLM_encode
+    decode_pl = d_pl('')
 
     model_params = {
         **BaseModel.model_params,
