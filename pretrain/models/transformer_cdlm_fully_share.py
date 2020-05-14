@@ -1,16 +1,14 @@
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
-from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
 from pretrain.preprocess.inputs import CDLM_translation_v2 as CDLM_translation
+from pretrain.preprocess.inputs import CDLM_pos, CDLM_ner, CDLM_synonym, CDLM_definition
 from pretrain.preprocess.inputs.sampling import sample_pl
 from pretrain.preprocess.inputs.pl import CDLM_encode, sent_2_tokens
 from pretrain.preprocess.inputs.decode import decode_pl as d_pl
-from lib.tf_models.transformer_lan_soft_pos import Transformer
-from lib.tf_models.pos_embeddings import embedding as pos_embeddings
 from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
+from pretrain.models.transformer_cdlm_translate import Model as BaseModel
 from pretrain.preprocess.config import Ids
 import tensorflow as tf
-import numpy as np
 
 keras = tf.keras
 tfv1 = tf.compat.v1
@@ -28,7 +26,10 @@ class Model(BaseModel):
 
     sample_params = {
         'translation': 3.0,
-        # ''
+        'pos': 3.0,
+        'ner': 3.0,
+        'synonym': 2.0,
+        'definition': 0.5,
     }
 
     data_params = {
@@ -39,25 +40,26 @@ class Model(BaseModel):
         'max_src_ground_seq_len': 16,
         'max_tar_ground_seq_len': 16,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
-        'over_sample_rate': 3.0,
-        'input_incr': Ids.end_cdlm_def + 1,  # <start>, <end>, <pad>, <mask>
-        'class_incr': Ids.end_cdlm_def + 1,  # <start>, <end>, <pad>, <mask>
+        'over_sample_rate': sample_params,
+        'input_incr': Ids.end_cdlm_def + Ids.pos_ids + Ids.ner_ids + 1,  # <start>, <end>, <pad>, <mask>
+        'class_incr': Ids.end_cdlm_def + Ids.pos_ids + Ids.ner_ids + 1,  # <start>, <end>, <pad>, <mask>
     }
 
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
 
-    before_encode_pl = preprocess_pl + sent_2_tokens + sample_pl(data_params['over_sample_rate'])
+    before_encode_pl = preprocess_pl + sent_2_tokens
 
-    translate_encode_pl = CDLM_translation.combine_pl(**pretrain_params) + CDLM_encode
-    pos_encode_pl = CDLM_translation.combine_pl(**pretrain_params) + CDLM_encode
-    ner_encode_pl = CDLM_translation.combine_pl(**pretrain_params) + CDLM_encode
-    synonym_encode_pl = CDLM_translation.combine_pl(**pretrain_params) + CDLM_encode
-    def_encode_pl = CDLM_translation.combine_pl(**pretrain_params) + CDLM_encode
+    translate_encode_pl = sample_pl(sample_params['translation']) + CDLM_translation.combine_pl(
+        **pretrain_params) + CDLM_encode
+    pos_encode_pl = sample_pl(sample_params['pos']) + CDLM_pos.combine_pl(**pretrain_params) + CDLM_encode
+    ner_encode_pl = sample_pl(sample_params['ner']) + CDLM_ner.combine_pl(**pretrain_params) + CDLM_encode
+    synonym_encode_pl = sample_pl(sample_params['synonym']) + CDLM_synonym.combine_pl(
+        **pretrain_params) + CDLM_encode
+    def_encode_pl = sample_pl(sample_params['definition']) + CDLM_definition.combine_pl(
+        **pretrain_params) + CDLM_encode
 
-    decode_pl = d_pl('', True)
-    decode_pos_pl = d_pl('pos', True)
-    decode_ner_pl = d_pl('ner', True)
+    decode_pl = d_pl('multi', True)
 
     model_params = {
         **BaseModel.model_params,
@@ -79,7 +81,7 @@ class Model(BaseModel):
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 800,
+        'epoch': 2,
         'early_stop': 20,
     }
 
@@ -95,7 +97,7 @@ class Model(BaseModel):
         'name': 'val_tf_accuracy',
         'mode': 'max',  # for the "name" monitor, the "min" is best;
         'for_start': 'tf_accuracy',
-        'for_start_value': 0.1,
+        'for_start_value': 0.01,
         'for_start_mode': 'max',
     }
 
@@ -108,24 +110,3 @@ class Model(BaseModel):
     evaluate_dict = {
 
     }
-
-    def build(self):
-        self.model = Transformer(
-            num_layers=self.model_params['num_layers'],
-            d_model=self.model_params['dim_model'],
-            num_heads=self.model_params['num_heads'],
-            d_ff=self.model_params['ff_units'],
-            input_vocab_size=self.input_vocab_size + self.data_params['input_incr'],
-            target_vocab_size=self.num_classes,
-            max_pe_input=self.model_params['max_pe_input'],
-            max_pe_target=self.model_params['max_pe_target'] - 1,
-            drop_rate=self.model_params['drop_rate'],
-            share_emb=self.model_params['share_emb'],
-            share_final=self.model_params['share_final'],
-            lan_vocab_size=self.model_params['lan_vocab_size'],
-        )
-
-    def pos_emb(self, pos_matrix):
-        _emb = pos_embeddings(self.data_params['max_src_seq_len'] + self.data_params['max_src_ground_seq_len'],
-                              self.model_params['dim_model'])
-        return np.array([_emb[0, list(np.array(pos_vector))] for pos_vector in pos_matrix], dtype=np.float32)

@@ -57,7 +57,7 @@ class Decoder(layers.Layer):
         # token embedding and position embedding
         self.embedding = layers.Embedding(target_vocab_size, d_model) \
             if isinstance(emb_layer, type(None)) else emb_layer
-        # self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
+        self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         # language embedding; vocab_size = 4 because there are two for <start> and <end>
         self.lan_embedding = layers.Embedding(lan_vocab_size, d_model) \
@@ -73,7 +73,7 @@ class Decoder(layers.Layer):
 
         x = self.embedding(x)  # (batch_size, target_seq_len, d_model)
         x *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
-        # x += self.pos_encoding[:, :seq_len, :]
+        x += self.pos_encoding[:, :seq_len, :]
         x += pos_y
 
         # add lan embedding

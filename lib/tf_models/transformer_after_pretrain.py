@@ -201,7 +201,7 @@ class DecoderLayer(layers.Layer):
 
 class Encoder(layers.Layer):
     def __init__(self, num_layers, d_model, num_heads, d_ff, input_vocab_size,
-                 maximum_position_encoding, drop_rate=0.1):
+                 maximum_position_encoding, drop_rate=0.1, lan_vocab_size=2):
         super(Encoder, self).__init__()
 
         self.d_model = d_model
@@ -212,7 +212,7 @@ class Encoder(layers.Layer):
         self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         # language embedding; vocab_size = 4 because there are two for <start> and <end>
-        self.lan_embedding = layers.Embedding(2, d_model)
+        self.lan_embedding = layers.Embedding(lan_vocab_size, d_model)
 
         self.enc_layers = [EncoderLayer(d_model, num_heads, d_ff, drop_rate)
                            for _ in range(num_layers)]
@@ -241,7 +241,7 @@ class Encoder(layers.Layer):
 
 class Decoder(layers.Layer):
     def __init__(self, num_layers, d_model, num_heads, d_ff, target_vocab_size,
-                 maximum_position_encoding, drop_rate=0.1, emb_layer=None, lan_emb_layer=None):
+                 maximum_position_encoding, drop_rate=0.1, emb_layer=None, lan_emb_layer=None, lan_vocab_size=2):
         super(Decoder, self).__init__()
 
         self.d_model = d_model
@@ -253,7 +253,8 @@ class Decoder(layers.Layer):
         self.pos_encoding = positional_encoding(maximum_position_encoding, d_model)
 
         # language embedding; vocab_size = 4 because there are two for <start> and <end>
-        self.lan_embedding = layers.Embedding(2, d_model) if isinstance(lan_emb_layer, type(None)) else lan_emb_layer
+        self.lan_embedding = layers.Embedding(lan_vocab_size, d_model) \
+            if isinstance(lan_emb_layer, type(None)) else lan_emb_layer
 
         self.dec_layers = [DecoderLayer(d_model, num_heads, d_ff, drop_rate)
                            for _ in range(num_layers)]
@@ -285,18 +286,19 @@ class Decoder(layers.Layer):
 
 class Transformer(keras.Model):
     def __init__(self, num_layers, d_model, num_heads, d_ff, input_vocab_size,
-                 target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False, share_final=False):
+                 target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False, share_final=False,
+                 lan_vocab_size=2):
         super(Transformer, self).__init__()
 
         self.__share_final = share_final
 
         self.encoder = Encoder(num_layers, d_model, num_heads, d_ff,
-                               input_vocab_size, max_pe_input, drop_rate)
+                               input_vocab_size, max_pe_input, drop_rate, lan_vocab_size)
 
         emb_layer = self.encoder.embedding if share_emb else None
         lan_emb_layer = self.encoder.lan_embedding if share_emb else None
         self.decoder = Decoder(num_layers, d_model, num_heads, d_ff,
-                               target_vocab_size, max_pe_target, drop_rate, emb_layer, lan_emb_layer)
+                               target_vocab_size, max_pe_target, drop_rate, emb_layer, lan_emb_layer, lan_vocab_size)
 
         self.final_layer = layers.Dense(target_vocab_size, activation='softmax')
 

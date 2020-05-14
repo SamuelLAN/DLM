@@ -2,6 +2,7 @@ from nltk.translate.bleu_score import corpus_bleu
 import tensorflow as tf
 from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
+from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 from lib.preprocess import utils
 from lib.tf_models.transformer_after_pretrain import Transformer
 
@@ -10,7 +11,7 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
-    name = 'transformer_for_nmt_zh_word_level_after_mlm_pretrain_wmt_um'
+    name = 'transformer_nmt_baseline'
 
     preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + \
                           tfds_share_pl.train_tokenizer + tfds_share_pl.encode_pipeline
@@ -45,6 +46,7 @@ class Model(BaseModel):
         'use_beam_search': False,
         'top_k': 5,
         'get_random': False,
+        'lan_vocab_size': 2,
     }
 
     train_params = {
@@ -53,7 +55,7 @@ class Model(BaseModel):
         # 'learning_rate': 1e-3,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 500,
+        'epoch': 2,
         'early_stop': 10,
     }
 
@@ -62,21 +64,23 @@ class Model(BaseModel):
         # 'optimizer': keras.optimizers.Adam(learning_rate=train_params['learning_rate'], beta_1=0.9, beta_2=0.98,
         #                                    epsilon=1e-9),
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
-        'label_smooth': False,
-        'metrics': [],
+        'label_smooth': True,
+        'metrics': [tf_accuracy, tf_perplexity],
     }
 
     monitor_params = {
         **BaseModel.monitor_params,
-        'name': 'val_loss',
-        'mode': 'min',  # for the "name" monitor, the "min" is best;
-        'for_start': 'loss',
-        'for_start_value': 1.5,
-        'for_start_mode': 'min',
+        'name': 'val_tf_accuracy',
+        'mode': 'max',  # for the "name" monitor, the "min" is best;
+        'for_start': 'tf_accuracy',
+        'for_start_value': 0.05,
+        'for_start_mode': 'max',
     }
 
     checkpoint_params = {
-        'load_model': ['transformer_for_MLM_zh_en', '2020_04_23_15_16_14'],  # [name, time]
+        'load_model': [],  # [name, time] # test
+        # 'load_model': ['transformer_CDLM_translate_wmt_news', '2020_05_13_04_33_50'],  # [name, time] # test
+        # 'load_model': ['transformer_for_MLM_zh_en', '2020_04_23_15_16_14'],  # [name, time]
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
     }
 
@@ -93,6 +97,7 @@ class Model(BaseModel):
             drop_rate=self.model_params['drop_rate'],
             share_emb=self.model_params['share_emb'],
             share_final=self.model_params['share_final'],
+            lan_vocab_size=self.model_params['lan_vocab_size'],
         )
 
     def translate_sentences(self, list_of_src_sentences, src_tokenizer, tar_tokenizer):

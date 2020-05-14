@@ -16,6 +16,12 @@ def decode_one_idx(x, _tokenizer, mode=''):
         elif mode == 'ner':
             tok = decode_ner_id(x, v_size + Ids.offset_ner)
 
+        elif mode == 'multi':
+            if x <= v_size + Ids.offset_ner:
+                tok = decode_pos_id(x, v_size + Ids.offset_pos)
+            else:
+                tok = decode_ner_id(x, v_size + Ids.offset_ner)
+
         if tok:
             return tok + ' '
         return '<sep> '

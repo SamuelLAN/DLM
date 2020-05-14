@@ -34,6 +34,7 @@ class Train(TrainBase):
 
         else:
             self.load_data()
+            self.preprocess_tokenizer()
             self.preprocess()
 
             cache(cache_name, [
@@ -59,9 +60,8 @@ class Train(TrainBase):
         print(f'test_lan_x.shape: {self.test_lan_x.shape}\ntest_lan_y.shape: {self.test_lan_y.shape}')
         print(f'test_pos_y.shape: {self.test_pos_y.shape}')
 
-    def preprocess(self):
-        """ preprocess the data to list of list token idx """
-        print('\nProcessing data ... ')
+    def preprocess_tokenizer(self):
+        print('\nProcessing tokenizer ...')
 
         # get tokenizer
         load_model_params = self.M.checkpoint_params['load_model']
@@ -77,6 +77,10 @@ class Train(TrainBase):
             tokenizer_path = get_relative_file_path('runtime', 'tokenizer',
                                                     load_model_params[0], load_model_params[1], 'tokenizer.pkl')
             self.tokenizer = read_cache(tokenizer_path)
+
+    def preprocess(self):
+        """ preprocess the data to list of list token idx """
+        print('\nProcessing data ... ')
 
         # preprocess train data
         self.train_x, self.train_y, self.train_lan_x, self.train_lan_y, self.train_pos_y = utils.pipeline(
@@ -145,7 +149,7 @@ class Train(TrainBase):
 
         print('\nTesting model ...')
 
-        train_examples = self.show_examples(5, self.train_x, self.train_lan_x,
+        train_examples = self.show_examples(35, self.train_x, self.train_lan_x,
                                             self.train_y, self.train_lan_y, self.train_pos_y)
         test_examples = self.show_examples(5, self.test_x, self.test_lan_x,
                                            self.test_y, self.test_lan_y, self.test_pos_y)

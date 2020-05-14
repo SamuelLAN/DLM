@@ -54,7 +54,7 @@ class BaseModel:
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'loss': keras.losses.SparseCategoricalCrossentropy(from_logits=False, reduction='none'),
         'customize_loss': True,
-        'label_smooth': False,
+        'label_smooth': True,
         'metrics': [],
     }
 

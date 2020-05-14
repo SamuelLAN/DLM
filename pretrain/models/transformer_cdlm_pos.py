@@ -33,8 +33,8 @@ class Model(BaseModel):
         'max_tar_ground_seq_len': 16,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
         'over_sample_rate': 3.0,
-        'input_incr': Ids.end_cdlm_pos_2 + 70,  # <start>, <end>, <pad>, <mask>
-        'class_incr': Ids.end_cdlm_pos_2 + 70,  # <start>, <end>, <pad>, <mask>
+        'input_incr': Ids.end_cdlm_pos_2 + Ids.pos_ids + 1,  # <start>, <end>, <pad>, <mask>
+        'class_incr': Ids.end_cdlm_pos_2 + Ids.pos_ids + 1,  # <start>, <end>, <pad>, <mask>
     }
 
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise

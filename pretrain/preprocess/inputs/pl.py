@@ -23,7 +23,8 @@ sent_2_tokens = [
         'input_keys': ['input_2'],
         'output_keys': 'input_2',
         'show_dict': {'input_2': 'input_2'},
-    }
+    },
+    {'output_keys': ['input_1', 'input_2']},
 ]
 
 filter_exceed_len_inp = [
@@ -182,9 +183,9 @@ CDLM_add_pad = [
     {
         'name': 'add_pad_token_to_pos_gt_for_src',
         'func':
-            # lambda x: x + list(range(int(x[-1]), int(x[-1]) + int(l - len(x)))), list_of_pos_ids)),
-        lambda l, list_of_pos_ids:
-        # list(map(lambda x: x + [int(x[-1])] * int(l - len(x)), list_of_pos_ids)),
+        # lambda x: x + list(range(int(x[-1]), int(x[-1]) + int(l - len(x)))), list_of_pos_ids)),
+            lambda l, list_of_pos_ids:
+            # list(map(lambda x: x + [int(x[-1])] * int(l - len(x)), list_of_pos_ids)),
             list(map(lambda x: x + list(range(int(x[-1] + 1), int(x[-1] + 1) + int(l - len(x)))), list_of_pos_ids)),
         'input_keys': ['max_src_ground_seq_len', 'pos_for_gt_1'],
         'output_keys': ['pos_for_gt_1'],

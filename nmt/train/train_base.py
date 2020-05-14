@@ -15,18 +15,21 @@ if gpus:
 
 import os
 import time
-from nmt.models.transformer_zh_en import Model
+from nmt.models.other_lans.transformer_zh_en_after_pretrin import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root, md5
-from nmt.load.zh_en_news_commentary import Loader
+from nmt.load.zh_en_wmt_news import Loader
 
 
 class Train:
+    TRAIN_NAME = os.path.splitext(os.path.split(__file__)[1])[0]
+    M = Model
+    Loader = Loader
 
     def __init__(self, use_cache=True):
         # read data from cache ;
         #    if no cache, then load the data and preprocess it, then store it to cache
-        cache_name = f'nmt_preprocessed_data_{md5(Model.data_params)}.pkl'
+        cache_name = f'{self.TRAIN_NAME}_nmt_preprocessed_data_{md5(self.M.data_params)}.pkl'
         data = read_cache(cache_name) if use_cache else None
         if not isinstance(data, type(None)):
             self.__train_src, \
@@ -73,8 +76,8 @@ class Train:
         print('\nLoading data ...')
 
         # load the data
-        train_loader = Loader(0.0, Loader.TRAIN_RATIO, Model.data_params['sample_rate'])
-        test_loader = Loader(Loader.TRAIN_RATIO, 1.0, Model.data_params['sample_rate'])
+        train_loader = self.Loader(0.0, self.Loader.TRAIN_RATIO, self.M.data_params['sample_rate'])
+        test_loader = self.Loader(self.Loader.TRAIN_RATIO, 1.0, self.M.data_params['sample_rate'])
 
         # load data
         self.__train_src, self.__train_tar = train_loader.data()
@@ -86,17 +89,17 @@ class Train:
         """ preprocess the data to list of list token idx """
         print('\nProcessing data ... ')
 
-        load_model_params = Model.checkpoint_params['load_model']
+        load_model_params = self.M.checkpoint_params['load_model']
         if load_model_params:
             tokenizer_path = create_dir_in_root('runtime', 'tokenizer',
                                                 load_model_params[0], load_model_params[1], 'tokenizer.pkl')
             self.__src_tokenizer = self.__tar_tokenizer = read_cache(tokenizer_path)
 
             self.__train_src_encode, self.__train_tar_encode, _, _ = utils.pipeline(
-                Model.encode_pipeline,
+                self.M.encode_pipeline,
                 self.__train_src,
                 self.__train_tar, {
-                    **Model.data_params,
+                    **self.M.data_params,
                     'tokenizer': self.__src_tokenizer,
                     'src_tokenizer': self.__src_tokenizer,
                     'tar_tokenizer': self.__tar_tokenizer,
@@ -104,20 +107,20 @@ class Train:
 
         else:
             self.__train_src_encode, self.__train_tar_encode, self.__src_tokenizer, self.__tar_tokenizer = utils.pipeline(
-                Model.preprocess_pipeline,
+                self.M.preprocess_pipeline,
                 self.__train_src,
                 self.__train_tar,
-                Model.data_params,
+                self.M.data_params,
             )
 
         params = {
-            **Model.data_params,
+            **self.M.data_params,
             'tokenizer': self.__src_tokenizer,
             'src_tokenizer': self.__src_tokenizer,
             'tar_tokenizer': self.__tar_tokenizer,
         }
 
-        self.__test_src_encode, self.__test_tar_encode, _, _ = utils.pipeline(Model.encode_pipeline,
+        self.__test_src_encode, self.__test_tar_encode, _, _ = utils.pipeline(self.M.encode_pipeline,
                                                                               self.__test_src, self.__test_tar, params)
 
         # get vocabulary size
@@ -127,8 +130,8 @@ class Train:
         print('\nFinish preprocessing ')
 
     def train(self):
-        print('\nBuilding model ({}) ...'.format(Model.TIME))
-        self.model = Model(self.__src_vocab_size, self.__tar_vocab_size)
+        print('\nBuilding model ({}) ...'.format(self.M.TIME))
+        self.model = self.M(self.__src_vocab_size, self.__tar_vocab_size)
 
         # save tokenizer before training
         cache(os.path.join(self.model.tokenizer_dir, 'tokenizer.pkl'), self.__src_tokenizer)
@@ -143,7 +146,7 @@ class Train:
     def test(self, load_model=False):
         """ test BLEU here """
         if load_model:
-            self.model = Model(self.__src_vocab_size, self.__tar_vocab_size, finish_train=True)
+            self.model = self.M(self.__src_vocab_size, self.__tar_vocab_size, finish_train=True)
             self.model.train((self.__train_src_encode, self.__train_tar_encode[:, :-1]), self.__train_tar_encode[:, 1:])
             self.__train_time = 0.
 
@@ -160,7 +163,7 @@ class Train:
         train_loss = self.model.calculate_loss_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
         train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode[:2000],
                                                            self.__train_tar_encode[:2000], 'train')
-        # train_bleu = 1.0
+
         start_test_time = time.time()
         test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
@@ -222,8 +225,3 @@ class Train:
 
         with open(os.path.join(create_dir_in_root('runtime', 'log'), '{}.log'.format(self.model.name)), 'ab') as f:
             f.write(string.encode('utf-8'))
-
-
-o_train = Train(use_cache=True)
-o_train.train()
-o_train.test(load_model=False)
