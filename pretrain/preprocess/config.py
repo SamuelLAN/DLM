@@ -1,6 +1,6 @@
 import os
 
-data_dir = r'D:\Data\DLM\data'
+data_dir = r'C:\Users\zshua\PycharmProjects\DLM\data\dictionaries\WMT-News.en-zh.en'
 dictionary_dir = os.path.join(data_dir, 'dictionaries')
 
 if not os.path.exists(dictionary_dir):

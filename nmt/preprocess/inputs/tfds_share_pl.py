@@ -144,7 +144,6 @@ encode_pipeline_for_src = [
     },
 ]
 
-
 decode_pipeline = [
     {
         'name': 'get_vocab_size',

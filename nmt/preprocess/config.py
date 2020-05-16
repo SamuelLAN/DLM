@@ -1,1 +1,1 @@
-data_dir = r'D:\Data\DLM\data'
+data_dir = r'D:\data'
