@@ -1,4 +1,15 @@
 import os
+import sys
+
+cur_dir = os.path.abspath(os.path.split(__file__)[0])
+sub_sub_root_dir = os.path.split(cur_dir)[0]
+sub_root_dir = os.path.split(sub_sub_root_dir)[0]
+root_dir = os.path.split(sub_root_dir)[0]
+
+sys.path.append(sub_sub_root_dir)
+sys.path.append(sub_root_dir)
+sys.path.append(root_dir)
+
 import shutil
 from lib import utils
 
@@ -18,6 +29,9 @@ for model_name in os.listdir(model_dir):
 
     for _date in os.listdir(tmp_model_dir):
         date_dir = os.path.join(tmp_model_dir, _date)
+        if not os.path.isdir(date_dir):
+            continue
+
         model_list = os.listdir(date_dir)
 
         print(f'\tchecking {_date}')

@@ -478,16 +478,13 @@ def remove_special_chars(string):
 
     string = string.strip()
 
-    if string and len(string) >= 2 and string[-1] in ['.', '?', '!', ';']:
-        string = string[:-1] + ' ' + string[-1]
-
     # if end punctuation is , or ;
     if string and string[-1] in [',', ';']:
-        string = string[:-1] + ' .'
+        string = string[:-1] + '.'
 
     # if no end punctuations, add one
     if string and string[-1] not in ['.', ',', '?', '!', ';']:
-        string += ' .'
+        string += '.'
     return string
 
 

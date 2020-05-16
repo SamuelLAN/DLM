@@ -1,6 +1,6 @@
 import tensorflow as tf
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
-from nmt.models.transformer_zh_en import Model as BaseModel
+from nmt.models.other_lans.transformer_zh_en import Model as BaseModel
 from nmt.preprocess.inputs import tfds_share_pl
 
 keras = tf.keras

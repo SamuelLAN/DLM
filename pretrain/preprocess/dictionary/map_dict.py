@@ -18,6 +18,8 @@ filter_zh_word = {
     '的': True,
     '就': True,
     '来': True,
+    '该': True,
+    '在': True,
 }
 
 filter_en_word = {
@@ -32,6 +34,7 @@ filter_en_word = {
     'over': True,
     'towards': True,
     'with': True,
+    'and': True,
 }
 
 pos_dict = {'abbr_B': 1, 'abbr_I': 2, 'abbr_O': 3, 'adj_B': 4, 'adj_I': 5, 'adj_O': 6, 'adv_B': 7, 'adv_I': 8,

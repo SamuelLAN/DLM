@@ -1,9 +1,19 @@
 import os
-from pretrain.preprocess.config import dictionary_dir, filtered_union_en_zh_dict_path, merged_stem_dict_path
+import sys
+
+cur_dir = os.path.abspath(os.path.split(__file__)[0])
+sub_sub_root_dir = os.path.split(cur_dir)[0]
+sub_root_dir = os.path.split(sub_sub_root_dir)[0]
+root_dir = os.path.split(sub_root_dir)[0]
+
+sys.path.append(sub_root_dir)
+sys.path.append(root_dir)
+
+from pretrain.preprocess.config import dictionary_dir, filtered_pos_union_en_zh_dict_path, merged_stem_dict_path
 from lib.preprocess import utils
 from lib.utils import load_json, write_json
 
-dictionary_path = filtered_union_en_zh_dict_path
+dictionary_path = filtered_pos_union_en_zh_dict_path
 stem_dictionary_path = merged_stem_dict_path
 
 print(f'loading dictionary from {dictionary_path} ...')

@@ -1,15 +1,16 @@
+import copy
 import random
 import numpy as np
 from functools import reduce
 from pretrain.preprocess.dictionary import map_dict
-from pretrain.preprocess.config import Ids, LanIds
+from pretrain.preprocess.config import Ids, LanIds, SampleRatio
 from pretrain.preprocess.inputs.TLM import TLM_concat
 
 random_state = 42
 
-ratio_mode_0 = 0.3
-ratio_mode_1 = 0.15
-ratio_mode_2 = 0.55
+ratio_mode_0 = SampleRatio.pos['ratio_mode_0']
+ratio_mode_1 = SampleRatio.pos['ratio_mode_1']
+ratio_mode_2 = SampleRatio.pos['ratio_mode_2']
 
 ratio_mode_0_1 = ratio_mode_0 + ratio_mode_1
 
@@ -176,7 +177,8 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
     if not POSs and not POSs_list:
         return [], [], [], [], []
 
-    offset = _tokenizer.vocab_size + Ids.end_cdlm_pos_2
+    # if Ids.multi_task:
+    offset = _tokenizer.vocab_size + Ids.offset_pos
 
     POS_ids = get_POSs_ids(POSs, sample, list_of_list_token_idx, offset)
     POS_ids_list = [get_POSs_ids(_POSs, samples[i], list_of_list_token_idx, offset) for i, _POSs in
@@ -217,16 +219,24 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
 
         POS_ids.sort()
         POS_ids = list(map(lambda x: [sep_idx] + x, POS_ids[:3]))
+        new_POS_ids = copy.deepcopy(POS_ids)
 
         # get token idxs for output
-        _output = reduce(lambda a, b: a + b, POS_ids)
+        _output = reduce(lambda a, b: a + b, new_POS_ids)
         _output.pop(0)
 
         # get language index for output
         _lan_output = [LanIds.POS] * len(_output)
 
         # get soft position for output
-        _soft_pos_output = pos_for_mask[:1] * len(_output)
+        _soft_pos_output = list(map(
+            lambda x: list(map(lambda a: int(round(a)), np.linspace(pos_for_mask[0], pos_for_mask[1], len(x)))),
+            POS_ids
+        ))
+        _soft_pos_output = reduce(lambda a, b: a + b, _soft_pos_output)
+        _soft_pos_output[1] = _soft_pos_output[0]
+        _soft_pos_output.pop(0)
+        # _soft_pos_output = pos_for_mask[:1] * len(_output)
 
         start = _tokenizer.vocab_size + Ids.start_cdlm_pos_0
         end = _tokenizer.vocab_size + Ids.end_cdlm_pos_0
@@ -331,7 +341,7 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
         start = _tokenizer.vocab_size + Ids.start_cdlm_pos_2
         end = _tokenizer.vocab_size + Ids.end_cdlm_pos_2
 
-    # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
+    # replace the masked word with its pos, let the ground truth be the tag of the source sequence;
     #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
     # elif mode == 3:
     #     pass
@@ -349,7 +359,7 @@ def CDLM_pos(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
 def MLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
     return [
         {
-            'name': 'CDLM_translation_MLM_sample',
+            'name': 'CDLM_pos_MLM_sample',
             'func': CDLM_MLM_sample,
             'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate, max_ratio, max_num],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
@@ -363,7 +373,7 @@ def MLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
 def TLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
     return [
         {
-            'name': 'CDLM_translation_MLM_sample',
+            'name': 'CDLM_pos_MLM_sample',
             'func': CDLM_TLM_sample,
             'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate, max_ratio, max_num],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
@@ -377,7 +387,7 @@ def TLM_pl(keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
 def combine_pl(keep_origin_rate=0.2, TLM_ratio=0.5, max_ratio=0.2, max_num=4):
     return [
         {
-            'name': 'CDLM_translation_combine_sample',
+            'name': 'CDLM_pos_combine_sample',
             'func': CDLM_combine_sample,
             'input_keys': ['input_1', 'input_2', 'tokenizer', keep_origin_rate, TLM_ratio, max_ratio, max_num],
             'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
@@ -393,6 +403,7 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.preprocess.inputs.decode import decode_pl
     from pretrain.load.token_translation import Loader
     from pretrain.preprocess.inputs.sampling import sample_pl
 
@@ -434,5 +445,5 @@ if __name__ == '__main__':
     print(soft_pos_y.shape)
 
     print('\n------------------- Decoding -------------------------')
-    x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
-    y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
+    x = utils.pipeline(decode_pl('pos'), x, None, {'tokenizer': tokenizer})
+    y = utils.pipeline(decode_pl('pos'), y, None, {'tokenizer': tokenizer})

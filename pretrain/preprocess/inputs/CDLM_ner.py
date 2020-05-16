@@ -2,14 +2,14 @@ import random
 import numpy as np
 from functools import reduce
 from pretrain.preprocess.dictionary import map_dict
-from pretrain.preprocess.config import Ids, LanIds, NERIds
+from pretrain.preprocess.config import Ids, LanIds, NERIds, SampleRatio
 from pretrain.preprocess.inputs.TLM import TLM_concat
 
 random_state = 42
 
-ratio_mode_0 = 0.3
-ratio_mode_1 = 0.15
-ratio_mode_2 = 0.5
+ratio_mode_0 = SampleRatio.ner['ratio_mode_0']
+ratio_mode_1 = SampleRatio.ner['ratio_mode_1']
+ratio_mode_2 = SampleRatio.ner['ratio_mode_2']
 
 ratio_mode_0_1 = ratio_mode_0 + ratio_mode_1
 
@@ -193,7 +193,7 @@ def CDLM_ner(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
     _soft_pos_output = []
 
     # for mode 0, we only need one sample
-    offset = _tokenizer.vocab_size + Ids.end_cdlm_ner_2
+    offset = _tokenizer.vocab_size + Ids.offset_ner
     ner_ids = get_ner_ids(sample, offset, list_of_list_token_idx)
 
     # for mode 1 and 2, we would need multiple samples
@@ -301,7 +301,7 @@ def CDLM_ner(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
         start = _tokenizer.vocab_size + Ids.start_mlm
         end = _tokenizer.vocab_size + Ids.end_mlm
 
-    # replace the masked word with its translation, and let the ground truth be its original word
+    # replace the masked word with its ner, and let the ground truth be its original word
     elif mode == 2:
 
         index = 0
@@ -355,7 +355,7 @@ def CDLM_ner(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0
         start = _tokenizer.vocab_size + Ids.start_cdlm_ner_2
         end = _tokenizer.vocab_size + Ids.end_cdlm_ner_2
 
-    # replace the masked word with its translation, let the ground truth be the tag of the source sequence;
+    # replace the masked word with its ner, let the ground truth be the tag of the source sequence;
     #   the tag value is 0, 1; 0 indicates it is not replaced word, 1 indicates it is a replaced word
     # elif mode == 3:
     #     pass
@@ -417,6 +417,7 @@ if __name__ == '__main__':
     from lib.preprocess import utils
     from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
     from pretrain.preprocess.inputs import pl
+    from pretrain.preprocess.inputs.decode import decode_pl
     from pretrain.load.token_translation import Loader
     from pretrain.preprocess.inputs.sampling import sample_pl
 
@@ -458,5 +459,5 @@ if __name__ == '__main__':
     print(soft_pos_y.shape)
 
     print('\n------------------- Decoding -------------------------')
-    x = utils.pipeline(tfds_share_pl.decode_pipeline, x, None, {'tokenizer': tokenizer})
-    y = utils.pipeline(tfds_share_pl.decode_pipeline, y, None, {'tokenizer': tokenizer})
+    x = utils.pipeline(decode_pl('ner'), x, None, {'tokenizer': tokenizer})
+    y = utils.pipeline(decode_pl('ner'), y, None, {'tokenizer': tokenizer})

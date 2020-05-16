@@ -7,6 +7,7 @@ from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from lib.tf_callback.board import Board
 from lib.tf_callback.saver import Saver
 from lib.tf_models.transformer import Transformer
+from lib.metrics import metrics
 import tensorflow as tf
 
 keras = tf.keras
@@ -53,7 +54,7 @@ class BaseModel:
         'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
         'loss': keras.losses.SparseCategoricalCrossentropy(from_logits=False, reduction='none'),
         'customize_loss': True,
-        'label_smooth': False,
+        'label_smooth': True,
         'metrics': [],
     }
 
@@ -287,3 +288,47 @@ class BaseModel:
         loss = np.mean(loss)
         print('{} loss: {}'.format(dataset, loss))
         return loss
+
+    def evaluate_metrics_for_encoded(self, dataset, *args):
+        acc_list = []
+        ppl_list = []
+        loss_list = []
+
+        print('\nstart calculating metrics for {} ...'.format(dataset))
+        batch_size = self.train_params['batch_size']
+        steps = int(np.ceil(len(args[2]) / batch_size))
+
+        # evaluate in batch so that OOM would not happen
+        for step in range(steps):
+            progress = float(step + 1) / steps * 100.
+            print('\rprogress: %.2f%% ' % progress, end='')
+
+            start = step * batch_size
+            end = start + batch_size
+
+            batch_input = [v[start: end] for v in args[:2]] + [v[start: end, :-1] for v in args[2:]]
+            batch_output = args[2][start: end, 1:]
+
+            predictions = self.model(batch_input, training=False)
+
+            acc_list.append(metrics.accuracy(batch_output, predictions))
+            ppl_list.append(metrics.perplexity(batch_output, predictions))
+            loss_list.append(self.loss(batch_output, predictions))
+
+        acc = np.mean(acc_list)
+        ppl = np.mean(ppl_list)
+        loss = np.mean(loss_list)
+
+        print('{} loss: {}, acc: {}, ppl: {}'.format(dataset, loss, acc, ppl))
+        return loss, acc, ppl
+
+    def eval_example_for_pretrain(self, *args):
+        _input = list(args[:2]) + [v[:, :-1] for v in args[2:]]
+        _output = args[2][:, 1:]
+        predictions = self.model(_input, training=False)
+        return np.argmax(predictions, axis=-1)
+
+    @staticmethod
+    def decode_encoded_data(_decode_pl, predictions, _tokenizer, verbose=False):
+        from lib.preprocess.utils import pipeline
+        return pipeline(_decode_pl, predictions, None, {'tokenizer': _tokenizer}, verbose=verbose)

@@ -41,7 +41,7 @@ def get_relative_file_path(*args):
     """ Get relative file path, if the directory is not exist, it will be created """
     file_name = args[-1]
     args = args[:-1]
-    return os.path.join(create_dir_in_root(args, file_name))
+    return os.path.join(create_dir_in_root(*args), file_name)
 
 
 def cache(file_name, data):

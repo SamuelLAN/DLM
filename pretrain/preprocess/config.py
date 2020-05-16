@@ -21,8 +21,14 @@ filtered_pos_union_zh_en_dict_path = os.path.join(dictionary_dir, 'filtered_pos_
 
 
 # vocabulary index
-class Ids:
+class IdsClass:
     multi_task = False
+
+    cdlm_tasks = []
+    # cdlm_tasks = ['translation', 'pos', 'ner', 'synonym', 'def']
+
+    pos_ids = 69
+    ner_ids = 4
 
     start_nmt = 1
     end_nmt = 2
@@ -34,18 +40,95 @@ class Ids:
     end_cdlm_t_0 = 8
     start_cdlm_t_2 = 9
     end_cdlm_t_2 = 10
-    start_cdlm_pos_0 = 11 if multi_task else 7
-    end_cdlm_pos_0 = 12 if multi_task else 8
-    start_cdlm_pos_2 = 13 if multi_task else 9
-    end_cdlm_pos_2 = 14 if multi_task else 10
-    start_cdlm_ner_0 = 15 if multi_task else 7
-    end_cdlm_ner_0 = 16 if multi_task else 8
-    start_cdlm_ner_2 = 17 if multi_task else 9
-    end_cdlm_ner_2 = 18 if multi_task else 10
-    start_cdlm_synonym = 19 if multi_task else 7
-    end_cdlm_synonym = 20 if multi_task else 8
-    start_cdlm_def = 21 if multi_task else 7
-    end_cdlm_def = 22 if multi_task else 8
+
+    @property
+    def start_cdlm_pos_0(self):
+        return 11 if self.multi_task else 7
+
+    @property
+    def end_cdlm_pos_0(self):
+        return 12 if self.multi_task else 8
+
+    @property
+    def start_cdlm_pos_2(self):
+        return 13 if self.multi_task else 9
+
+    @property
+    def end_cdlm_pos_2(self):
+        return 14 if self.multi_task else 10
+
+    @property
+    def start_cdlm_ner_0(self):
+        return 15 if self.multi_task else 7
+
+    @property
+    def end_cdlm_ner_0(self):
+        return 16 if self.multi_task else 8
+
+    @property
+    def start_cdlm_ner_2(self):
+        return 17 if self.multi_task else 9
+
+    @property
+    def end_cdlm_ner_2(self):
+        return 18 if self.multi_task else 10
+
+    @property
+    def start_cdlm_synonym_0(self):
+        return 19 if self.multi_task else 7
+
+    @property
+    def end_cdlm_synonym_0(self):
+        return 20 if self.multi_task else 8
+
+    @property
+    def start_cdlm_synonym_2(self):
+        return 21 if self.multi_task else 9
+
+    @property
+    def end_cdlm_synonym_2(self):
+        return 22 if self.multi_task else 10
+
+    @property
+    def start_cdlm_def(self):
+        return 23 if self.multi_task else 7
+
+    @property
+    def end_cdlm_def(self):
+        return 24 if self.multi_task else 8
+
+    @property
+    def offset_pos(self):
+        if not self.multi_task:
+            return self.end_cdlm_pos_2
+
+        incr = self.end_mlm
+        if 'def' in self.cdlm_tasks:
+            incr += 2
+            incr += 4 * (len(self.cdlm_tasks) - 1)
+        else:
+            incr += 4 * len(self.cdlm_tasks)
+
+        return incr
+
+    @property
+    def offset_ner(self):
+        if not self.multi_task:
+            return self.end_cdlm_ner_2
+
+        incr = self.end_mlm
+        if 'def' in self.cdlm_tasks:
+            incr += 2
+            incr += 4 * (len(self.cdlm_tasks) - 1)
+        else:
+            incr += 4 * len(self.cdlm_tasks)
+
+        if 'pos' in self.cdlm_tasks:
+            incr += self.pos_ids
+        return incr
+
+
+Ids = IdsClass()
 
 
 class NERIds:
@@ -60,3 +143,29 @@ class LanIds:
     en = 1
     POS = 2
     NER = 3 if Ids.multi_task else 2
+
+
+class SampleRatio:
+    translation = {
+        'ratio_mode_0': 0.3,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.55,
+    }
+
+    pos = {
+        'ratio_mode_0': 0.5,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.35,
+    }
+
+    ner = {
+        'ratio_mode_0': 0.3,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.55,
+    }
+
+    synonym = {
+        'ratio_mode_0': 0.3,
+        'ratio_mode_1': 0.15,
+        'ratio_mode_2': 0.55,
+    }

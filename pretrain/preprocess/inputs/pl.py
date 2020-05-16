@@ -23,7 +23,8 @@ sent_2_tokens = [
         'input_keys': ['input_2'],
         'output_keys': 'input_2',
         'show_dict': {'input_2': 'input_2'},
-    }
+    },
+    {'output_keys': ['input_1', 'input_2']},
 ]
 
 filter_exceed_len_inp = [
@@ -100,8 +101,9 @@ CDLM_filter_exceed = [
     {
         'name': 'filter_exceed_max_seq_len_with_max_seq_len',
         'func': utils.filter_exceed_max_seq_len_together,
-        'input_keys': ['max_src_seq_len', 0, 'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
-        'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1'],
+        'input_keys': ['max_src_seq_len', 0, 'input_1', 'ground_truth_1', 'lan_idx_for_input_1',
+                       'lan_idx_for_gt_1', 'pos_for_gt_1'],
+        'output_keys': ['input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1'],
     },
     {
         'name': 'filter_exceed_max_seq_len_with_max_ground_seq_len',
@@ -180,8 +182,11 @@ TLM_add_pad = MLM_add_pad[0::2]
 CDLM_add_pad = [
     {
         'name': 'add_pad_token_to_pos_gt_for_src',
-        'func': lambda l, list_of_pos_ids: list(map(
-            lambda x: x + list(range(int(x[-1] + 1), int(x[-1] + 1) + int(l - len(x)))), list_of_pos_ids)),
+        'func':
+        # lambda x: x + list(range(int(x[-1]), int(x[-1]) + int(l - len(x)))), list_of_pos_ids)),
+            lambda l, list_of_pos_ids:
+            # list(map(lambda x: x + [int(x[-1])] * int(l - len(x)), list_of_pos_ids)),
+            list(map(lambda x: x + list(range(int(x[-1] + 1), int(x[-1] + 1) + int(l - len(x)))), list_of_pos_ids)),
         'input_keys': ['max_src_ground_seq_len', 'pos_for_gt_1'],
         'output_keys': ['pos_for_gt_1'],
         'show_dict': {'pos_for_gt_1': 'pos_for_gt_1'},
