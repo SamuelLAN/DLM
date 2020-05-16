@@ -29,6 +29,7 @@ Model.sample_params = {
     'synonym': 0.2,
     'definition': 0.1,
 }
+Model.data_params['over_sample_rate'] = Model.sample_params
 
 
 class Train(TrainBase):
