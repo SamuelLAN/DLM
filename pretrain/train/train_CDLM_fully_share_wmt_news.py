@@ -145,6 +145,7 @@ class Train(TrainBase):
         print('\nFinish preprocessing ')
 
 
-o_train = Train(use_cache=True)
-o_train.train()
-o_train.test(load_model=False)
+if __name__ == '__main__':
+    o_train = Train(use_cache=True)
+    o_train.train()
+    o_train.test(load_model=False)
