@@ -154,16 +154,15 @@ class Model(BaseModel):
         pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
         tar_encode_data = utils.convert_list_of_list_token_idx_2_string(tar_encode_data)
         tar_encode_data = list(map(lambda x: [x], tar_encode_data))
-        from pretrain.preprocess.dictionary.map_dict import word,phrase
+        from pretrain.preprocess.dictionary.map_dict import word, phrase
         print('calculating precision ...')
         count = 0
         for i in tar_encode_data:
             if word(i) is not None or phrase(i) is not None:
-                count+=1
-        precision = count/len(tar_encode_data)
+                count += 1
+        precision = count / len(tar_encode_data)
         print('{} precision: {}'.format(dataset, precision))
         return precision
-
 
     def evaluate(self, list_of_list_src_token_idx):
         if self.model_params['use_beam_search']:
