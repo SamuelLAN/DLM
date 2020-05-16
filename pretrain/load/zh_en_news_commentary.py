@@ -5,13 +5,14 @@ from nmt.preprocess.corpus import news_commentary
 
 class Loader:
     RANDOM_STATE = 42
-    TRAIN_RATIO = 0.98
+    NMT_TRAIN_RATIO = 0.98
+    PRETRAIN_TRAIN_RATIO = 0.98
 
     def __init__(self, start_ratio=0.0, end_ratio=0.98, sample_rate=1.0):
         # load data from files
         data = news_commentary.zh_en()
 
-        data = self.__split_data(data, 0., self.TRAIN_RATIO)
+        data = self.__split_data(data, 0., self.NMT_TRAIN_RATIO)
         data = reduce(lambda x, y: x + y, data)
 
         # shuffle the data

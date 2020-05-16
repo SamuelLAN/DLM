@@ -73,8 +73,8 @@ class Train:
 
         # load the data
         tokenizer_loader = self.Loader(0.0, 1.0, self.M.data_params['sample_ratio'])
-        train_loader = self.Loader(0.0, 0.9, self.M.data_params['sample_ratio'])
-        test_loader = self.Loader(0.9, 1.0, self.M.data_params['sample_ratio'])
+        train_loader = self.Loader(0.0, self.Loader.PRETRAIN_TRAIN_RATIO, self.M.data_params['sample_ratio'])
+        test_loader = self.Loader(self.Loader.PRETRAIN_TRAIN_RATIO, 1.0, self.M.data_params['sample_ratio'])
 
         # get data for tokenizer; if load from exist model, then do not need to regenerate the tokenizer
         load_model_params = self.M.checkpoint_params['load_model']
