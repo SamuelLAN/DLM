@@ -1,5 +1,6 @@
 def sample(_list, ratio):
     """ sample data from list_of_sentences """
+
     if ratio <= 0:
         return []
     elif ratio <= 1:

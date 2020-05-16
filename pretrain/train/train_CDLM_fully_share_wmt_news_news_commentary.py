@@ -14,12 +14,21 @@ from pretrain.preprocess.config import Ids
 Ids.multi_task = True
 Ids.cdlm_tasks = ['translation', 'pos', 'ner', 'synonym', 'def']
 
+import numpy as np
+import random
 from pretrain.models.transformer_cdlm_fully_share import Model
 from pretrain.train.train_CDLM_fully_share_wmt_news import Train as TrainBase
 from pretrain.load.zh_en_news_commentary import Loader as Loader_news_news_commentary
 from pretrain.load.zh_en_wmt_news import Loader
 
 Model.name = 'transformer_CDLM_fully_share_news_commentary'
+Model.sample_params = {
+    'translation': 1.0,
+    'pos': 0.1,
+    'ner': 0.3,
+    'synonym': 0.1,
+    'definition': 0.05,
+}
 
 
 class Train(TrainBase):
@@ -58,10 +67,23 @@ class Train(TrainBase):
         train_src_2, train_tar_2 = train_loader_2.data()
         test_src_2, test_tar_2 = test_loader_2.data()
 
+        # combine data
         self.train_src = train_src + train_src_2
         self.train_tar = train_tar + train_tar_2
         self.test_src = test_src + test_src_2
         self.test_tar = test_tar + test_tar_2
+
+        # shuffle data
+        data = list(zip(self.train_src, self.train_tar, self.test_src, self.test_tar))
+        random.seed(42)
+        random.shuffle(data)
+        self.train_src, self.train_tar, self.test_src, self.test_tar = list(zip(*data))
+
+        # convert to np.array
+        self.train_src = np.array(self.train_src)
+        self.train_tar = np.array(self.train_tar)
+        self.test_src = np.array(self.test_src)
+        self.test_tar = np.array(self.test_tar)
 
         print('\nFinish loading ')
 
