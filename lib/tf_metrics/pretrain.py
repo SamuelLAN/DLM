@@ -23,5 +23,5 @@ def tf_perplexity(y_true, y_pred):
         loss = tf.reduce_sum(loss, axis=-1)
         loss = tf.reduce_mean(loss)
 
-        _perplexity = tf.pow(2, loss)
+        _perplexity = tf.pow(2., loss)
         return _perplexity
