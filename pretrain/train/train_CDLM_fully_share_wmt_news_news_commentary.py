@@ -14,8 +14,6 @@ from pretrain.preprocess.config import Ids
 Ids.multi_task = True
 Ids.cdlm_tasks = ['translation', 'pos', 'ner', 'synonym', 'def']
 
-import numpy as np
-import random
 from pretrain.models.transformer_cdlm_fully_share import Model
 from pretrain.train.train_CDLM_fully_share_wmt_news import Train as TrainBase
 from pretrain.load.zh_en_news_commentary import Loader as Loader_news_news_commentary
@@ -40,7 +38,7 @@ class Train(TrainBase):
 
     def load_data(self):
         """ load the data """
-        print('\nLoading data ...')
+        print('\nLoading data (combined) ...')
 
         # load the data
         tokenizer_loader = self.Loader(0.0, 1.0, self.M.data_params['sample_ratio'])
@@ -74,23 +72,7 @@ class Train(TrainBase):
         self.test_src = test_src + test_src_2
         self.test_tar = test_tar + test_tar_2
 
-        # print('shuffling data ...')
-        #
-        # # shuffle data
-        # data = list(zip(self.train_src, self.train_tar, self.test_src, self.test_tar))
-        # random.seed(42)
-        # random.shuffle(data)
-        # self.train_src, self.train_tar, self.test_src, self.test_tar = list(zip(*data))
-        #
-        # print('converting data to array ...')
-        #
-        # # convert to np.array
-        # self.train_src = np.array(self.train_src)
-        # self.train_tar = np.array(self.train_tar)
-        # self.test_src = np.array(self.test_src)
-        # self.test_tar = np.array(self.test_tar)
-
-        print('\nFinish loading ')
+        print('\nFinish loading (combined) ')
 
 
 o_train = Train(use_cache=True)
