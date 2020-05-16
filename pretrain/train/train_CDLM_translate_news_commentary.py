@@ -14,6 +14,9 @@ from pretrain.models.transformer_cdlm_translate import Model
 from pretrain.load.zh_en_news_commentary import Loader
 
 Model.name = 'transformer_CDLM_translate_news_commentary'
+Model.data_params['over_sample_rate'] = 1.0
+Model.train_params['epoch'] = 10
+Model.monitor_params['name'] = 'tf_accuracy'
 
 
 class Train(TrainBase):

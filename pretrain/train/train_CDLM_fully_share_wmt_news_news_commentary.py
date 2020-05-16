@@ -1,5 +1,7 @@
 import os
 import sys
+import random
+import numpy as np
 
 cur_dir = os.path.abspath(os.path.split(__file__)[0])
 sub_sub_root_dir = os.path.split(cur_dir)[0]
@@ -71,6 +73,22 @@ class Train(TrainBase):
         self.train_tar = train_tar + train_tar_2
         self.test_src = test_src + test_src_2
         self.test_tar = test_tar + test_tar_2
+
+        print('shuffling data ...')
+
+        # shuffle data
+        data = list(zip(self.train_src, self.train_tar, self.test_src, self.test_tar))
+        random.seed(42)
+        random.shuffle(data)
+        self.train_src, self.train_tar, self.test_src, self.test_tar = list(zip(*data))
+
+        print('converting data to array ...')
+
+        # convert to np.array
+        self.train_src = np.array(self.train_src)
+        self.train_tar = np.array(self.train_tar)
+        self.test_src = np.array(self.test_src)
+        self.test_tar = np.array(self.test_tar)
 
         print('\nFinish loading (combined) ')
 

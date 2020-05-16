@@ -15,7 +15,7 @@ if gpus:
 
 import os
 import time
-from nmt.models.other_lans.transformer_zh_en_after_pretrin import Model
+from nmt.models.other_lans.transformer_zh_en import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root, md5
 # from nmt.load.zh_en_news_commentary import Loader
