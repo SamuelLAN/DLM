@@ -1,3 +1,6 @@
+import random
+
+
 def sample(_list, ratio):
     """ sample data from list_of_sentences """
 
@@ -13,6 +16,14 @@ def sample(_list, ratio):
 def sample_together(src_data, tar_data, ratio=1.0):
     if ratio == 1.0:
         return src_data, tar_data
+
+    if ratio < 1.0:
+        indices = list(range(len(src_data)))
+        random.seed(42)
+        random.shuffle(indices)
+        src_data = src_data[indices]
+        tar_data = tar_data[indices]
+
     src_list = sample(src_data, ratio)
     tar_list = sample(tar_data, ratio)
     return src_list, tar_list
