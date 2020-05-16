@@ -23,11 +23,11 @@ from pretrain.load.zh_en_wmt_news import Loader
 
 Model.name = 'transformer_CDLM_fully_share_news_commentary'
 Model.sample_params = {
-    'translation': 1.0,
-    'pos': 0.1,
+    'translation': 1.2,
+    'pos': 0.2,
     'ner': 0.3,
-    'synonym': 0.1,
-    'definition': 0.05,
+    'synonym': 0.2,
+    'definition': 0.1,
 }
 
 
