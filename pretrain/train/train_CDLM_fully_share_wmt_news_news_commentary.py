@@ -18,6 +18,7 @@ from pretrain.models.transformer_cdlm_fully_share import Model
 from pretrain.train.train_CDLM_fully_share_wmt_news import Train as TrainBase
 from pretrain.load.zh_en_news_commentary import Loader as Loader_news_news_commentary
 from pretrain.load.zh_en_wmt_news import Loader
+from lib.utils import cache, read_cache, md5
 
 Model.name = 'transformer_CDLM_fully_share_news_commentary'
 Model.sample_params = {
@@ -35,6 +36,53 @@ class Train(TrainBase):
     M = Model
     Loader = Loader
     Loader2 = Loader_news_news_commentary
+
+    def __init__(self, use_cache=True):
+        # read data from cache ;
+        #    if no cache, then load the data and preprocess it, then store it to cache
+        cache_name = f'pre{self.TRAIN_NAME}_preprocessed_data_{md5(self.M.data_params)}.pkl'
+        data = read_cache(cache_name) if use_cache else None
+        if not isinstance(data, type(None)):
+            self.train_x, \
+            self.train_y, \
+            self.train_lan_x, \
+            self.train_lan_y, \
+            self.train_pos_y, \
+            self.test_x, \
+            self.test_y, \
+            self.test_lan_x, \
+            self.test_lan_y, \
+            self.test_pos_y, \
+            self.tokenizer, \
+            self.vocab_size = data
+
+        else:
+            self.load_data()
+            self.preprocess_tokenizer()
+            self.preprocess()
+
+            cache(cache_name, [
+                self.train_x,
+                self.train_y,
+                self.train_lan_x,
+                self.train_lan_y,
+                self.train_pos_y,
+                self.test_x,
+                self.test_y,
+                self.test_lan_x,
+                self.test_lan_y,
+                self.test_pos_y,
+                self.tokenizer,
+                self.vocab_size,
+            ])
+
+        print(f'vocab_size: {self.vocab_size}\n')
+        print(f'train_x.shape: {self.train_x.shape}\ntrain_y.shape: {self.train_y.shape}')
+        print(f'train_lan_x.shape: {self.train_lan_x.shape}\ntrain_lan_y.shape: {self.train_lan_y.shape}')
+        print(f'train_pos_y.shape: {self.train_pos_y.shape}')
+        print(f'test_x.shape: {self.test_x.shape}\ntest_y.shape: {self.test_y.shape}')
+        print(f'test_lan_x.shape: {self.test_lan_x.shape}\ntest_lan_y.shape: {self.test_lan_y.shape}')
+        print(f'test_pos_y.shape: {self.test_pos_y.shape}')
 
     def load_data(self):
         """ load the data """
