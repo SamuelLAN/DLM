@@ -18,8 +18,8 @@ import time
 from nmt.models.transformer_zh_en import Model
 from lib.preprocess import utils
 from lib.utils import cache, read_cache, create_dir_in_root, md5
-from nmt.load.zh_en_news_commentary import Loader
-
+# from nmt.load.zh_en_news_commentary import Loader
+from nmt.load.zh_en_wmt_news import Loader
 
 class Train:
 
@@ -73,8 +73,8 @@ class Train:
         print('\nLoading data ...')
 
         # load the data
-        train_loader = Loader(0.0, Loader.TRAIN_RATIO, Model.data_params['sample_rate'])
-        test_loader = Loader(Loader.TRAIN_RATIO, 1.0, Model.data_params['sample_rate'])
+        train_loader = Loader(0.0, Loader.TRAIN_RATIO)
+        test_loader = Loader(Loader.TRAIN_RATIO, 1.0)
 
         # load data
         self.__train_src, self.__train_tar = train_loader.data()
@@ -164,6 +164,7 @@ class Train:
         start_test_time = time.time()
         test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
+        test_precision = self.model.calculate_precision_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         self.__test_train_time = start_test_time - start_train_time
         self.__test_test_time = time.time() - start_test_time
 
@@ -190,6 +191,7 @@ class Train:
             'train_bleu': train_bleu,
             'test_loss': test_loss,
             'test_bleu': test_bleu,
+
             'train_examples': train_examples,
             'test_examples': test_examples,
             'real_vocab_size': self.__src_tokenizer.vocab_size,
@@ -223,7 +225,6 @@ class Train:
         with open(os.path.join(create_dir_in_root('runtime', 'log'), '{}.log'.format(self.model.name)), 'ab') as f:
             f.write(string.encode('utf-8'))
 
-
 o_train = Train(use_cache=True)
-o_train.train()
-o_train.test(load_model=False)
+# o_train.train()
+o_train.test(load_model=True)

@@ -8,7 +8,6 @@ from lib.tf_metrics.pretrain import tf_accuracy
 keras = tf.keras
 tfv1 = tf.compat.v1
 
-
 class Model(BaseModel):
     name = 'transformer_for_nmt_share_emb_zh_word_level_wmt_news'
 
@@ -79,7 +78,7 @@ class Model(BaseModel):
     }
 
     checkpoint_params = {
-        'load_model': [],  # [name, time]
+        'load_model': ["baseline", "wmt-news"],  # [name, time]
         # 'load_model': [name, '2020_04_26_20_26_51'],  # [name, time] # BLEU 21, for news-commentary
         # 'load_model': [name, '2020_04_25_12_59_02'],  # [name, time] # BLEU 46, for wmt-news
         'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
@@ -128,6 +127,26 @@ class Model(BaseModel):
 
         print('{} bleu: {}'.format(dataset, bleu))
         return bleu
+
+    def calculate_precision_for_encoded(self, src_encode_data, tar_encode_data, dataset=''):
+        """ evaluate the BLEU according to the encoded src language data (list_of_list_token_idx)
+                                and the target reference (list of sentences) """
+        print('\nstart translating {} ...'.format(dataset))
+        pred_encoded_data = self.evaluate(src_encode_data)
+        tar_encode_data = utils.remove_some_token_idx(tar_encode_data, [0])
+
+        pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
+        tar_encode_data = utils.convert_list_of_list_token_idx_2_string(tar_encode_data)
+        tar_encode_data = list(map(lambda x: [x], tar_encode_data))
+        count = 0
+        print('calculating bleu ...')
+        from pretrain.preprocess.dictionary.map_dict import word,phrase
+        for i in tar_encode_data:
+            if i in word(i) or i in phrase(i):
+                count += 1
+        precision = count/len(tar_encode_data)
+        print('{} precision: {}'.format(dataset, precision))
+        return precision
 
     def evaluate(self, list_of_list_src_token_idx):
         if self.model_params['use_beam_search']:
