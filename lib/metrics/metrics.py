@@ -30,6 +30,8 @@ def perplexity(y_true, y_pred):
 
     # loss = - y_true * np.log(y_pred + 0.0001)
 
+    if hasattr(y_pred, 'numpy'):
+        y_pred = y_pred.numpy()
     y_pred[np.where(y_pred == 0)] = 0.00001
     loss = - y_pred * np.log(y_pred)
 
