@@ -99,7 +99,10 @@ def __merge_dict(dict_list):
                     info[k] = v
                 else:
                     info[k] += v
-        return filter_duplicate(info)
+
+        for k, v in info.items():
+            info[k] = list(set(v))
+        return info
 
 
 def __get_info(info, info_key='*'):
