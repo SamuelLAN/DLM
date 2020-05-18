@@ -171,6 +171,29 @@ class Train(TrainBase):
 
         print('\nFinish testing')
 
+        model_list = os.listdir(self.model.model_dir)
+        if model_list:
+            model_list.sort(reverse=True)
+            best_model = model_list[0]
+        else:
+            best_model = ''
+
+        train_loader = self.Loader(0.0, self.Loader.PRETRAIN_TRAIN_RATIO, self.M.data_params['sample_ratio'])
+        test_loader = self.Loader(self.Loader.PRETRAIN_TRAIN_RATIO, 1.0, self.M.data_params['sample_ratio'])
+
+        # get data
+        self.train_src, self.train_tar = train_loader.data()
+        self.test_src, self.test_tar = test_loader.data()
+
+        shape_of_data = {
+            'train_size': len(self.train_src),
+            'test_size': len(self.test_src),
+            'train_x_shape': self.train_x.shape,
+            'train_y_shape': self.train_y.shape,
+            'test_x_shape': self.test_x.shape,
+            'test_y_shape': self.test_y.shape,
+        }
+
         self.log({
             'train_loss': train_loss,
             'train_acc': train_acc,
@@ -180,4 +203,7 @@ class Train(TrainBase):
             'test_ppl': test_ppl,
             'train_examples': train_examples,
             'test_examples': test_examples,
+            'early_stop_at': best_model,
+            'shape_of_data': shape_of_data,
+            'initialize_from': self.model.checkpoint_params['load_model'],
         })
