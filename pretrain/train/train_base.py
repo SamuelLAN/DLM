@@ -192,6 +192,13 @@ class Train:
         else:
             best_model = ''
 
+        train_loader = self.Loader(0.0, self.Loader.PRETRAIN_TRAIN_RATIO, self.M.data_params['sample_ratio'])
+        test_loader = self.Loader(self.Loader.PRETRAIN_TRAIN_RATIO, 1.0, self.M.data_params['sample_ratio'])
+
+        # get data
+        self.train_src, self.train_tar = train_loader.data()
+        self.test_src, self.test_tar = test_loader.data()
+
         shape_of_data = {
             'train_size': len(self.train_src),
             'test_size': len(self.test_src),
