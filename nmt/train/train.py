@@ -178,7 +178,7 @@ class Train:
         start_test_time = time.time()
         test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
-        test_precision = self.model.calculate_precision_for_encoded(self.__test_src_encode[:2000], self.__src_tokenizer)
+        test_precision = self.model.calculate_precision_for_encoded(self.__test_src_encode, self.__src_tokenizer)
         self.__test_train_time = start_test_time - start_train_time
         self.__test_test_time = time.time() - start_test_time
 
