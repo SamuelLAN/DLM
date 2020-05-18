@@ -29,7 +29,9 @@ def perplexity(y_true, y_pred):
     #     y_true = __one_hot(y_true, y_pred.shape[-1])
 
     # loss = - y_true * np.log(y_pred + 0.0001)
-    loss = - y_pred * np.log(y_pred + 0.0001)
+
+    y_pred[np.where(y_pred == 0)] = 0.00001
+    loss = - y_pred * np.log(y_pred)
 
     # loss *= mask
     loss = np.sum(loss, axis=-1)
