@@ -144,24 +144,20 @@ class Model(BaseModel):
         print('{} bleu: {}'.format(dataset, bleu))
         return bleu
 
-    def calculate_precision_for_encoded(self, src_encode_data, tar_encode_data, dataset=''):
-        """ evaluate the BLEU according to the encoded src language data (list_of_list_token_idx)
-                                and the target reference (list of sentences) """
-        print('\nstart translating {} ...'.format(dataset))
-        pred_encoded_data = self.evaluate(src_encode_data)
-        tar_encode_data = utils.remove_some_token_idx(tar_encode_data, [0])
+    def calculate_precision_for_encoded(self, src_encoded_data, tokenizer):
+        """ evaluate the precision according to the encoded src language data """
+        pred = self.translate_list_token_idx(src_encoded_data, tokenizer)
+        total_tokens = list(map(lambda x: x.strip('.').strip('!').strip('?').strip(';').strip(',').split(' '), pred))
 
-        pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
-        tar_encode_data = utils.convert_list_of_list_token_idx_2_string(tar_encode_data)
-        tar_encode_data = list(map(lambda x: [x], tar_encode_data))
-        from pretrain.preprocess.dictionary.map_dict import word, phrase
-        print('calculating precision ...')
+        from pretrain.preprocess.dictionary.map_dict import word
         count = 0
-        for i in tar_encode_data:
-            if word(i) is not None or phrase(i) is not None:
-                count += 1
-        precision = count / len(tar_encode_data)
-        print('{} precision: {}'.format(dataset, precision))
+        for i in total_tokens:
+            for j in i:
+                cur = word(j)
+                if "translation" in cur:
+                    count += 1
+        precision = count / len(total_tokens)
+        print('Total test precision is: {}'.format(precision))
         return precision
 
     def evaluate(self, list_of_list_src_token_idx):

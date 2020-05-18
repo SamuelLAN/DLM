@@ -1,4 +1,14 @@
 import tensorflow as tf
+import os
+import sys
+
+cur_dir = os.path.abspath(os.path.split(__file__)[0])
+sub_sub_root_dir = os.path.split(cur_dir)[0]
+sub_root_dir = os.path.split(sub_sub_root_dir)[0]
+root_dir = os.path.split(sub_root_dir)[0]
+
+sys.path.append(sub_root_dir)
+sys.path.append(root_dir)
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 print(gpus)
@@ -22,7 +32,7 @@ from lib.utils import cache, read_cache, create_dir_in_root, md5
 from nmt.load.zh_en_wmt_news import Loader
 
 Model.name = 'transformer_nmt_baseline'
-Model.checkpoint_params['load_model'] = ['baseline', 'wmt_news']
+Model.checkpoint_params['load_model'] = ['baseline', 'wmt-news']
 
 
 class Train:
@@ -168,8 +178,7 @@ class Train:
         start_test_time = time.time()
         test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
-        # test_precision = self.model.calculate_precision_for_encoded(self.__test_src_encode, self.__test_tar_encode,
-        #                                                             'test')
+        test_precision = self.model.calculate_precision_for_encoded(self.__test_src_encode[:2000], self.__src_tokenizer)
         self.__test_train_time = start_test_time - start_train_time
         self.__test_test_time = time.time() - start_test_time
 
@@ -196,7 +205,7 @@ class Train:
             'train_bleu': train_bleu,
             'test_loss': test_loss,
             'test_bleu': test_bleu,
-            # 'test_precision': test_precision,
+            'test_precision': test_precision,
             'train_examples': train_examples,
             'test_examples': test_examples,
             'real_vocab_size': self.__src_tokenizer.vocab_size,

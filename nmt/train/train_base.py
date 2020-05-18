@@ -167,6 +167,7 @@ class Train:
         start_test_time = time.time()
         test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         test_bleu = self.model.calculate_bleu_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
+        test_precision = self.model.calculate_precision_for_encoded(self.__test_src_encode[:50], self.__src_tokenizer, 'test')
         self.__test_train_time = start_test_time - start_train_time
         self.__test_test_time = time.time() - start_test_time
 
@@ -193,6 +194,7 @@ class Train:
             'train_bleu': train_bleu,
             'test_loss': test_loss,
             'test_bleu': test_bleu,
+            'test_precision': test_precision,
             'train_examples': train_examples,
             'test_examples': test_examples,
             'real_vocab_size': self.__src_tokenizer.vocab_size,
