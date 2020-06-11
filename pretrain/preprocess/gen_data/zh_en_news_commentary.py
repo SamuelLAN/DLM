@@ -12,9 +12,7 @@ class GenData:
     RANDOM_STATE = 42
     NMT_TRAIN_RATIO = 0.98
     PRETRAIN_TRAIN_RATIO = 0.98
-    BATCH_SIZE_PER_FILE = 12
-
-    buffer_size = 1000
+    BATCH_SIZE_PER_FILE = 128
 
     def __init__(self, start_ratio=0.0, end_ratio=0.98, _sample_rate=1.0, data_params={}, pretrain_params={},
                  tokenizer_pl=[], encoder_pl=[], _tokenizer_dir='cdlm', _dataset='cdlm'):
