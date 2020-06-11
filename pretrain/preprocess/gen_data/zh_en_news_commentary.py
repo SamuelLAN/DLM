@@ -91,7 +91,7 @@ class GenData:
             # preprocess data
             batch_x, batch_y, batch_lan_x, batch_lan_y, batch_pos_y = utils.pipeline(
                 self.__encoder_pl, batch_src, batch_tar, {**self.__data_params, 'tokenizer': self.__tokenizer},
-                verbose=i ==0
+                verbose=i == 0
             )
 
             # save data to file
