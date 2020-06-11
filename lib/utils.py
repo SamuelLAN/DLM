@@ -27,6 +27,23 @@ def write_json(_path, data):
         f.write(json.dumps(data).encode('utf-8'))
 
 
+def create_dir(*args):
+    """ create directory under the root dir """
+    dir_path = args[0]
+    for arg in args[1:]:
+        dir_path = os.path.join(dir_path, arg)
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+    return dir_path
+
+
+def get_file_path(*args):
+    """ Get relative file path, if the directory is not exist, it will be created """
+    file_name = args[-1]
+    args = args[:-1]
+    return os.path.join(create_dir(*args), file_name)
+
+
 def create_dir_in_root(*args):
     """ create directory under the root dir """
     dir_path = root_dir
