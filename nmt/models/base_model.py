@@ -196,8 +196,8 @@ class BaseModel:
                            epochs=self.train_params['epoch'],
                            batch_size=batch_size,
                            steps_per_epoch=steps_per_epoch,
-                           # validation_data=(val_x, val_y) if not isinstance(val_x, type(None)) else None,
-                           # validation_steps=validation_steps,
+                           validation_data=(val_x, val_y) if not isinstance(val_x, type(None)) else None,
+                           validation_steps=validation_steps,
                            callbacks=self.callbacks,
                            verbose=2)
 
