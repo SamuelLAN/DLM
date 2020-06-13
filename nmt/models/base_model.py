@@ -1,6 +1,7 @@
 import os
 import time
 import math
+import types
 import numpy as np
 from lib import utils
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
@@ -174,7 +175,7 @@ class BaseModel:
         self.model.load_weights(model_path)
         print('Successfully loading weights from %s ' % model_path)
 
-    def train(self, train_x, train_y, val_x=None, val_y=None):
+    def train(self, train_x, train_y, val_x=None, val_y=None, train_size=None, val_size=None):
         # compile model
         self.__compile()
 
@@ -185,11 +186,18 @@ class BaseModel:
             self.load_model(model_dir, batch_x, train_y[:1])
 
         if not self.__finish_train:
+            not_generator = not isinstance(train_x, types.GeneratorType)
+            batch_size = self.train_params['batch_size'] if not_generator else None
+            steps_per_epoch = None if not_generator else int(math.ceil(train_size / self.train_params['batch_size']))
+            validation_steps = None if not_generator else int(math.ceil(val_size / self.train_params['batch_size']))
+
             # fit model
             self.model.fit(train_x, train_y,
                            epochs=self.train_params['epoch'],
-                           batch_size=self.train_params['batch_size'],
-                           validation_data=(val_x, val_y) if not isinstance(val_x, type(None)) else None,
+                           batch_size=batch_size,
+                           steps_per_epoch=steps_per_epoch,
+                           # validation_data=(val_x, val_y) if not isinstance(val_x, type(None)) else None,
+                           # validation_steps=validation_steps,
                            callbacks=self.callbacks,
                            verbose=2)
 
@@ -200,7 +208,7 @@ class BaseModel:
 
     def loss(self, y_true, y_pred, from_logits=True, label_smoothing=0):
         # reshape y_true to (batch_size, max_tar_seq_len)
-        y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
+        # y_true = tf.reshape(y_true, [-1, y_pred.shape[1]])
         mask = tf.expand_dims(tf.cast(tf.logical_not(tf.equal(y_true, 0)), y_pred.dtype), axis=-1)
         y_true = tf.cast(tf.one_hot(tf.cast(y_true, tf.int32), y_pred.shape[-1]), y_pred.dtype)
 

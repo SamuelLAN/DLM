@@ -65,7 +65,7 @@ class Model(BaseModel):
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 800,
+        'epoch': 100,
         'early_stop': 20,
     }
 
@@ -111,7 +111,8 @@ class Model(BaseModel):
             lan_vocab_size=self.model_params['lan_vocab_size'],
         )
 
-    def pos_emb(self, pos_matrix):
-        _emb = pos_embeddings(self.data_params['max_src_seq_len'] + self.data_params['max_src_ground_seq_len'],
-                              self.model_params['dim_model'])
+    @staticmethod
+    def pos_emb(pos_matrix):
+        _emb = pos_embeddings(Model.data_params['max_src_seq_len'] + Model.data_params['max_src_ground_seq_len'],
+                              Model.model_params['dim_model'])
         return np.array([_emb[0, list(np.array(pos_vector))] for pos_vector in pos_matrix], dtype=np.float32)

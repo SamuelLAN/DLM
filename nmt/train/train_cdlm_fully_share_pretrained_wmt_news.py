@@ -19,6 +19,8 @@ from nmt.load.zh_en_wmt_news import Loader
 from nmt.train.train_base import Train as TrainBase
 
 Model.name = 'transformer_nmt_CDLM_fully_share_pretrained_wmt_news'
+Model.checkpoint_params['load_model'] = ['transformer_CDLM_fully_share_wmt_news', '2020_05_16_06_34_50']
+Model.checkpoint_params['load_model'] = [Model.name, '2020_05_17_01_47_41']
 
 
 class Train(TrainBase):
@@ -28,5 +30,5 @@ class Train(TrainBase):
 
 
 o_train = Train(use_cache=True)
-o_train.train()
-o_train.test(load_model=False)
+# o_train.train()
+o_train.test(load_model=True)

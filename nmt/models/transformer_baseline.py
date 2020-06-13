@@ -134,7 +134,8 @@ class Model(BaseModel):
         pred_encoded_data = self.evaluate(src_encode_data)
         return self.calculate_bleu_for_pred(pred_encoded_data, tar_encode_data, dataset)
 
-    def calculate_bleu_for_pred(self, pred_encoded_data, tar_encode_data, dataset=''):
+    @staticmethod
+    def calculate_bleu_for_pred(pred_encoded_data, tar_encode_data, dataset=''):
         """ evaluate the BLEU according to the encoded src language data (list_of_list_token_idx)
                                 and the target reference (list of sentences) """
         print('\nstart translating {} ...'.format(dataset))

@@ -111,7 +111,7 @@ class GenData:
 
 from pretrain.models.transformer_cdlm_translate import Model
 
-is_train = True
+is_train = False
 sample_rate = 10.0
 train_ratio = 0.98
 dataset = f'cdlm_translate_train_{sample_rate}' if is_train else f'cdlm_translate_test'
@@ -125,6 +125,6 @@ GenData(
     pretrain_params=Model.pretrain_params,
     tokenizer_pl=Model.tokenizer_pl,
     encoder_pl=Model.encode_pl,
-    _tokenizer_dir=dataset,
+    _tokenizer_dir=tokenizer_dir,
     _dataset=dataset
 )
