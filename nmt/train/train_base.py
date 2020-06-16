@@ -81,11 +81,13 @@ class Train:
         train_ratio = self.Loader.TRAIN_RATIO
         val_ratio = train_ratio + self.Loader.VAL_RATIO
 
+        tokenizer_loader = self.Loader(0.0, train_ratio, 1.0)
         train_loader = self.Loader(0.0, train_ratio, self.M.data_params['sample_rate'])
         val_loader = self.Loader(train_ratio, val_ratio, self.M.data_params['sample_rate'])
         test_loader = self.Loader(val_ratio, 1.0, self.M.data_params['sample_rate'])
 
         # load data
+        self.__tokenizer_data_src, self.__tokenizer_data_tar = tokenizer_loader.data()
         self.__train_src, self.__train_tar = train_loader.data()
         self.__val_src, self.__val_tar = val_loader.data()
         self.__test_src, self.__test_tar = test_loader.data()
@@ -107,23 +109,15 @@ class Train:
                                                 load_model_params[0], load_model_params[1], 'tokenizer.pkl')
             self.__src_tokenizer = self.__tar_tokenizer = read_cache(tokenizer_path)
 
-            self.__train_src_encode, self.__train_tar_encode, _, _ = utils.pipeline(
-                self.M.encode_pipeline,
-                self.__train_src,
-                self.__train_tar, {
-                    **self.M.data_params,
-                    'tokenizer': self.__src_tokenizer,
-                    'src_tokenizer': self.__src_tokenizer,
-                    'tar_tokenizer': self.__tar_tokenizer,
-                })
-
         else:
-            self.__train_src_encode, self.__train_tar_encode, self.__src_tokenizer, self.__tar_tokenizer = utils.pipeline(
-                self.M.preprocess_pipeline,
-                self.__train_src,
-                self.__train_tar,
+            _, _, self.__src_tokenizer, self.__tar_tokenizer = utils.pipeline(
+                self.M.tokenizer_pl,
+                self.__tokenizer_data_src,
+                self.__tokenizer_data_tar,
                 self.M.data_params,
             )
+            del self.__tokenizer_data_src
+            del self.__tokenizer_data_tar
 
         params = {
             **self.M.data_params,
@@ -131,6 +125,11 @@ class Train:
             'src_tokenizer': self.__src_tokenizer,
             'tar_tokenizer': self.__tar_tokenizer,
         }
+
+        self.__train_src_encode, self.__train_tar_encode, _, _ = utils.pipeline(self.M.encode_pipeline,
+                                                                                self.__train_src,
+                                                                                self.__train_tar,
+                                                                                params)
 
         self.__val_src_encode, self.__val_tar_encode, _, _ = utils.pipeline(self.M.encode_pipeline,
                                                                             self.__val_src, self.__val_tar, params)

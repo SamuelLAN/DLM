@@ -15,6 +15,7 @@ class Model(BaseModel):
     preprocess_pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + \
                           tfds_share_pl.train_tokenizer + tfds_share_pl.encode_pipeline
     # for test
+    tokenizer_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
     encode_pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.encode_pipeline
     encode_pipeline_for_src = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise_for_src + \
                               tfds_share_pl.encode_pipeline_for_src
