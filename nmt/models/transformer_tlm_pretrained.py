@@ -68,16 +68,12 @@ class Model(BaseModel):
 
     monitor_params = {
         **BaseModel.monitor_params,
-        'name': 'val_tf_accuracy',
-        'mode': 'max',  # for the "name" monitor, the "min" is best;
-        'for_start': 'tf_accuracy',
-        'for_start_value': 0.05,
-        'for_start_mode': 'max',
+        'early_stop': train_params['early_stop'],
     }
 
     checkpoint_params = {
         'load_model': [],  # [name, time] # test
         # 'load_model': ['transformer_CDLM_translate_wmt_news', '2020_05_13_04_33_50'],  # [name, time] # test
         # 'load_model': ['transformer_for_MLM_zh_en', '2020_04_23_15_16_14'],  # [name, time]
-        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
+        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['monitor']
     }

@@ -132,23 +132,11 @@ class BaseModel:
         """ if using model.fit to train model,
               then we need to set callbacks for the training process """
         # callback for tensorboard
-        callback_tf_board = Board(log_dir=self.tb_dir,
-                                  histogram_freq=self.tb_params['histogram_freq'],
-                                  write_grads=self.tb_params['write_grads'],
-                                  write_graph=self.tb_params['write_graph'],
-                                  write_images=False,
-                                  profile_batch=0,
-                                  update_freq=self.tb_params['update_freq'])
+        callback_tf_board = Board(log_dir=self.tb_dir, **self.tb_params)
         callback_tf_board.set_model(self.model)
 
         # callback for saving model and early stopping
-        callback_saver = Saver(self.checkpoint_path,
-                               self.monitor_params['name'],
-                               self.monitor_params['mode'],
-                               self.train_params['early_stop'],
-                               self.monitor_params['for_start'],
-                               self.monitor_params['for_start_value'],
-                               self.monitor_params['for_start_mode'])
+        callback_saver = Saver(self.checkpoint_path, **self.monitor_params)
         callback_saver.set_model(self.model)
 
         self.callbacks = [callback_tf_board, callback_saver]

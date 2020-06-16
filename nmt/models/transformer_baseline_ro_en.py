@@ -55,25 +55,12 @@ class Model(BaseModel):
         'early_stop': 15,
     }
 
-    compile_params = {
-        **BaseModel.compile_params,
-        # 'optimizer': keras.optimizers.Adam(learning_rate=train_params['learning_rate'], beta_1=0.9, beta_2=0.98,
-        #                                    epsilon=1e-9),
-        'optimizer': tfv1.train.AdamOptimizer(learning_rate=train_params['learning_rate']),
-        'label_smooth': True,
-        'metrics': [tf_accuracy, tf_perplexity],
-    }
-
     monitor_params = {
         **BaseModel.monitor_params,
-        'name': 'val_tf_accuracy',
-        'mode': 'max',  # for the "name" monitor, the "min" is best;
-        'for_start': 'tf_accuracy',
-        'for_start_value': 0.05,
-        'for_start_mode': 'max',
+        'early_stop': train_params['early_stop'],
     }
 
     checkpoint_params = {
         'load_model': [],  # [name, time] # test
-        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
+        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['monitor']
     }
