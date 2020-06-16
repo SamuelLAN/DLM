@@ -1,7 +1,6 @@
 import tensorflow as tf
 from nmt.models.transformer_baseline import Model as BaseModel
-from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
-from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
+from nmt.preprocess.inputs import noise_pl, tfds_share_pl
 
 keras = tf.keras
 tfv1 = tf.compat.v1
@@ -16,7 +15,7 @@ class Model(BaseModel):
     encode_pipeline = noise_pl.remove_noise + tfds_share_pl.encode_pipeline
     encode_pipeline_for_src = noise_pl.remove_noise_for_src + tfds_share_pl.encode_pipeline_for_src
     encode_pipeline_for_tar = noise_pl.remove_noise_for_src + tfds_share_pl.encode_pipeline_for_src
-    decode_pipeline_for_src = tfds_share_pl.decode_pipeline + zh_en.remove_space_pipeline
+    decode_pipeline_for_src = tfds_share_pl.decode_pipeline
     decode_pipeline_for_tar = tfds_share_pl.decode_pipeline
 
     data_params = {
