@@ -10,7 +10,7 @@ sys.path.append(sub_root_dir)
 sys.path.append(root_dir)
 
 from nmt.models.transformer_baseline_ro_en import Model
-from nmt.load.zh_en_wmt_news import Loader
+from nmt.load.ro_en_europarl import Loader
 from nmt.train.train_base import Train as TrainBase
 
 Model.name = 'transformer_nmt_baseline_ro_en_europarl'
