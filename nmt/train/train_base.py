@@ -17,7 +17,8 @@ import os
 import time
 from nmt.models.transformer_baseline import Model
 from lib.preprocess import utils
-from lib.utils import cache, read_cache, create_dir_in_root, md5
+from lib.utils import cache, read_cache, create_dir_in_root, md5, load_pkl, get_file_path
+from nmt.preprocess.config import data_dir
 from nmt.load.zh_en_wmt_news import Loader
 
 
@@ -25,6 +26,7 @@ class Train:
     TRAIN_NAME = os.path.splitext(os.path.split(__file__)[1])[0]
     M = Model
     Loader = Loader
+    tokenizer_dir = ''
 
     def __init__(self, use_cache=True):
         # read data from cache ;
@@ -76,11 +78,16 @@ class Train:
         print('\nLoading data ...')
 
         # load the data
-        train_loader = self.Loader(0.0, self.Loader.TRAIN_RATIO, self.M.data_params['sample_rate'])
-        test_loader = self.Loader(self.Loader.TRAIN_RATIO, 1.0, self.M.data_params['sample_rate'])
+        train_ratio = self.Loader.TRAIN_RATIO
+        val_ratio = train_ratio + self.Loader.VAL_RATIO
+
+        train_loader = self.Loader(0.0, train_ratio, self.M.data_params['sample_rate'])
+        val_loader = self.Loader(train_ratio, val_ratio, self.M.data_params['sample_rate'])
+        test_loader = self.Loader(val_ratio, 1.0, self.M.data_params['sample_rate'])
 
         # load data
         self.__train_src, self.__train_tar = train_loader.data()
+        self.__val_src, self.__val_tar = val_loader.data()
         self.__test_src, self.__test_tar = test_loader.data()
 
         print('\nFinish loading ')
@@ -89,8 +96,13 @@ class Train:
         """ preprocess the data to list of list token idx """
         print('\nProcessing data ... ')
 
-        load_model_params = self.M.checkpoint_params['load_model']
-        if load_model_params:
+        if self.tokenizer_dir:
+            self.__src_tokenizer = load_pkl(get_file_path(data_dir, 'tokenizer', self.tokenizer_dir, 'tokenizer.pkl'))
+            self.__tar_tokenizer = self.__src_tokenizer
+
+        elif self.M.checkpoint_params['load_model']:
+            load_model_params = self.M.checkpoint_params['load_model']
+
             tokenizer_path = create_dir_in_root('runtime', 'tokenizer',
                                                 load_model_params[0], load_model_params[1], 'tokenizer.pkl')
             self.__src_tokenizer = self.__tar_tokenizer = read_cache(tokenizer_path)
@@ -120,6 +132,9 @@ class Train:
             'tar_tokenizer': self.__tar_tokenizer,
         }
 
+        self.__val_src_encode, self.__val_tar_encode, _, _ = utils.pipeline(self.M.encode_pipeline,
+                                                                            self.__val_src, self.__val_tar, params)
+
         self.__test_src_encode, self.__test_tar_encode, _, _ = utils.pipeline(self.M.encode_pipeline,
                                                                               self.__test_src, self.__test_tar, params)
 
@@ -139,7 +154,7 @@ class Train:
         print('\nTraining model ...')
         start_time = time.time()
         self.model.train((self.__train_src_encode, self.__train_tar_encode[:, :-1]), self.__train_tar_encode[:, 1:],
-                         (self.__test_src_encode, self.__test_tar_encode[:, :-1]), self.__test_tar_encode[:, 1:])
+                         (self.__val_src_encode, self.__val_tar_encode[:, :-1]), self.__val_tar_encode[:, 1:])
         self.__train_time = time.time() - start_time
         print('\nFinish training')
 
@@ -153,21 +168,34 @@ class Train:
         print('\nTesting model ...')
 
         train_examples = self.show_examples(self.__train_src_encode, self.__train_tar_encode, 5)
+        val_examples = self.show_examples(self.__val_src_encode, self.__val_tar_encode, 5)
         test_examples = self.show_examples(self.__test_src_encode, self.__test_tar_encode, 5)
 
-        print('\nTrain examples: {}\n\nTest examples: {}'.format(train_examples, test_examples))
+        print('\nTrain examples: {}\n\nVal examples: {}\n\nTest examples: {}'.format(
+            train_examples, val_examples, test_examples))
 
         print('\n\nCalculating bleu ...')
 
-        start_train_time = time.time()
         train_loss = self.model.calculate_loss_for_encoded(self.__train_src_encode, self.__train_tar_encode, 'train')
+
+        start_train_time = time.time()
         train_bleu = self.model.calculate_bleu_for_encoded(self.__train_src_encode[:2000],
                                                            self.__train_tar_encode[:2000], 'train')
-        # train_loss = train_bleu = test_loss = test_bleu = 'ignore'
+        end_train_time = time.time()
+
+        val_loss = self.model.calculate_loss_for_encoded(self.__val_src_encode, self.__val_tar_encode, 'val')
+
+        start_val_time = time.time()
+        val_bleu = self.model.calculate_bleu_for_encoded(self.__val_src_encode, self.__val_tar_encode, 'val')
+        end_val_time = time.time()
+
+        test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
+
         start_test_time = time.time()
         pred_encoded = self.model.evaluate(self.__test_src_encode)
-        test_loss = self.model.calculate_loss_for_encoded(self.__test_src_encode, self.__test_tar_encode, 'test')
         test_bleu = self.model.calculate_bleu_for_pred(pred_encoded, self.__test_tar_encode, 'test')
+        end_test_time = time.time()
+
         precision_d_1_gram = self.model.calculate_precisions_for_decoded(
             pred_encoded, self.__test_tar_encode, self.__tar_tokenizer, n_gram=1)
         precision_d_2_gram = self.model.calculate_precisions_for_decoded(
@@ -176,8 +204,10 @@ class Train:
             pred_encoded, self.__test_tar_encode, self.__tar_tokenizer, n_gram=3)
         precision_d_4_gram = self.model.calculate_precisions_for_decoded(
             pred_encoded, self.__test_tar_encode, self.__tar_tokenizer, n_gram=4)
-        self.__test_train_time = start_test_time - start_train_time
-        self.__test_test_time = time.time() - start_test_time
+
+        self.__test_train_time = end_train_time - start_train_time
+        self.__test_val_time = end_val_time - start_val_time
+        self.__test_test_time = end_test_time - start_test_time
 
         print('\nFinish testing')
 
@@ -190,9 +220,12 @@ class Train:
 
         shape_of_data = {
             'train_size': len(self.__train_src),
+            'val_size': len(self.__val_src),
             'test_size': len(self.__test_src),
             'train_x_shape': self.__train_src_encode.shape,
             'train_y_shape': self.__train_tar_encode.shape,
+            'val_x_shape': self.__val_src_encode.shape,
+            'val_y_shape': self.__val_tar_encode.shape,
             'test_x_shape': self.__test_src_encode.shape,
             'test_y_shape': self.__test_tar_encode.shape,
         }
@@ -200,6 +233,8 @@ class Train:
         self.log({
             'train_loss': train_loss,
             'train_bleu': train_bleu,
+            'val_loss': val_loss,
+            'val_bleu': val_bleu,
             'test_loss': test_loss,
             'test_bleu': test_bleu,
             'test_precision_in_dict_1': precision_d_1_gram,
@@ -207,10 +242,13 @@ class Train:
             'test_precision_in_dict_3': precision_d_3_gram,
             'test_precision_in_dict_4': precision_d_4_gram,
             'train_examples': train_examples,
+            'val_examples': val_examples,
             'test_examples': test_examples,
             'real_vocab_size': self.__src_tokenizer.vocab_size,
             'early_stop_at': best_model,
             'shape_of_data': shape_of_data,
+            'tokenizer': self.model.tokenizer_dir,
+            'initialize_tokenizer': self.tokenizer_dir,
             'initialize_from': self.model.checkpoint_params['load_model'],
         })
 

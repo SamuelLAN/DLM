@@ -1,5 +1,5 @@
 import random
-from nmt.preprocess.corpus import wmt_news, um_corpus
+from nmt.preprocess.corpus import europarl
 
 
 class Loader:
@@ -9,15 +9,18 @@ class Loader:
 
     def __init__(self, start_ratio=0.0, end_ratio=0.8, sample_rate=1.0):
         # load data from files
-        zh_data, en_data = wmt_news.zh_en()
+        ro_data, en_data = europarl.ro_en()
 
         # shuffle the data
+        data = list(zip(ro_data, en_data))
         random.seed(self.RANDOM_STATE)
-        data = list(zip(zh_data, en_data))
         random.shuffle(data)
 
         # split data according to the ratio (for train set, val set and test set)
         data = self.__split_data(data, start_ratio, end_ratio)
+
+        # sample data if the data size is too big; low resource setting
+        data = self.sample_data(data, sample_rate)
 
         self.__src_data, self.__tar_data = list(zip(*data))
 
@@ -28,6 +31,11 @@ class Loader:
         start_index = int(len_data * start_ratio)
         end_index = int(len_data * end_ratio)
         return data[start_index: end_index]
+
+    @staticmethod
+    def sample_data(data, sample_rate):
+        len_data = len(data)
+        return data[: int(len_data * sample_rate)]
 
     def data(self):
         return self.__src_data, self.__tar_data

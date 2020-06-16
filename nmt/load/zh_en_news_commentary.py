@@ -12,15 +12,15 @@ class Loader:
         # load data from files
         data = news_commentary.zh_en()
 
-        # sample data if the data size is too big; low resource setting
-        data = self.sample_data(data, sample_rate)
-
         data = self.__split_data(data, start_ratio, end_ratio)
         data = reduce(lambda x, y: x + y, data)
 
         # shuffle the data
         random.seed(self.RANDOM_STATE)
         random.shuffle(data)
+
+        # sample data if the data size is too big; low resource setting
+        data = self.sample_data(data, sample_rate)
 
         # # sample data if the data size is too big; low resource setting
         # data = self.sample_data(data, sample_rate)

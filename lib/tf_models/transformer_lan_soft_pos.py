@@ -95,14 +95,17 @@ class Decoder(layers.Layer):
 class Transformer(BaseTransformer):
     def __init__(self, num_layers, d_model, num_heads, d_ff, input_vocab_size,
                  target_vocab_size, max_pe_input, max_pe_target, drop_rate=0.1, share_emb=False, share_final=False,
-                 lan_vocab_size=2):
+                 lan_vocab_size=2, encoder=None):
         super(Transformer, self).__init__(num_layers, d_model, num_heads, d_ff, input_vocab_size, target_vocab_size,
                                           max_pe_input, max_pe_target, drop_rate, share_emb, share_final)
 
         self.__share_final = share_final
 
-        self.encoder = Encoder(num_layers, d_model, num_heads, d_ff,
-                               input_vocab_size, max_pe_input, drop_rate, lan_vocab_size)
+        if not isinstance(encoder, type(None)):
+            self.encoder = encoder
+        else:
+            self.encoder = Encoder(num_layers, d_model, num_heads, d_ff,
+                                   input_vocab_size, max_pe_input, drop_rate, lan_vocab_size)
 
         emb_layer = self.encoder.embedding if share_emb else None
         lan_emb_layer = self.encoder.lan_embedding if share_emb else None

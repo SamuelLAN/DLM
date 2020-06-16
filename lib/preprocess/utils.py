@@ -483,8 +483,8 @@ def remove_special_chars(string):
         string = string[:-1] + '.'
 
     # if no end punctuations, add one
-    if string and string[-1] not in ['.', ',', '?', '!', ';']:
-        string += '.'
+    if string and string[-1] not in ['.', ',', '?', '!', ';'] and len(string.split(' ')) > 3:
+        string += ' .'
     return string
 
 
@@ -548,9 +548,11 @@ def split_sentences(src_sentences, tar_sentences):
         if len(src_l) <= 1 or abs(len(src_l[0].split(' ')) - len(tar_l[0].split(' '))) > 5:
             continue
 
-        new_sentences += [(src_l[i] + src_delimiters[i], tar_l[i] + src_delimiters[i])
-                          for i in range(len(src_l)) if i > 0]
-        sentences[index] = (src_l[0] + src_delimiters[0], tar_l[0] + src_delimiters[0])
+        new_sentences += [(
+            str(src_l[i] + (src_delimiters[i] if len(src_delimiters) - 1 >= i else '')).strip(),
+            str(tar_l[i] + src_delimiters[i] if len(src_delimiters) - 1 >= i else '').strip()
+        ) for i in range(len(src_l)) if i > 0]
+        sentences[index] = (str(src_l[0] + src_delimiters[0]).strip(), str(tar_l[0] + src_delimiters[0]).strip())
 
     remove_indices.sort(reverse=True)
     for index in remove_indices:

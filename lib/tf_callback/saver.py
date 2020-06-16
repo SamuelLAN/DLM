@@ -10,7 +10,7 @@ keras = tf.keras
 class Saver(keras.callbacks.Callback):
     def __init__(self, file_path, monitor, mode, early_stop,
                  start_train_monitor='categorical_accuracy',
-                 start_train_monitor_val=0.65,
+                 start_train_monitor_value=0.65,
                  start_train_monitor_mode='max'):
 
         super(Saver, self).__init__()
@@ -20,7 +20,7 @@ class Saver(keras.callbacks.Callback):
         self.__mode = mode
         self.__early_stop = early_stop
         self.__start_train_monitor = start_train_monitor
-        self.__start_train_monitor_val = start_train_monitor_val
+        self.__start_train_monitor_val = start_train_monitor_value
         self.__start_train_monitor_mode = start_train_monitor_mode
 
         self.__patience = 0

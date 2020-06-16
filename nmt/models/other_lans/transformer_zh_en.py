@@ -8,6 +8,7 @@ from lib.tf_metrics.pretrain import tf_accuracy
 keras = tf.keras
 tfv1 = tf.compat.v1
 
+
 class Model(BaseModel):
     name = 'transformer_for_nmt_share_emb_zh_word_level_wmt_news'
 
@@ -116,6 +117,13 @@ class Model(BaseModel):
                                 and the target reference (list of sentences) """
         print('\nstart translating {} ...'.format(dataset))
         pred_encoded_data = self.evaluate(src_encode_data)
+        return self.calculate_bleu_for_pred(pred_encoded_data, tar_encode_data, dataset)
+
+    @staticmethod
+    def calculate_bleu_for_pred(pred_encoded_data, tar_encode_data, dataset=''):
+        """ evaluate the BLEU according to the encoded src language data (list_of_list_token_idx)
+                                and the target reference (list of sentences) """
+        print('\nstart translating {} ...'.format(dataset))
         tar_encode_data = utils.remove_some_token_idx(tar_encode_data, [0])
 
         pred_encoded_data = utils.convert_list_of_list_token_idx_2_string(pred_encoded_data)
@@ -128,20 +136,132 @@ class Model(BaseModel):
         print('{} bleu: {}'.format(dataset, bleu))
         return bleu
 
-    def calculate_precision_for_encoded(self, src_encoded_data, tokenizer):
-        """ evaluate the precision according to the encoded src language data """
-        pred = self.translate_list_token_idx(src_encoded_data, tokenizer)
-        total_tokens = list(map(lambda x: x.strip('.').strip('!').strip('?').strip(';').strip(',').split(' '), pred))
+    def calculate_precisions_for_decoded(self, pred_encoded, tar_encoded_data, tar_tokenizer,
+                                         n_gram=1, dataset='test', is_zh=False):
 
-        from pretrain.preprocess.dictionary.map_dict import word,phrase
-        count = 0
-        for i in total_tokens:
-            for j in i:
-                cur = word(j)
-                if "translation" in cur:
-                    count += 1
-        precision = count / len(total_tokens)
-        print('Total test precision is: {}'.format(precision))
+        tar_decoded_data = self.decode_tar_data(tar_encoded_data, tar_tokenizer)
+        predictions = self.decode_tar_data(pred_encoded, tar_tokenizer)
+
+        # convert sentences to list of words
+        list_of_list_tar_token = list(map(
+            lambda x: list(map(
+                lambda a: a.strip(),
+                x.strip('.').strip('!').strip('?').strip(';').strip(',').split(' ')
+            )), tar_decoded_data))
+
+        list_of_list_pred_token = list(map(
+            lambda x: list(map(
+                lambda a: a.strip(),
+                x.strip('.').strip('!').strip('?').strip(';').strip(',').split(' ')
+            )), predictions))
+
+        test_precision_all = self.calculate_precision_for_encoded(
+            list_of_list_pred_token, list_of_list_tar_token, n_gram,
+            info_key='*', dataset=dataset, is_zh=is_zh)
+        test_precision_translate = self.calculate_precision_for_encoded(
+            list_of_list_pred_token, list_of_list_tar_token, n_gram,
+            info_key='translation', dataset=dataset, is_zh=is_zh)
+        test_precision_pos = self.calculate_precision_for_encoded(
+            list_of_list_pred_token, list_of_list_tar_token, n_gram,
+            info_key='pos', dataset=dataset, is_zh=is_zh)
+        test_precision_src_syn = self.calculate_precision_for_encoded(
+            list_of_list_pred_token, list_of_list_tar_token, n_gram,
+            info_key='src_synonyms', dataset=dataset, is_zh=is_zh)
+        test_precision_src_def = self.calculate_precision_for_encoded(
+            list_of_list_pred_token, list_of_list_tar_token, n_gram,
+            info_key='src_meanings', dataset=dataset, is_zh=is_zh)
+        test_precision_tar_syn = self.calculate_precision_for_encoded(
+            list_of_list_pred_token, list_of_list_tar_token, n_gram,
+            info_key='tar_synonyms', dataset=dataset, is_zh=is_zh)
+        test_precision_tar_def = self.calculate_precision_for_encoded(
+            list_of_list_pred_token, list_of_list_tar_token, n_gram,
+            info_key='tar_meanings', dataset=dataset, is_zh=is_zh)
+
+        return {
+            f'{dataset}_precision_all': test_precision_all,
+            f'{dataset}_precision_translate': test_precision_translate,
+            f'{dataset}_precision_pos': test_precision_pos,
+            f'{dataset}_precision_src_syn': test_precision_src_syn,
+            f'{dataset}_precision_src_def': test_precision_src_def,
+            f'{dataset}_precision_tar_syn': test_precision_tar_syn,
+            f'{dataset}_precision_tar_def': test_precision_tar_def,
+        }
+
+    @staticmethod
+    def calculate_precision_for_encoded(list_of_list_pred_token, list_of_list_tar_token,
+                                        n_gram=1, info_key='*', dataset='test', is_zh=False):
+        """ evaluate the precision according to the encoded src language data """
+        from lib.preprocess.utils import stem
+        from pretrain.preprocess.dictionary.map_dict import zh_word, en_word, zh_phrase, en_phrase, n_grams
+
+        # get map function
+        if n_gram == 1:
+            map_token = zh_word if is_zh else en_word
+        else:
+            map_token = zh_phrase if is_zh else en_phrase
+
+        if n_gram > 1:
+            list_of_list_tar_token = n_grams(list_of_list_tar_token, n_gram)
+            list_of_list_pred_token = n_grams(list_of_list_pred_token, n_gram)
+
+        # use the reference to map the dictionary
+        list_of_list_info_for_ref = list(map(
+            lambda l: list(map(
+                lambda x: map_token(x, info_key), l
+            )), list_of_list_tar_token
+        ))
+
+        # get stem list
+        if n_gram == 1:
+            list_of_list_tar_stem = list(map(lambda x: list(map(stem, x)), list_of_list_tar_token))
+            list_of_list_pred_stem = list(map(lambda x: list(map(stem, x)), list_of_list_pred_token))
+
+        else:
+            list_of_list_tar_stem = list(map(
+                lambda l: list(map(lambda g: ' '.join(list(map(stem, g))), l)),
+                list_of_list_tar_token))
+            list_of_list_pred_stem = list(map(
+                lambda l: list(map(lambda g: ' '.join(list(map(stem, g))), l)),
+                list_of_list_pred_token))
+
+        # convert n gram list to string
+        if n_gram > 1:
+            list_of_list_tar_token = list(map(lambda l: list(map(lambda g: ' '.join(g), l)), list_of_list_tar_token))
+            list_of_list_pred_token = list(map(lambda l: list(map(lambda g: ' '.join(g), l)), list_of_list_pred_token))
+
+        map_ref_list = []
+        map_pred_list = []
+
+        # traverse the mapping results
+        for sent_idx, list_of_info in enumerate(list_of_list_info_for_ref):
+
+            # get correspond word list or stem list
+            tar_word_list = list_of_list_tar_token[sent_idx]
+            tar_stem_list = list_of_list_tar_stem[sent_idx]
+            pred_word_list = list_of_list_pred_token[sent_idx]
+            pred_stem_list = list_of_list_pred_stem[sent_idx]
+
+            for gram_idx, info in enumerate(list_of_info):
+                if not info:
+                    continue
+
+                tar_gram = tar_word_list[gram_idx]
+                map_ref_list.append(tar_gram)
+
+                if tar_gram in pred_word_list or tar_gram in pred_stem_list:
+                    map_pred_list.append(tar_gram)
+                    continue
+
+                tar_stem = tar_stem_list[gram_idx]
+                if tar_stem in pred_word_list or tar_stem in pred_stem_list:
+                    map_pred_list.append(tar_stem)
+
+        # get precision
+        if len(map_ref_list) == 0:
+            precision = 0
+        else:
+            precision = float(len(map_pred_list)) / len(map_ref_list)
+        print(f'{dataset} precision in dictionary ({info_key}): {precision}')
         return precision
 
     def evaluate(self, list_of_list_src_token_idx):

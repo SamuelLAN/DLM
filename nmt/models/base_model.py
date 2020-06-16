@@ -49,6 +49,8 @@ class BaseModel:
         'update_freq': 'epoch',
         'write_grads': False,
         'write_graph': True,
+        'write_images': False,
+        'profile_batch': 0,
     }
 
     compile_params = {
@@ -60,16 +62,17 @@ class BaseModel:
     }
 
     monitor_params = {
-        'name': 'loss',
+        'monitor': 'loss',
         'mode': 'min',  # for the "name" monitor, the "min" is best;
-        'for_start': 'loss',
-        'for_start_value': 3.,
-        'for_start_mode': 'min',
+        'early_stop': train_params['early_stop'],
+        'start_train_monitor': 'loss',
+        'start_train_monitor_value': 3.,
+        'start_train_monitor_mode': 'min',
     }
 
     checkpoint_params = {
         'load_model': [],  # [name, time]
-        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
+        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['monitor']
     }
 
     TIME = str(time.strftime('%Y_%m_%d_%H_%M_%S'))
@@ -90,7 +93,7 @@ class BaseModel:
         self.__finish_train = finish_train
 
         # create directories for tensorboard files and model files
-        self.__create_dir()
+        self.create_dir()
 
         # build models
         self.build()
@@ -100,7 +103,7 @@ class BaseModel:
 
         self.__global_step = tfv1.train.get_or_create_global_step()
 
-    def __create_dir(self):
+    def create_dir(self):
         # create tensorboard path
         self.tb_dir = utils.create_dir_in_root('runtime', 'tensorboard', self.name, self.TIME)
 
@@ -150,7 +153,7 @@ class BaseModel:
 
         self.callbacks = [callback_tf_board, callback_saver]
 
-    def __compile(self):
+    def compile(self):
         loss = self.loss if self.compile_params['customize_loss'] else self.compile_params['loss']
         self.model.compile(optimizer=self.compile_params['optimizer'],
                            loss=loss,
@@ -177,7 +180,7 @@ class BaseModel:
 
     def train(self, train_x, train_y, val_x=None, val_y=None, train_size=None, val_size=None):
         # compile model
-        self.__compile()
+        self.compile()
 
         # if we want to load a trained model
         if self.checkpoint_params['load_model']:
