@@ -110,12 +110,13 @@ class Train:
             self.__src_tokenizer = self.__tar_tokenizer = read_cache(tokenizer_path)
 
         else:
-            _, _, self.__src_tokenizer, self.__tar_tokenizer = utils.pipeline(
+            self.__src_tokenizer = utils.pipeline(
                 self.M.tokenizer_pl,
                 self.__tokenizer_data_src,
                 self.__tokenizer_data_tar,
                 self.M.data_params,
             )
+            self.__tar_tokenizer = self.__src_tokenizer
             del self.__tokenizer_data_src
             del self.__tokenizer_data_tar
 
