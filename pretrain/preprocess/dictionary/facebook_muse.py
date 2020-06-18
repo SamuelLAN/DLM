@@ -4,7 +4,7 @@ from lib.utils import write_json, load_json
 from pretrain.preprocess.config import dictionary_dir
 from pretrain.preprocess.dictionary.preprocess_string import process, pipeline, filter_duplicate
 
-facebook_dir = os.path.join(dictionary_dir, 'muse')
+facebook_dir = os.path.join(dictionary_dir, 'muse', 'zh_en')
 
 zh_en_dict_path = os.path.join(facebook_dir, 'zh_en_dict.json')
 en_zh_dict_path = os.path.join(facebook_dir, 'en_zh_dict.json')

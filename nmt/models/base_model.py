@@ -323,7 +323,6 @@ class BaseModel:
 
     def eval_example_for_pretrain(self, *args):
         _input = list(args[:2]) + [v[:, :-1] for v in args[2:]]
-        _output = args[2][:, 1:]
         predictions = self.model(_input, training=False)
         return np.argmax(predictions, axis=-1)
 

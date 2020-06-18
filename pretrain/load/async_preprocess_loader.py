@@ -3,7 +3,8 @@ import time
 import random
 import threading
 import numpy as np
-from lib.utils import create_dir, load_pkl
+from lib.preprocess import utils
+from lib.utils import create_dir, get_file_path, load_pkl
 from pretrain.preprocess.config import data_dir
 
 
@@ -13,18 +14,25 @@ class Loader:
     queue_size = 1280
     data_size_per_file = 128
 
-    def __init__(self, *args):
+    def __init__(self, tokenizer_dir, un_preprocess_dirs,
+                 data_params={}, pretrain_params={}, encoder_pl=[]):
         # initialize variables
+        self.__data_params = data_params
+        self.__pretrain_params = pretrain_params
+        self.__encoder_pl = encoder_pl
+        self.__dirs = un_preprocess_dirs
+
         self.__running = True
         self.__cur_index = 0
         self.__data = []
         self.__file_list = []
-        self.__dirs = args
+
+        self.__tokenizer = load_pkl(get_file_path(data_dir, 'tokenizer', tokenizer_dir, 'tokenizer.pkl'))
 
         # get the list of all files
-        for dir_name in args:
-            processed_dir_path = create_dir(data_dir, 'preprocessed', dir_name)
-            self.__file_list += list(map(lambda x: os.path.join(processed_dir_path, x), os.listdir(processed_dir_path)))
+        for dir_name in self.__dirs:
+            _dir_path = create_dir(data_dir, 'un_preprocessed', dir_name)
+            self.__file_list += list(map(lambda x: os.path.join(_dir_path, x), os.listdir(_dir_path)))
         self.__len_files = len(self.__file_list)
 
         random.seed(self.RANDOM_STATE)
@@ -50,7 +58,14 @@ class Loader:
                 file_path = self.__file_list[self.__cur_index]
                 self.__cur_index = (self.__cur_index + 1) % self.__len_files
 
-                batch_x, batch_y, batch_lan_x, batch_lan_y, batch_pos_y = load_pkl(file_path)
+                batch_src, batch_tar = load_pkl(file_path)
+
+                # preprocess data
+                batch_x, batch_y, batch_lan_x, batch_lan_y, batch_pos_y = utils.pipeline(
+                    self.__encoder_pl, batch_src, batch_tar, {**self.__data_params, 'tokenizer': self.__tokenizer},
+                    verbose=False
+                )
+
                 data_queue += list(zip(batch_x, batch_y, batch_lan_x, batch_lan_y, batch_pos_y))
 
             if len(self.__data) < max_buffer_size:

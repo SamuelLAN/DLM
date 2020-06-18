@@ -25,14 +25,14 @@ class Model(BaseModel):
     }
 
     data_params = {
-        **BaseModel.data_params,
+        # **BaseModel.data_params,
         'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 24,
         'max_tar_ground_seq_len': 24,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
-        'over_sample_rate': 3.0,
+        'over_sample_rate': 10.0,
         'input_incr': Ids.end_cdlm_ner_2 + Ids.ner_ids + 1,  # <start>, <end>, <pad>, <mask>
         'class_incr': Ids.end_cdlm_ner_2 + Ids.ner_ids + 1,  # <start>, <end>, <pad>, <mask>
     }

@@ -13,7 +13,7 @@ from pretrain.train.train_CDLM_base_async import Train as TrainBase
 from pretrain.models.transformer_cdlm_translate import Model
 from pretrain.load.async_loader import Loader
 
-Model.name = 'transformer_CDLM_translate_wmt_news_async'
+Model.name = 'transformer_CDLM_translate_news_commentary_3.0_async'
 
 
 class Train(TrainBase):
@@ -21,9 +21,9 @@ class Train(TrainBase):
     M = Model
     Loader = Loader
 
-    train_preprocess_dirs = ['cdlm_translate_train_10.0']
+    train_preprocess_dirs = ['cdlm_translate_train_3.0']
     val_preprocess_dirs = ['cdlm_translate_test']
-    tokenizer_dir = 'cdlm_translate_train_10.0'
+    tokenizer_dir = 'cdlm_translate_train_3.0'
 
 
 o_train = Train()

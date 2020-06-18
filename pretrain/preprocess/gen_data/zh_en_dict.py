@@ -4,8 +4,9 @@ import random
 from functools import reduce
 from nmt.preprocess.corpus import news_commentary
 from lib.preprocess import utils
-from lib.utils import create_dir, write_pkl, load_pkl
+from lib.utils import create_dir, write_pkl, load_pkl, load_json
 from pretrain.preprocess.config import data_dir
+from pretrain.preprocess.config import filtered_pos_union_en_zh_dict_path, filtered_pos_union_zh_en_dict_path
 
 
 class GenData:
@@ -26,9 +27,24 @@ class GenData:
         self.__processed_dir_path = create_dir(data_dir, 'preprocessed', _dataset)
 
         # load data from files
-        data = news_commentary.zh_en()
+        # zh_en_dict = load_json(filtered_pos_union_en_zh_dict_path)
+        zh_en_dict = load_json(filtered_pos_union_zh_en_dict_path)
+        zh_en_list = list(filter(lambda x: 'translation' in x[1] and x[1]['translation'], zh_en_dict.items()))
+        zh_en_list = list(map(lambda x: [[x[0]] * len(x[1]['translation']), x[1]['translation']], zh_en_list))
+        # data = reduce(lambda x, y: [x[0] + y[0], x[1] + y[1]], zh_en_list)
 
-        data = self.__split_data(data, 0., self.NMT_TRAIN_RATIO)
+        zh_data = []
+        en_data = []
+        length = len(zh_en_list)
+        for i, val in enumerate(zh_en_list):
+            if i % 50 == 0:
+                progress = float(i + 1) / length * 100.
+                print('\rprogress: %.2f%% ' % progress, end='')
+
+            zh_data += val[0]
+            en_data += val[1]
+
+        data = list(zip(zh_data, en_data))
 
         # shuffle the data
         random.seed(self.RANDOM_STATE)
@@ -38,14 +54,11 @@ class GenData:
         if os.path.isfile(self.__tokenizer_path):
             self.__tokenizer = load_pkl(self.__tokenizer_path)
         else:
-            tmp_data = reduce(lambda x, y: x + y, data)
-            self.__tokenizer_src, self.__tokenizer_tar = list(zip(*tmp_data))
+            self.__tokenizer_src, self.__tokenizer_tar = list(zip(*data))
             self.get_tokenizer()
 
         # get the data set (train or validation or test)
         data = self.__split_data(data, start_ratio, end_ratio)
-
-        data = reduce(lambda x, y: x + y, data)
 
         self.gen_preprocessed_data(data, self.BATCH_SIZE_PER_FILE)
 
@@ -86,14 +99,14 @@ class GenData:
             batch_src, batch_tar = list(zip(*data[index_start: index_end]))
 
             # preprocess data
-            batch_x, batch_y, batch_lan_x, batch_lan_y, batch_pos_y = utils.pipeline(
+            batch_x, batch_y, _, _ = utils.pipeline(
                 self.__encoder_pl, batch_src, batch_tar, {**self.__data_params, 'tokenizer': self.__tokenizer},
                 verbose=i == 0
             )
 
             # save data to file
             file_path = os.path.join(self.__processed_dir_path, f'batch_{i}.pkl')
-            write_pkl(file_path, [batch_x, batch_y, batch_lan_x, batch_lan_y, batch_pos_y])
+            write_pkl(file_path, [batch_x, batch_y])
 
         print('finish generating preprocessed data ')
 
@@ -106,14 +119,14 @@ class GenData:
         return data[start_index: end_index]
 
 
-from pretrain.models.transformer_cdlm_synonym import Model
+from nmt.models.transformer_baseline import Model
 
 is_train = False
-sample_rate = 0.01
-train_ratio = 0.98
-dataset = f'cdlm_translate_train_{sample_rate}_tokenizer_all' if is_train else f'cdlm_synonym_test_tokenizer_all'
-# tokenizer_dir = f'cdlm_translate_train_{sample_rate}'
-# dataset = f'news_commentary_test_v2'
+sample_rate = 1.0
+train_ratio = 0.995
+dataset = f'word_translate_zh_en_train_{sample_rate}_tokenizer_all' if is_train else f'word_translate_zh_en_test_tokenizer_all'
+# tokenizer_dir = f'word_translate_train'
+# tokenizer_dir = f'only_news_commentary_80000'
 tokenizer_dir = f'news_commentary_wmt_news_um_corpus_zh_en_dict_90000'
 
 GenData(
@@ -122,7 +135,7 @@ GenData(
     _sample_rate=sample_rate if is_train else 1.0,
     data_params=Model.data_params,
     tokenizer_pl=Model.tokenizer_pl,
-    encoder_pl=Model.encode_pl,
+    encoder_pl=Model.encode_pipeline,
     _tokenizer_dir=tokenizer_dir,
     _dataset=dataset
 )

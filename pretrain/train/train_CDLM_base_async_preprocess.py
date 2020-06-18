@@ -2,7 +2,8 @@ import os
 import time
 from pretrain.train.train_base import Train as TrainBase
 from pretrain.models.transformer_cdlm_translate import Model
-from pretrain.load.async_loader import Loader
+from pretrain.load.async_loader import Loader as LoaderVal
+from pretrain.load.async_preprocess_loader import Loader as LoaderTrain
 from pretrain.preprocess.config import data_dir
 from lib.utils import load_pkl, get_file_path
 
@@ -12,16 +13,18 @@ Model.name = 'transformer_CDLM_translate_wmt_news'
 class Train(TrainBase):
     TRAIN_NAME = os.path.splitext(os.path.split(__file__)[1])[0]
     M = Model
-    Loader = Loader
+    LoaderTrain = LoaderTrain
+    LoaderVal = LoaderVal
 
-    train_preprocess_dirs = ['cdlm_translate_train_10.0']
-    val_preprocess_dirs = ['cdlm_translate_test']
-    tokenizer_dir = 'cdlm_translate_train_10.0'
+    train_preprocess_dirs = ['news_commentary_train']
+    val_preprocess_dirs = ['news_commentary_test_v2']
+    tokenizer_dir = 'only_news_commentary_80000'
 
     def __init__(self):
         # load the data
-        self.train_loader = self.Loader(*self.train_preprocess_dirs)
-        self.val_loader = self.Loader(*self.val_preprocess_dirs)
+        self.train_loader = self.LoaderTrain(self.tokenizer_dir, self.train_preprocess_dirs,
+                                             self.M.data_params, self.M.pretrain_params, self.M.encode_pl)
+        self.val_loader = self.LoaderVal(*self.val_preprocess_dirs)
 
         # get the generator of the dataset
         self.train_data = self.train_loader.generator(self.M.pos_emb, self.M.train_params['batch_size'])
@@ -33,6 +36,7 @@ class Train(TrainBase):
 
         # get an example of a batch
         self.train_example_x, self.train_example_y = self.train_loader.batch_example(self.M.pos_emb)
+        self.val_example_x, self.val_example_y = self.train_loader.batch_example(self.M.pos_emb)
         self.train_batch = self.train_loader.batch_data(self.M.pos_emb)
         self.val_batch = self.val_loader.batch_data(self.M.pos_emb)
 
@@ -79,7 +83,8 @@ class Train(TrainBase):
 
         start_train_time = time.time()
         train_loss, train_acc, train_ppl = self.model.evaluate_metrics_for_encoded(
-            'train', *self.train_loader.batch_data(self.M.pos_emb, 2000))
+            'train', *self.train_loader.batch_data(self.M.pos_emb, 2000)
+        )
         start_test_time = time.time()
         test_loss, test_acc, test_ppl = self.model.evaluate_metrics_for_encoded(
             'test', *self.val_loader.batch_data(self.M.pos_emb, self.val_size)

@@ -28,7 +28,7 @@ class Model(BaseModel):
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 80000,  # approximate
+        'vocab_size': 90000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 24,
@@ -65,7 +65,7 @@ class Model(BaseModel):
         'learning_rate': 1e-4,
         # 'learning_rate': CustomSchedule(model_params['dim_model']),
         'batch_size': 16,
-        'epoch': 100,
+        'epoch': 200,
         'early_stop': 20,
     }
 
@@ -77,18 +77,18 @@ class Model(BaseModel):
     }
 
     monitor_params = {
-        **BaseModel.monitor_params,
-        'name': 'val_tf_accuracy',
+        'monitor': 'val_tf_accuracy',
         'mode': 'max',  # for the "name" monitor, the "min" is best;
-        'for_start': 'tf_accuracy',
-        'for_start_value': 0.05,
-        'for_start_mode': 'max',
+        'early_stop': train_params['early_stop'],
+        'start_train_monitor': 'tf_accuracy',
+        'start_train_monitor_value': 0.05,
+        'start_train_monitor_mode': 'max',
     }
 
     checkpoint_params = {
         'load_model': [],  # [name, time]
         # 'load_model': ['transformer_for_MLM_zh_en', '2020_04_26_15_19_16'],  # [name, time]
-        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
+        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['monitor']
     }
 
     evaluate_dict = {
