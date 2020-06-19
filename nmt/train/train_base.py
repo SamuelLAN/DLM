@@ -38,6 +38,10 @@ class Train:
             self.__train_tar, \
             self.__train_src_encode, \
             self.__train_tar_encode, \
+            self.__val_src, \
+            self.__val_tar, \
+            self.__val_src_encode, \
+            self.__val_tar_encode, \
             self.__test_src, \
             self.__test_tar, \
             self.__test_src_encode, \
@@ -56,6 +60,10 @@ class Train:
                 self.__train_tar,
                 self.__train_src_encode,
                 self.__train_tar_encode,
+                self.__val_src,
+                self.__val_tar,
+                self.__val_src_encode,
+                self.__val_tar_encode,
                 self.__test_src,
                 self.__test_tar,
                 self.__test_src_encode,
@@ -70,6 +78,8 @@ class Train:
         print('train_size: {}\ntest_size: {}'.format(len(self.__train_src), len(self.__test_src)))
         print('train_x.shape: {}\ntrain_y.shape: {}'.format(
             self.__train_src_encode.shape, self.__train_tar_encode.shape))
+        print('val_x.shape: {}\nval_y.shape: {}'.format(
+            self.__val_src_encode.shape, self.__val_tar_encode.shape))
         print('test_x.shape: {}\ntest_y.shape: {}'.format(
             self.__test_src_encode.shape, self.__test_tar_encode.shape))
 
