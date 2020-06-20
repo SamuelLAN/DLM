@@ -1,13 +1,15 @@
 import os
+import sys
+sys.path.append('/Users/jiayonglin/Desktop/828B/DLM/')
 from pretrain.preprocess.config import dictionary_dir
 from pretrain.preprocess.dictionary.preprocess_string import process, pipeline
 from lib.utils import load_json, write_json
 
-zh_en_dir = os.path.join(dictionary_dir, 'zh_en')
-en_zh_dir = os.path.join(dictionary_dir, 'en_zh')
+ro_en_dir = os.path.join(dictionary_dir, 'ro_en')
+en_ro_dir = os.path.join(dictionary_dir, 'en_ro')
 
-merged_zh_en_dict_path = os.path.join(dictionary_dir, 'zh_en_merged_v_all.json')
-merged_en_zh_dict_path = os.path.join(dictionary_dir, 'en_zh_merged_v_all.json')
+merged_ro_en_dict_path = os.path.join(dictionary_dir, 'ro_en_merged_v_all.json')
+merged_en_ro_dict_path = os.path.join(dictionary_dir, 'en_ro_merged_v_all.json')
 
 
 def __check_has_val(val):
@@ -58,7 +60,10 @@ def __merge_dict(_merged_dict, key, val, mode=0):
         if mode != 0 and _type == 'translation' and _merged_dict[key][_type]:
             continue
 
-        _merged_dict[key][_type] += l
+        for i in l:
+            if i not in _merged_dict[key][_type]:
+                _merged_dict[key][_type].append(i)
+        #_merged_dict[key][_type] += l
 
     return _merged_dict
 
@@ -90,16 +95,16 @@ def traverse_dict_and_merge(_dict_dir, _merged_dict):
     return _merged_dict
 
 
-zh_en_dict = {}
-en_zh_dict = {}
+ro_en_dict = {}
+en_ro_dict = {}
 
-traverse_dict_and_merge(zh_en_dir, zh_en_dict)
-traverse_dict_and_merge(en_zh_dir, en_zh_dict)
+traverse_dict_and_merge(ro_en_dir, ro_en_dict)
+traverse_dict_and_merge(en_ro_dir, en_ro_dict)
 
 print('\nwriting data to files ...')
 
-write_json(merged_zh_en_dict_path, zh_en_dict)
-write_json(merged_en_zh_dict_path, en_zh_dict)
+write_json(merged_ro_en_dict_path, ro_en_dict)
+write_json(merged_en_ro_dict_path, en_ro_dict)
 
 print('\ndone')
 
