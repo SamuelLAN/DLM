@@ -2,7 +2,7 @@ import copy
 import random
 import numpy as np
 from functools import reduce
-from pretrain.preprocess.dictionary import map_dict
+from pretrain.preprocess.dictionary import map_dict_ro_en as map_dict
 from pretrain.preprocess.config import Ids, LanIds, SampleRatio
 from pretrain.preprocess.inputs.TLM import TLM_concat
 
@@ -93,7 +93,7 @@ def CDLM_translation_for_zh_en(list_of_zh_word, list_of_en_word, _tokenizer, kee
 
 
 def get_translations(sample, list_of_info_for_4_gram, list_of_info_for_3_gram, list_of_info_for_2_gram,
-                     list_of_info_for_word, list_of_words_for_a_sentence, is_zh):
+                     list_of_info_for_word, list_of_words_for_a_sentence):
     n = sample[1] - sample[0]
     if n == 4:
         translations = list_of_info_for_4_gram[sample[0]]
@@ -107,17 +107,10 @@ def get_translations(sample, list_of_info_for_4_gram, list_of_info_for_3_gram, l
 
     # filter some noise of the translations
     translations = list(filter(lambda x: x, translations))
-    if is_zh:
-        translations = list(filter(lambda x: (x[0] != '-' or x[-1] != '-') and len(x) > 1, translations))
-        if len(translations) >= 8:
-            tmp_translations = list(filter(lambda x: len(x) >= 5, translations))
-            if tmp_translations:
-                translations = tmp_translations
-
     return translations
 
 
-def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
+def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_ro, keep_origin_rate=0.2, max_ratio=0.2, max_num=4):
     """
 
     :params
@@ -142,8 +135,8 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
     list_of_4_gram = map_dict.n_grams(list_of_token, 4)
 
     # map dictionary
-    map_word = map_dict.zh_word if is_zh else map_dict.en_word
-    map_phrase = map_dict.zh_phrase if is_zh else map_dict.en_phrase
+    map_word = map_dict.ro_word if is_ro else map_dict.en_word
+    map_phrase = map_dict.ro_phrase if is_ro else map_dict.en_phrase
     info_key = 'translation'
 
     list_of_info_for_word = list(map(lambda x: map_word(x, info_key), list_of_token))
@@ -187,8 +180,8 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
     # get token index
     mask_idx = _tokenizer.vocab_size + Ids.mask
     sep_idx = _tokenizer.vocab_size + Ids.sep
-    src_lan_idx = LanIds.zh if is_zh else LanIds.en
-    tar_lan_idx = LanIds.en if is_zh else LanIds.zh
+    src_lan_idx = LanIds.ro if is_ro else LanIds.en
+    tar_lan_idx = LanIds.en if is_ro else LanIds.ro
 
     _input = []
     _lan_input = []
@@ -198,12 +191,12 @@ def CDLM_translation(list_of_words_for_a_sentence, _tokenizer, is_zh, keep_origi
 
     # for mode 0, we only need one sample
     translations = get_translations(sample, list_of_info_for_4_gram, list_of_info_for_3_gram, list_of_info_for_2_gram,
-                                    list_of_info_for_word, list_of_words_for_a_sentence, is_zh)
+                                    list_of_info_for_word, list_of_words_for_a_sentence)
 
     # for mode 1 and 2, we would need multiple samples
     translations_list = [
         get_translations(_sample, list_of_info_for_4_gram, list_of_info_for_3_gram, list_of_info_for_2_gram,
-                         list_of_info_for_word, list_of_words_for_a_sentence, is_zh) for _sample in samples
+                         list_of_info_for_word, list_of_words_for_a_sentence) for _sample in samples
     ]
 
     # remove those do not have translation info samples after filtering
@@ -459,12 +452,13 @@ if __name__ == '__main__':
     from pretrain.preprocess.inputs import pl
     from pretrain.preprocess.inputs.decode import decode_pl
     from pretrain.load.token_translation import Loader
+    from nmt.load.ro_en import Loader
     from pretrain.preprocess.inputs.sampling import sample_pl
 
-    # token_loader = Loader(0.0, 1.0)
-    # token_zh_data, token_en_data = token_loader.data()
+    token_loader = Loader(0.0, 0.1, 0.01)
+    origin_ro_data, origin_en_data = token_loader.data()
 
-    origin_zh_data, origin_en_data = wmt_news.zh_en()
+    # origin_ro_data, origin_en_data = wmt_news.zh_en()
     params = {
         'vocab_size': 10000,
         'max_src_seq_len': 60,
@@ -473,13 +467,13 @@ if __name__ == '__main__':
         'max_tar_ground_seq_len': 12,
     }
 
-    # tokenizer_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
+    # tokenizer_pl = noise_pl.remove_noise + tfds_share_pl.train_tokenizer
     # tokenizer = utils.pipeline(tokenizer_pl,
     #                            token_zh_data + list(origin_zh_data[:1000]), token_en_data + list(origin_en_data[:1000]), params)
 
-    pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise + tfds_share_pl.train_tokenizer
+    pipeline = noise_pl.remove_noise + tfds_share_pl.train_tokenizer
     # pipeline = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
-    pipeline += pl.sent_2_tokens + sample_pl(2.0) + combine_pl(0.2) + pl.CDLM_encode + [
+    pipeline += pl.sent_2_tokens + MLM_pl(0.2) + pl.CDLM_encode + [
         {'output_keys': [
             'input_1', 'ground_truth_1', 'lan_idx_for_input_1', 'lan_idx_for_gt_1', 'pos_for_gt_1', 'tokenizer']}
     ]
@@ -487,9 +481,9 @@ if __name__ == '__main__':
     print('\n------------------- Encoding -------------------------')
     x, y, lan_x, lan_y, soft_pos_y, tokenizer = utils.pipeline(
         preprocess_pipeline=pipeline,
-        lan_data_1=origin_zh_data, lan_data_2=origin_en_data, params={**params,
-                                                                                    # 'tokenizer': tokenizer
-                                                                                    })
+        lan_data_1=origin_ro_data, lan_data_2=origin_en_data, params={**params,
+                                                                      # 'tokenizer': tokenizer
+                                                                      })
 
     print('\n----------------------------------------------')
     print(x.shape)

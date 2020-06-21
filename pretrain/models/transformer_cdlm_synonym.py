@@ -19,7 +19,7 @@ class Model(BaseModel):
 
     pretrain_params = {
         'keep_origin_rate': 0.2,
-        'TLM_ratio': 0.7,
+        # 'TLM_ratio': 0.7,
         'max_ratio': 0.3,
         'max_num': 4,
     }
@@ -39,8 +39,7 @@ class Model(BaseModel):
 
     preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
-    encode_pl = preprocess_pl + sent_2_tokens + sample_pl(data_params['over_sample_rate']) + \
-                CDLM_synonym.combine_pl(**pretrain_params) + CDLM_encode
+    encode_pl = preprocess_pl + sent_2_tokens + CDLM_synonym.combine_pl(**pretrain_params) + CDLM_encode
     decode_pl = d_pl('')
 
     model_params = {

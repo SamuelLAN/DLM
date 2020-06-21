@@ -9,12 +9,13 @@ root_dir = os.path.split(sub_root_dir)[0]
 sys.path.append(sub_root_dir)
 sys.path.append(root_dir)
 
-from pretrain.preprocess.config import dictionary_dir, filtered_pos_union_en_zh_dict_path, merged_stem_dict_path
+from pretrain.preprocess.config import dictionary_dir, merged_ro_en_dict_path, merged_stem_ro_dict_path
 from lib.preprocess import utils
 from lib.utils import load_json, write_json
 
-dictionary_path = filtered_pos_union_en_zh_dict_path
-stem_dictionary_path = merged_stem_dict_path
+stem_func = utils.stem_ro
+dictionary_path = merged_ro_en_dict_path
+stem_dictionary_path = merged_stem_ro_dict_path
 
 print(f'loading dictionary from {dictionary_path} ...')
 
@@ -29,9 +30,9 @@ def __stem_for_phrase(x):
 
     l = x.split(' ')
     if len(l) == 1:
-        return utils.stem(x)
+        return stem_func(x)
 
-    l = list(map(lambda a: utils.stem(a.strip()), l))
+    l = list(map(lambda a: stem_func(a.strip()), l))
     x = ' '.join(l)
     return x
 

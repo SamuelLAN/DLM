@@ -19,10 +19,22 @@ filtered_union_zh_en_dict_path = os.path.join(dictionary_dir, 'filtered_zh_en_me
 filtered_pos_union_en_zh_dict_path = os.path.join(dictionary_dir, 'filtered_pos_en_zh_merged_union.json')
 filtered_pos_union_zh_en_dict_path = os.path.join(dictionary_dir, 'filtered_pos_zh_en_merged_union.json')
 
+merged_en_ro_dict_path = os.path.join(dictionary_dir, 'en_ro_merged_v_all.json')
+merged_ro_en_dict_path = os.path.join(dictionary_dir, 'ro_en_merged_v_all.json')
+merged_stem_ro_dict_path = os.path.join(dictionary_dir, 'stem_ro_dictionary.json')
+merged_stem_en_ro_dict_path = os.path.join(dictionary_dir, 'stem_en_ro_dictionary.json')
+
+filtered_merged_en_ro_dict_path = os.path.join(dictionary_dir, 'filtered_en_ro_merged.json')
+filtered_merged_ro_en_dict_path = os.path.join(dictionary_dir, 'filtered_ro_en_merged.json')
+
+filtered_union_en_ro_dict_path = os.path.join(dictionary_dir, 'filtered_en_ro_union.json')
+filtered_union_ro_en_dict_path = os.path.join(dictionary_dir, 'filtered_ro_en_union.json')
+
 
 # vocabulary index
 class IdsClass:
     multi_task = False
+    multi_lan = True
 
     cdlm_tasks = []
     # cdlm_tasks = ['translation', 'pos', 'ner', 'synonym', 'def']
@@ -141,8 +153,9 @@ class NERIds:
 class LanIds:
     zh = 0
     en = 1
-    POS = 2
-    NER = 3 if Ids.multi_task else 2
+    ro = 2
+    POS = 3 if Ids.multi_lan else 2
+    NER = POS + 1 if Ids.multi_task else (3 if Ids.multi_lan else 2)
 
 
 class SampleRatio:

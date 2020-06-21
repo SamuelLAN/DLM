@@ -23,9 +23,6 @@ class Loader:
         # sample data if the data size is too big; low resource setting
         data = self.sample_data(data, sample_rate)
 
-        # # sample data if the data size is too big; low resource setting
-        # data = self.sample_data(data, sample_rate)
-
         self.__src_data, self.__tar_data = list(zip(*data))
 
     @staticmethod

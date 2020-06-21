@@ -129,3 +129,21 @@ class Loader:
 
         return stats
 
+
+# from pretrain.models.transformer_cdlm_translate_zh_en_ro import Model
+#
+# train_preprocess_dirs = ['zh_en_wmt_news_news_commentary_um_corpus_train', 'ro_en_train']
+# tokenizer_dir = 'zh_en_ro_news_commentary_wmt_news_um_corpus_dict_90000'
+#
+# o_loader = Loader(tokenizer_dir, train_preprocess_dirs, Model.data_params, Model.pretrain_params, Model.encode_pl)
+# _gen = o_loader.generator(Model.pos_emb, 64)
+# for i in range(1000):
+#     print(f'\n------------- {i} ---------------')
+#     _X, _Y = next(_gen)
+#
+#     print(f'X:')
+#     for j, val in enumerate(_X):
+#         print(f'{j} shape: {val.shape}')
+#     print(f'y.shape: {_Y.shape}')
+#
+# print('\ndone')

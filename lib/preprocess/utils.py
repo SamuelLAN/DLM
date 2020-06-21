@@ -13,6 +13,7 @@ import tensorflow_datasets as tfds
 from six.moves.urllib.request import urlretrieve
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
+from nltk.stem import SnowballStemmer
 from lib.preprocess.zh_hans.langconv import Converter
 
 TOKEN_START = '<start>'
@@ -22,6 +23,7 @@ TOKEN_PAD = '<pad>'
 TOKEN_UNK = '<unk>'  # for unknown words
 
 __ps = PorterStemmer()
+__ss = SnowballStemmer('romanian')
 
 
 def download(url, file_path):
@@ -570,6 +572,10 @@ def lower_sentences(list_of_sentences):
 
 def stem(word):
     return __ps.stem(word)
+
+
+def stem_ro(word):
+    return __ss.stem(word)
 
 
 def zh_traditional_2_simplified(sentence):

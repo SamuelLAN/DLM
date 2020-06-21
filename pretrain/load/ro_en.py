@@ -1,35 +1,24 @@
 import random
-from functools import reduce
-from nmt.preprocess.corpus import news_commentary
+from nmt.load import ro_en
 
 
 class Loader:
     RANDOM_STATE = 42
-    NMT_TRAIN_RATIO = 0.98
-    PRETRAIN_TRAIN_RATIO = 0.98
+    PRETRAIN_TRAIN_RATIO = 0.9
 
-    def __init__(self, start_ratio=0.0, end_ratio=0.98, sample_rate=1.0):
-        # load data from files
-        data = news_commentary.zh_en()
+    def __init__(self, start_ratio=0.0, end_ratio=0.9, sample_rate=1.0):
+        # load data from ro_en wmt data
+        _loader = ro_en.Loader(0.0, ro_en.Loader.TRAIN_RATIO)
+        ro_data, en_data = _loader.data()
 
-        data = self.__split_data(data, 0., self.NMT_TRAIN_RATIO)
+        data = list(zip(ro_data, en_data))
 
-        # shuffle the data
-        random.seed(self.RANDOM_STATE)
-        random.shuffle(data)
-
-        # get the train set
+        # split dataset
         data = self.__split_data(data, start_ratio, end_ratio)
 
         if start_ratio == 0. or sample_rate < 1.:
-            # sample data if the data size is too big; low resource setting
+            # sample data
             data = self.sample_data(data, sample_rate)
-
-        data = reduce(lambda x, y: x + y, data)
-
-        # shuffle the data
-        random.seed(self.RANDOM_STATE)
-        random.shuffle(data)
 
         self.__src_data, self.__tar_data = list(zip(*data))
 

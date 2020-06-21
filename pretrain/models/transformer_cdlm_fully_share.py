@@ -19,7 +19,7 @@ class Model(BaseModel):
 
     pretrain_params = {
         'keep_origin_rate': 0.2,
-        'TLM_ratio': 0.7,
+        # 'TLM_ratio': 0.7,
         'max_ratio': 0.3,
         'max_num': 4,
     }
@@ -50,13 +50,13 @@ class Model(BaseModel):
 
     before_encode_pl = preprocess_pl + sent_2_tokens
 
-    translate_encode_pl = sample_pl(sample_params['translation']) + CDLM_translation.combine_pl(
+    translate_encode_pl = sample_pl(sample_params['translation']) + CDLM_translation.MLM_pl(
         **pretrain_params) + CDLM_encode
-    pos_encode_pl = sample_pl(sample_params['pos']) + CDLM_pos.combine_pl(**pretrain_params) + CDLM_encode
-    ner_encode_pl = sample_pl(sample_params['ner']) + CDLM_ner.combine_pl(**pretrain_params) + CDLM_encode
-    synonym_encode_pl = sample_pl(sample_params['synonym']) + CDLM_synonym.combine_pl(
+    pos_encode_pl = sample_pl(sample_params['pos']) + CDLM_pos.MLM_pl(**pretrain_params) + CDLM_encode
+    ner_encode_pl = sample_pl(sample_params['ner']) + CDLM_ner.MLM_pl(**pretrain_params) + CDLM_encode
+    synonym_encode_pl = sample_pl(sample_params['synonym']) + CDLM_synonym.MLM_pl(
         **pretrain_params) + CDLM_encode
-    def_encode_pl = sample_pl(sample_params['definition']) + CDLM_definition.combine_pl(
+    def_encode_pl = sample_pl(sample_params['definition']) + CDLM_definition.MLM_pl(
         **pretrain_params) + CDLM_encode
 
     decode_pl = d_pl('multi', True)

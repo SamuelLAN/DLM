@@ -1,7 +1,7 @@
 from lib.tf_learning_rate.warmup_then_down import CustomSchedule
 from nmt.models.base_model import BaseModel
-from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
-from pretrain.preprocess.inputs import CDLM_translation_v2 as CDLM_translation
+from nmt.preprocess.inputs import noise_pl, tfds_share_pl
+from pretrain.preprocess.inputs import CDLM_translation_zh_ro_en as CDLM_translation
 from pretrain.preprocess.inputs.sampling import sample_pl
 from pretrain.preprocess.inputs.pl import CDLM_encode, sent_2_tokens
 from pretrain.preprocess.inputs.decode import decode_pl as d_pl
@@ -17,7 +17,7 @@ tfv1 = tf.compat.v1
 
 
 class Model(BaseModel):
-    name = 'transformer_CDLM_translate'
+    name = 'transformer_CDLM_translate_zh_en_ro'
 
     pretrain_params = {
         'keep_origin_rate': 0.2,
@@ -39,7 +39,7 @@ class Model(BaseModel):
         'class_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
     }
 
-    preprocess_pl = zh_en.seg_zh_by_jieba_pipeline + noise_pl.remove_noise
+    preprocess_pl = noise_pl.remove_noise
     tokenizer_pl = preprocess_pl + tfds_share_pl.train_tokenizer
     # encode_pl = preprocess_pl + sent_2_tokens + sample_pl(data_params['over_sample_rate']) + CDLM_translation.combine_pl(**pretrain_params) + CDLM_encode
     encode_pl = preprocess_pl + sent_2_tokens + CDLM_translation.MLM_pl(**pretrain_params) + CDLM_encode
@@ -57,7 +57,7 @@ class Model(BaseModel):
         'drop_rate': 0.1,
         'share_emb': True,
         'share_final': False,
-        'lan_vocab_size': 2,
+        'lan_vocab_size': 3,
     }
 
     train_params = {
