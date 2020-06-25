@@ -17,6 +17,23 @@ seg_zh_by_jieba_pipeline = [
     },
 ]
 
+seg_zh_by_jieba_pipeline_for_tar = [
+    {
+        'name': 'tokenize_tar_lan',
+        'func': utils.zh_word_seg_by_jieba,
+        'input_keys': ['input_2'],
+        'output_keys': 'input_2',
+        'show_dict': {'tar_lan': 'input_2'},
+    },
+    {
+        'name': 'join_list_token_2_string_with_space_for_tar_lan',
+        'func': utils.join_list_token_2_string,
+        'input_keys': ['input_2', ' '],
+        'output_keys': 'input_2',
+        'show_dict': {'tar_lan': 'input_2'},
+    },
+]
+
 remove_space_pipeline = [
     {
         'name': 'remove_space',
