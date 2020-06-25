@@ -1,7 +1,8 @@
 import os
 import math
 import random
-from pretrain.load import ro_en
+from functools import reduce
+from pretrain.load import zh_en_wmt_news, zh_en_news_commentary
 from lib.preprocess import utils
 from lib.utils import create_dir, write_pkl, load_pkl
 from pretrain.preprocess.config import data_dir
@@ -25,13 +26,23 @@ class GenData:
         self.__processed_dir_path = create_dir(data_dir, 'preprocessed', _dataset)
 
         # initialize wmt news loader
-        start_ratio = 0.0 if _is_train else ro_en.Loader.PRETRAIN_TRAIN_RATIO
-        end_ratio = ro_en.Loader.PRETRAIN_TRAIN_RATIO if _is_train else 1.0
-        ro_en_loader = ro_en.Loader(start_ratio, end_ratio, 0.125)
+        start_ratio = 0.0 if _is_train else zh_en_wmt_news.Loader.PRETRAIN_TRAIN_RATIO
+        end_ratio = zh_en_wmt_news.Loader.PRETRAIN_TRAIN_RATIO if _is_train else 1.0
+        zh_en_wmt_loader = zh_en_wmt_news.Loader(start_ratio, end_ratio)
+
+        # initialize news commentary loader
+        start_ratio = 0.0 if _is_train else zh_en_news_commentary.Loader.PRETRAIN_TRAIN_RATIO
+        end_ratio = zh_en_news_commentary.Loader.PRETRAIN_TRAIN_RATIO if _is_train else 1.0
+        zh_en_news_commentary_loader = zh_en_news_commentary.Loader(start_ratio, end_ratio, 0.182)
 
         # load the data
-        ro_data, en_data = ro_en_loader.data()
-        data = list(zip(ro_data, en_data))
+        zh_data, en_data = zh_en_wmt_loader.data()
+        zh_data_2, en_data_2 = zh_en_news_commentary_loader.data()
+
+        # combine data
+        zh_data += zh_data_2
+        en_data += en_data_2
+        data = list(zip(zh_data, en_data))
 
         # shuffle the data
         random.seed(self.RANDOM_STATE)
@@ -103,9 +114,9 @@ class GenData:
         return data[start_index: end_index]
 
 
-from pretrain.models.transformer_cdlm_translate_ro_en import Model
+from pretrain.models.transformer_cdlm_translate import Model
 
-dataset = f'ro_en_cdlm_translate_ro_60k_test'
+dataset = f'zh_en_wmt_news_news_commentary_60k_cdlm_translate_test'
 tokenizer_dir = f'zh_en_ro_news_commentary_wmt_news_um_corpus_dict_90000'
 
 GenData(

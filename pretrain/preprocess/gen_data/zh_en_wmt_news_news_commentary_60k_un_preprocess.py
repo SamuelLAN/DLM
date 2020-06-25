@@ -1,7 +1,7 @@
 import os
 import math
 import random
-from pretrain.load import ro_en
+from pretrain.load import zh_en_wmt_news, zh_en_news_commentary
 from lib.utils import create_dir, write_pkl
 from pretrain.preprocess.config import data_dir
 
@@ -10,17 +10,27 @@ class GenData:
     RANDOM_STATE = 42
     BATCH_SIZE_PER_FILE = 128
 
-    def __init__(self, _is_train, _sample_rate=1.0, _dataset='cdlm'):
+    def __init__(self, _is_train, _dataset='cdlm'):
         # initialize variables
         self.__processed_dir_path = create_dir(data_dir, 'un_preprocessed', _dataset)
 
         # initialize wmt news loader
-        start_ratio = 0.0 if _is_train else ro_en.Loader.PRETRAIN_TRAIN_RATIO
-        end_ratio = ro_en.Loader.PRETRAIN_TRAIN_RATIO if _is_train else 1.0
-        ro_en_loader = ro_en.Loader(start_ratio, end_ratio, _sample_rate)
+        start_ratio = 0.0 if _is_train else zh_en_wmt_news.Loader.PRETRAIN_TRAIN_RATIO
+        end_ratio = zh_en_wmt_news.Loader.PRETRAIN_TRAIN_RATIO if _is_train else 1.0
+        zh_en_wmt_loader = zh_en_wmt_news.Loader(start_ratio, end_ratio)
+
+        # initialize news commentary loader
+        start_ratio = 0.0 if _is_train else zh_en_news_commentary.Loader.PRETRAIN_TRAIN_RATIO
+        end_ratio = zh_en_news_commentary.Loader.PRETRAIN_TRAIN_RATIO if _is_train else 1.0
+        zh_en_news_commentary_loader = zh_en_news_commentary.Loader(start_ratio, end_ratio, 0.182)
 
         # load the data
-        zh_data, en_data = ro_en_loader.data()
+        zh_data, en_data = zh_en_wmt_loader.data()
+        zh_data_2, en_data_2 = zh_en_news_commentary_loader.data()
+
+        # combine data
+        zh_data += zh_data_2
+        en_data += en_data_2
         data = list(zip(zh_data, en_data))
 
         # shuffle the data
@@ -55,10 +65,9 @@ class GenData:
 
 
 is_train = True
-dataset = f'ro_en_60k_{"train" if is_train else "test"}'
+dataset = f'zh_en_wmt_news_news_commentary_60k_{"train" if is_train else "test"}'
 
 GenData(
     is_train,
-    _sample_rate=0.125,
     _dataset=dataset
 )

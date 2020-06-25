@@ -62,6 +62,8 @@ class Train(TrainBase):
             val_y=None,
             train_size=self.train_size,
             val_size=self.val_size,
+            train_example_x=self.train_example_x,
+            train_example_y=self.train_example_y
         )
         self.train_time = time.time() - start_time
         print('\nFinish training')

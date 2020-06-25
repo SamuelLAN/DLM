@@ -166,18 +166,23 @@ class BaseModel:
         self.model.load_weights(model_path)
         print('Successfully loading weights from %s ' % model_path)
 
-    def train(self, train_x, train_y, val_x=None, val_y=None, train_size=None, val_size=None):
+    def train(self, train_x, train_y, val_x=None, val_y=None, train_size=None, val_size=None,
+              train_example_x=None, train_example_y=None):
         # compile model
         self.compile()
+
+        not_generator = not isinstance(train_x, types.GeneratorType)
 
         # if we want to load a trained model
         if self.checkpoint_params['load_model']:
             model_dir = utils.create_dir_in_root(*(['runtime', 'models'] + self.checkpoint_params['load_model']))
-            batch_x = [v[:1] for v in train_x] if isinstance(train_x, tuple) else train_x[:1]
-            self.load_model(model_dir, batch_x, train_y[:1])
+            if not_generator:
+                batch_x = [v[:1] for v in train_x] if isinstance(train_x, tuple) else train_x[:1]
+                self.load_model(model_dir, batch_x, train_y[:1])
+            else:
+                self.load_model(model_dir, train_example_x, train_example_y)
 
         if not self.__finish_train:
-            not_generator = not isinstance(train_x, types.GeneratorType)
             batch_size = self.train_params['batch_size'] if not_generator else None
             steps_per_epoch = None if not_generator else int(math.ceil(train_size / self.train_params['batch_size']))
             validation_steps = None if not_generator else int(math.ceil(val_size / self.train_params['batch_size']))
