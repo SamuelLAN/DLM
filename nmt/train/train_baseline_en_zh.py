@@ -24,6 +24,6 @@ class Train(TrainBase):
     tokenizer_dir = 'zh_en_ro_news_commentary_wmt_news_um_corpus_dict_90000'
 
 
-o_train = Train(use_cache=True)
+o_train = Train(use_cache=False)
 o_train.train()
 o_train.test(load_model=False)
