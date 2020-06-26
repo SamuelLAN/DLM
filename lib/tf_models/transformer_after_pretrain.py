@@ -330,7 +330,8 @@ class Transformer(keras.Model):
             enc_padding_mask, look_ahead_mask, dec_padding_mask = mask
 
         enc_inp_lan = tf.zeros_like(enc_inp)
-        enc_output = self.encoder(enc_inp, enc_inp_lan, training, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
+        enc_output = self.encoder(enc_inp, enc_inp_lan, training,
+                                  enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
 
         # dec_output.shape == (batch_size, tar_seq_len, d_model)
         dec_inp_lan = tf.ones_like(dec_inp)
@@ -348,7 +349,7 @@ class Transformer(keras.Model):
         return final_output
 
     def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx, tar_start_token_idx, tar_end_token_idx,
-                                        max_tar_seq_len=60, verbose=0):
+                                        max_tar_seq_len=60, verbose=0, show_attention_weight=False):
         """
         Evaluate a sentence
         :params
@@ -378,7 +379,14 @@ class Transformer(keras.Model):
             decoder_input = np.array(list(map(lambda x: x['output'], outputs)))
 
             # predictions.shape == (top_k, seq_len, vocab_size)
-            predictions = self.call([encoder_input, decoder_input], training=False)
+            if show_attention_weight:
+                predictions, attention_weights = self.call([encoder_input, decoder_input],
+                                                           training=False, show_attention_weight=show_attention_weight)
+            else:
+                predictions = self.call([encoder_input, decoder_input],
+                                        training=False, show_attention_weight=show_attention_weight)
+                attention_weights = {}
+
             predictions = predictions[:, -1]
 
             last_token_idx = np.argmax(predictions, axis=-1)
@@ -386,7 +394,13 @@ class Transformer(keras.Model):
             tmp_outputs = []
             for i, val in enumerate(outputs):
                 val['output'] += [last_token_idx[i]]
-                if last_token_idx[i] == tar_end_token_idx:
+                if last_token_idx[i] == tar_end_token_idx or seq_len >= max_tar_seq_len:
+
+                    attentions = {}
+                    for k, v in attention_weights.items():
+                        attentions[k] = v[i]
+
+                    val['attentions'] = attentions
                     ret.append(val)
                 else:
                     tmp_outputs.append(val)
@@ -398,7 +412,10 @@ class Transformer(keras.Model):
             ret += outputs
 
         ret.sort(key=lambda x: x['index'])
-        return list(map(lambda x: x['output'], ret))
+
+        if show_attention_weight:
+            return list(map(lambda x: x['output'], ret)), list(map(lambda x: x['attentions'], ret))
+        return list(map(lambda x: x['output'], ret)), []
 
     def beam_search_list_token_idx(self,
                                    list_input_token_idx,
