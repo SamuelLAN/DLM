@@ -395,7 +395,7 @@ class BaseModel:
                 # ['<start>'] + list_of_src_token[13:-11] + ['<end>'],
                 fontdict=font_dict,
                 rotation=90,
-                # fontproperties='SimHei'
+                fontproperties='SimHei'
             )
 
             ax.set_yticklabels(
