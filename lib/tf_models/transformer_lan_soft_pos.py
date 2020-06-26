@@ -139,3 +139,72 @@ class Transformer(BaseTransformer):
         if show_attention_weight:
             return final_output, attention_weights
         return final_output
+
+    def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx, tar_start_token_idx, tar_end_token_idx,
+                                        max_tar_seq_len=60, verbose=0, show_attention_weight=False):
+        """
+        Evaluate a sentence
+        :params
+            list_input_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
+                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+            tar_start_token_idx (int): idx of target <start> token
+            tar_end_token_idx (int): idx of target <end> token
+            max_tar_seq_len: max token num of target sentences
+        :return
+            list_target_token_idx (list): [12, 43, 2, 346, 436, 87, 876],
+                        # correspond to ['He', 'llo', ',', 'I', 'am', 'stu', 'dent'],
+        """
+        # shape: (batch_size, len of list_input_token_idx )
+        batch_size = len(list_of_list_input_token_idx)
+        outputs = [{'output': [tar_start_token_idx], 'index': i} for i in range(batch_size)]
+
+        seq_len = 1
+        ret = []
+
+        while len(outputs) and seq_len < max_tar_seq_len:
+            if verbose and seq_len % 2 == 0:
+                progress = float(seq_len) / max_tar_seq_len * 100.
+                print('\rprogress: %.2f%% ' % progress, end='')
+
+            # get input
+            encoder_input = np.array([list_of_list_input_token_idx[val['index']] for val in outputs])
+            decoder_input = np.array(list(map(lambda x: x['output'], outputs)))
+
+            # predictions.shape == (top_k, seq_len, vocab_size)
+            if show_attention_weight:
+                predictions, attention_weights = self.call([encoder_input, decoder_input],
+                                                           training=False, show_attention_weight=show_attention_weight)
+            else:
+                predictions = self.call([encoder_input, decoder_input],
+                                        training=False, show_attention_weight=show_attention_weight)
+                attention_weights = {}
+
+            predictions = predictions[:, -1]
+
+            last_token_idx = np.argmax(predictions, axis=-1)
+
+            tmp_outputs = []
+            for i, val in enumerate(outputs):
+                val['output'] += [last_token_idx[i]]
+                if last_token_idx[i] == tar_end_token_idx or seq_len >= max_tar_seq_len:
+
+                    attentions = {}
+                    for k, v in attention_weights.items():
+                        attentions[k] = v[i]
+
+                    val['attentions'] = attentions
+                    ret.append(val)
+                else:
+                    tmp_outputs.append(val)
+
+            outputs = tmp_outputs
+            seq_len += 1
+
+        if len(outputs):
+            ret += outputs
+
+        ret.sort(key=lambda x: x['index'])
+
+        if show_attention_weight:
+            return list(map(lambda x: x['output'], ret)), list(map(lambda x: x['attentions'], ret))
+        return list(map(lambda x: x['output'], ret)), []
