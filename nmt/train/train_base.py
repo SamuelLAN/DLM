@@ -175,14 +175,14 @@ class Train:
             self.model.train((self.__train_src_encode, self.__train_tar_encode[:, :-1]), self.__train_tar_encode[:, 1:])
             self.__train_time = 0.
 
-        print('\nTesting attention map ... ')
-
-        src_sent = r'1月,欧洲央行行长德拉吉事实上绕过了这两个障碍,实施了量化宽松方案,其规模之大足以为所有欧元区政府现在也包括希腊的全部赤字提供融资,并将它们未偿还债务的大部分共同化.'
+        # print('\nTesting attention map ... ')
+        #
+        # # src_sent = r'1月,欧洲央行行长德拉吉事实上绕过了这两个障碍,实施了量化宽松方案,其规模之大足以为所有欧元区政府现在也包括希腊的全部赤字提供融资,并将它们未偿还债务的大部分共同化.'
         # src_sent = r'鉴于温室效应所固有的巨大惯性,负责和不负责行为所导致的温差将在25年后才得以显现,而产生重大后果则需要50年.'
-        # src_sent = r'负责和不负责行为所导致的温差将在25年后才得以显现,而产生重大后果则需要50年.'
-        # src_sent = r'那么这一新措施能起到作用吗?'
-        self.model.get_attention_map([src_sent], self.__src_tokenizer, self.__tar_tokenizer)
-        exit()
+        # # src_sent = r'负责和不负责行为所导致的温差将在25年后才得以显现,而产生重大后果则需要50年.'
+        # # src_sent = r'那么这一新措施能起到作用吗?'
+        # self.model.get_attention_map([src_sent], self.__src_tokenizer, self.__tar_tokenizer)
+        # exit()
 
         print('\nTesting model ...')
 

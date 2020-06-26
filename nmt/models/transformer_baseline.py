@@ -4,6 +4,7 @@ from nmt.models.base_model import BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
 from lib.tf_metrics.pretrain import tf_accuracy, tf_perplexity
 from lib.preprocess import utils
+from pretrain.preprocess.config import Ids
 from lib.tf_models.transformer_after_pretrain import Transformer
 
 keras = tf.keras
@@ -30,7 +31,9 @@ class Model(BaseModel):
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
-        'input_incr': 4,
+        # 'input_incr': 4,
+        'input_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
+        'class_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
     }
 
     model_params = {
@@ -47,7 +50,7 @@ class Model(BaseModel):
         'use_beam_search': False,
         'top_k': 5,
         'get_random': False,
-        'lan_vocab_size': 2,
+        'lan_vocab_size': 3,
     }
 
     train_params = {
@@ -140,8 +143,6 @@ class Model(BaseModel):
             self.plot_attention_weights(attention, src_decoded, pred_decoded, _layer)
 
         print('finish plotting ')
-
-        exit()
 
     def translate_list_token_idx(self, list_of_list_of_src_token_idx, tar_tokenizer):
         """ translate the src list token idx to target language sentences """

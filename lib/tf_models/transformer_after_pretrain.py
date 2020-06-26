@@ -321,7 +321,7 @@ class Transformer(keras.Model):
 
         return enc_padding_mask, combined_mask, dec_padding_mask
 
-    def call(self, inputs, training=None, mask=None):
+    def call(self, inputs, training=None, mask=None, show_attention_weight=False):
         enc_inp, dec_inp = inputs
 
         if isinstance(mask, type(None)):
@@ -345,7 +345,8 @@ class Transformer(keras.Model):
             final_output = tf.matmul(dec_output, W)
             final_output = tf.nn.softmax(final_output, axis=-1)
 
-        # return final_output, attention_weights
+        if show_attention_weight:
+            return final_output, attention_weights
         return final_output
 
     def evaluate_list_of_list_token_idx(self, list_of_list_input_token_idx, tar_start_token_idx, tar_end_token_idx,

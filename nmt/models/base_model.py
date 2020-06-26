@@ -13,7 +13,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib.pylab import mpl
 
-mpl.rcParams['font.sans-serif'] = ['SimHei']  # 指定默认字体
+mpl.rcParams['font.sans-serif'] = ['FangSong']  # 指定默认字体
 mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
 
 keras = tf.keras
@@ -377,30 +377,30 @@ class BaseModel:
                 ax.set_xlabel(f'Head {head + 1}', fontdict=font_dict)
 
             # ax.matshow(tmp_attention[:-1, :len_src], cmap='viridis')
-            # ax.matshow(tmp_attention[16:-1, 8:len_src], cmap='viridis')
-            ax.matshow(tmp_attention[15:-1 - 8, 13:len_src - 11], cmap='viridis')
+            ax.matshow(tmp_attention[11:-1, 8:len_src], cmap='viridis')
+            # ax.matshow(tmp_attention[16: -1 - 13, 13:len_src - 10], cmap='viridis')
 
             ax.set_xticks(list(range(len_src)))
             ax.set_yticks(list(range(len_pred)))
 
             # ax.set_ylim(len_pred - 1.5, -0.5)
-            # ax.set_ylim(len_pred - 16 - 1.5, -0.5)
-            ax.set_ylim(len_pred - 15 - 8 - 1.5, -0.5)
+            ax.set_ylim(len_pred - 11 - 1.5, -0.5)
+            # ax.set_ylim(len_pred - 16 - 13 - 1.5, -0.5)
             # ax.set_xlim(-0.5, len_src - 8.5)
-            # ax.set_xlim(-0.5, len_src - 8.5)
-            ax.set_xlim(-0.5, len_src - 13.5 - 11)
+            ax.set_xlim(-0.5, len_src - 8.5)
+            # ax.set_xlim(-0.5, len_src - 13.5 - 10)
 
             ax.set_xticklabels(
-                ['<start>'] + list_of_src_token[13:-11] + ['<end>'],
+                ['<start>'] + list_of_src_token[8:] + ['<end>'],
                 # ['<start>'] + list_of_src_token[13:-11] + ['<end>'],
                 fontdict=font_dict,
                 rotation=90,
-                fontproperties='SimHei'
+                # fontproperties='SimHei'
             )
 
             ax.set_yticklabels(
                 # list_of_pred_token[15:],
-                list_of_pred_token[15:-8],
+                list_of_pred_token[11:],
                 fontdict=font_dict,
                 # fontproperties='SimHei'
             )
