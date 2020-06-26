@@ -1,6 +1,7 @@
 import tensorflow as tf
 from nmt.models.transformer_baseline import Model as BaseModel
 from nmt.preprocess.inputs import noise_pl, tfds_share_pl, zh_en
+from pretrain.preprocess.config import Ids
 
 keras = tf.keras
 tfv1 = tf.compat.v1
@@ -24,7 +25,9 @@ class Model(BaseModel):
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'sample_rate': 1.0,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
-        'input_incr': 4,
+        # 'input_incr': 4,
+        'input_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
+        'class_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
     }
 
     model_params = {
@@ -41,7 +44,8 @@ class Model(BaseModel):
         'use_beam_search': False,
         'top_k': 5,
         'get_random': False,
-        'lan_vocab_size': 2,
+        'lan_vocab_size': 3,
+        # 'lan_vocab_size': 2,
     }
 
     train_params = {
