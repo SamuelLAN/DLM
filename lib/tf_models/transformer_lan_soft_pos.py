@@ -114,7 +114,7 @@ class Transformer(BaseTransformer):
 
         self.final_layer = layers.Dense(target_vocab_size, activation='softmax')
 
-    def call(self, inputs, training=None, mask=None):
+    def call(self, inputs, training=None, mask=None, show_attention_weight=False):
         enc_inp, enc_inp_lan, dec_inp, dec_inp_lan, dec_inp_pos = inputs
 
         if isinstance(mask, type(None)):
@@ -136,5 +136,6 @@ class Transformer(BaseTransformer):
             final_output = tf.matmul(dec_output, W)
             final_output = tf.nn.softmax(final_output, axis=-1)
 
-        # return final_output, attention_weights
+        if show_attention_weight:
+            return final_output, attention_weights
         return final_output
