@@ -68,21 +68,19 @@ class Model(BaseModel):
     }
 
     monitor_params = {
-        **BaseModel.monitor_params,
-        'name': 'tf_accuracy',
-        # 'name': 'val_loss',
-        # 'mode': 'min',  # for the "name" monitor, the "min" is best;
+        'monitor': 'val_tf_accuracy',
         'mode': 'max',  # for the "name" monitor, the "min" is best;
-        'for_start': 'loss',
-        'for_start_value': 1.5,
-        'for_start_mode': 'min',
+        'early_stop': train_params['early_stop'],
+        'start_train_monitor': 'tf_accuracy',
+        'start_train_monitor_value': 0.05,
+        'start_train_monitor_mode': 'max',
     }
 
     checkpoint_params = {
         'load_model': ["baseline", "wmt-news"],  # [name, time]
         # 'load_model': [name, '2020_04_26_20_26_51'],  # [name, time] # BLEU 21, for news-commentary
         # 'load_model': [name, '2020_04_25_12_59_02'],  # [name, time] # BLEU 46, for wmt-news
-        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['name']
+        'extend_name': '.{epoch:03d}-{%s:.4f}.hdf5' % monitor_params['monitor']
     }
 
     def translate_sentences(self, list_of_src_sentences, src_tokenizer, tar_tokenizer):
@@ -264,7 +262,38 @@ class Model(BaseModel):
         print(f'{dataset} precision in dictionary ({info_key}): {precision}')
         return precision
 
-    def evaluate(self, list_of_list_src_token_idx):
+    def evaluate(self, list_of_list_src_token_idx, show_attention_weight=False):
         if self.model_params['use_beam_search']:
             return self.evaluate_encoded_beam_search(list_of_list_src_token_idx)
-        return self.evaluate_encoded(list_of_list_src_token_idx)
+        return self.evaluate_encoded(list_of_list_src_token_idx, show_attention_weight)
+
+    def get_attention_map(self, list_of_src_sentences, src_tokenizer, tar_tokenizer):
+        """ translate list of sentences and decode the results """
+        encoded_data = utils.pipeline(self.encode_pipeline_for_src, list_of_src_sentences, None, {
+            'tokenizer': src_tokenizer,
+            'vocab_size': src_tokenizer.vocab_size,
+            'max_src_seq_len': self.data_params['max_src_seq_len'],
+        })
+
+        pred_encoded, attentions = self.evaluate(encoded_data, True)
+
+        pred_decoded = self.decode_tar_data(pred_encoded, tar_tokenizer, False)
+        src_decoded = self.decode_src_data(encoded_data, src_tokenizer, False)
+
+        pred_decoded = pred_decoded[0]
+        src_decoded = src_decoded[0]
+        attentions = attentions[0]
+
+        print('start ploting ...')
+
+        for _layer, attention in attentions.items():
+            if _layer != 'decoder_layer6_block2':
+                continue
+            # if _layer[-1] != '2':
+            #     continue
+            print(f'plotting {_layer} ... ')
+            self.plot_attention_weights(attention, src_decoded, pred_decoded, _layer)
+
+        print('finish plotting ')
+
+        exit()

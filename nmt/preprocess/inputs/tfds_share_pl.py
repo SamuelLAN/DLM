@@ -110,7 +110,7 @@ encode_pipeline_for_src = [
         'show_dict': {'vocab_size': 'vocab_size'},
     },
     {
-        'name': 'encoder_string_2_subword_idxn',
+        'name': 'encoder_string_2_subword_idx',
         'func': utils.encoder_string_2_subword_idx_by_tfds,
         'input_keys': ['tokenizer', 'input_1'],
         'output_keys': 'input_1',
@@ -126,13 +126,13 @@ encode_pipeline_for_src = [
     {
         'name': 'filter_exceed_max_seq_len',
         'func': utils.filter_exceed_max_seq_len,
-        'input_keys': ['input_1', 'max_seq_len'],
+        'input_keys': ['input_1', 'max_src_seq_len'],
         'output_keys': 'input_1',
     },
     {
         'name': 'add_pad_token_to_src_lan',
         'func': utils.add_pad_token_idx_2_list_token_idx,
-        'input_keys': ['input_1', 'max_seq_len'],
+        'input_keys': ['input_1', 'max_src_seq_len'],
         'output_keys': 'input_1',
         'show_dict': {'src_lan': 'input_1'},
     },

@@ -10,6 +10,11 @@ from lib.tf_callback.saver import Saver
 from lib.tf_models.transformer import Transformer
 from lib.metrics import metrics
 import tensorflow as tf
+import matplotlib.pyplot as plt
+from matplotlib.pylab import mpl
+
+mpl.rcParams['font.sans-serif'] = ['FangSong']  # 指定默认字体
+mpl.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
 
 keras = tf.keras
 tfv1 = tf.compat.v1
@@ -240,22 +245,31 @@ class BaseModel:
         # calculate the mean loss
         return tf.reduce_mean(loss_)
 
-    def evaluate_encoded(self, list_of_list_src_token_idx):
+    def evaluate_encoded(self, list_of_list_src_token_idx, show_attention_weight=False):
         """ translate list of list encoded token idx; the results are also encoded """
         batch_size = self.train_params['batch_size']
         steps = int(np.ceil(len(list_of_list_src_token_idx) / batch_size))
 
         # evaluate in batch so that OOM would not happen
         predictions = []
+        attentions = []
         for step in range(steps):
             progress = float(step + 1) / steps * 100.
             print('\rprogress: %.2f%% ' % progress, end='')
 
             batch_x = list_of_list_src_token_idx[step * batch_size: (step + 1) * batch_size]
-            predictions += self.model.evaluate_list_of_list_token_idx(batch_x,
-                                                                      self.tar_start_token_idx,
-                                                                      self.tar_end_token_idx,
-                                                                      self.data_params['max_tar_seq_len'])
+            _predictions, _attentions = self.model.evaluate_list_of_list_token_idx(
+                batch_x,
+                self.tar_start_token_idx,
+                self.tar_end_token_idx,
+                self.data_params['max_tar_seq_len'],
+                show_attention_weight=show_attention_weight)
+
+            predictions += _predictions
+            attentions += _attentions
+
+        if show_attention_weight:
+            return predictions, attentions
         return predictions
 
     def evaluate_encoded_beam_search(self, list_of_list_src_token_idx):
@@ -335,3 +349,63 @@ class BaseModel:
     def decode_encoded_data(_decode_pl, predictions, _tokenizer, verbose=False):
         from lib.preprocess.utils import pipeline
         return pipeline(_decode_pl, predictions, None, {'tokenizer': _tokenizer}, verbose=verbose)
+
+    @staticmethod
+    def plot_attention_weights(attention, list_of_src_token, list_of_pred_token, name='attention'):
+        len_pred = len(list_of_pred_token) + 1
+        len_src = len(list_of_src_token) + 2
+
+        mean_attention = np.mean(attention, axis=0)
+        len_heads = int(attention.shape[0])
+        font_dict = {'fontsize': 25}
+
+        fig = plt.figure(f'{name}_1', figsize=(16, 8))
+        for head in range(len_heads + 1):
+            if head % 2 == 0 and head != 0:
+                plt.tight_layout()
+                plt.savefig(utils.get_relative_file_path('runtime', 'figure', f'{name}_head_{head}_{list_of_src_token[1]}.png'), dpi=300)
+                fig = plt.figure(f'{name}_{head}', figsize=(15, 9))
+
+            if head == len_heads:
+                tmp_attention = mean_attention
+                ax = fig.add_subplot(1, 1, 1)
+                ax.set_xlabel(f'mean attention', fontdict=font_dict)
+
+            else:
+                tmp_attention = attention[head]
+                ax = fig.add_subplot(1, 2, head % 2 + 1)
+                ax.set_xlabel(f'Head {head + 1}', fontdict=font_dict)
+
+            # ax.matshow(tmp_attention[:-1, :len_src], cmap='viridis')
+            # ax.matshow(tmp_attention[16:-1, 8:len_src], cmap='viridis')
+            ax.matshow(tmp_attention[15:-1 - 8, 13:len_src - 11], cmap='viridis')
+
+            ax.set_xticks(list(range(len_src)))
+            ax.set_yticks(list(range(len_pred)))
+
+            # ax.set_ylim(len_pred - 1.5, -0.5)
+            # ax.set_ylim(len_pred - 16 - 1.5, -0.5)
+            ax.set_ylim(len_pred - 15 - 8 - 1.5, -0.5)
+            # ax.set_xlim(-0.5, len_src - 8.5)
+            # ax.set_xlim(-0.5, len_src - 8.5)
+            ax.set_xlim(-0.5, len_src - 13.5 - 11)
+
+            ax.set_xticklabels(
+                ['<start>'] + list_of_src_token[13:-11] + ['<end>'],
+                # ['<start>'] + list_of_src_token[13:-11] + ['<end>'],
+                fontdict=font_dict,
+                rotation=90,
+                # fontproperties='SimHei'
+            )
+
+            ax.set_yticklabels(
+                # list_of_pred_token[15:],
+                list_of_pred_token[15:-8],
+                fontdict=font_dict,
+                # fontproperties='SimHei'
+            )
+
+        plt.tight_layout()
+        plt.savefig(utils.get_relative_file_path('runtime', 'figure', f'{name}_mean_{list_of_src_token[1]}.png'),
+                    dpi=300)
+        plt.show()
