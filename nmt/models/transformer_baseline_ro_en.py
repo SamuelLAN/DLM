@@ -25,7 +25,7 @@ class Model(BaseModel):
         'vocab_size': 20000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
-        'sample_rate': 0.0125,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
+        'sample_rate': 0.125,  # sample "sample_rate" percentage of data into dataset; range from 0 ~ 1
         # 'input_incr': 4,
         'input_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
         'class_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
