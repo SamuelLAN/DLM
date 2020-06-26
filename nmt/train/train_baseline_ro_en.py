@@ -14,7 +14,7 @@ from nmt.load.ro_en import Loader
 from nmt.train.train_base import Train as TrainBase
 
 Model.name = 'transformer_nmt_baseline_ro_en'
-Model.checkpoint_params['load_model'] = ['transformer_nmt_baseline_wmt_news_with_zh_en_ro_60k_pretrained', '2020_06_26_02_45_02']
+Model.checkpoint_params['load_model'] = ['transformer_CDLM_translate_zh_en_ro_wmt_news_60k_async_preprocess', '2020_06_25_20_10_39']
 
 
 class Train(TrainBase):
