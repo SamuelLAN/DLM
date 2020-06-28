@@ -28,7 +28,7 @@ class Model(BaseModel):
 
     data_params = {
         **BaseModel.data_params,
-        'vocab_size': 90000,  # approximate
+        'vocab_size': 80000,  # approximate
         'max_src_seq_len': 60,
         'max_tar_seq_len': 60,
         'max_src_ground_seq_len': 24,
