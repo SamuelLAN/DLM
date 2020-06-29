@@ -105,8 +105,8 @@ class GenData:
 
 from pretrain.models.transformer_cdlm_translate_ro_en import Model
 
-dataset = f'ro_en_cdlm_translate_ro_60k_test'
-tokenizer_dir = f'zh_en_ro_news_commentary_wmt_news_um_corpus_dict_90000'
+dataset = f'ro_en_cdlm_translate_6w_size_10_sr_80k_voc_test'
+tokenizer_dir = f'zh_en_ro_wmt_16_19_20_80000'
 
 GenData(
     _is_train=False,

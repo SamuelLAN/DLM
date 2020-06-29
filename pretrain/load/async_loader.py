@@ -9,8 +9,8 @@ from pretrain.preprocess.config import data_dir
 
 class Loader:
     RANDOM_STATE = 42
-    buffer_size = 6400
-    queue_size = 1280
+    buffer_size = 5120
+    queue_size = 512
     data_size_per_file = 128
 
     def __init__(self, *args):

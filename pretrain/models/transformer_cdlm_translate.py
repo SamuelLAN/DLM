@@ -34,7 +34,7 @@ class Model(BaseModel):
         'max_src_ground_seq_len': 24,
         'max_tar_ground_seq_len': 24,
         'sample_ratio': 1.0,  # sample "sample_rate" percentage of data into dataset; > 0
-        'over_sample_rate': 3.0,
+        # 'over_sample_rate': 3.0,
         'input_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
         'class_incr': Ids.end_cdlm_t_2 + 1,  # <start>, <end>, <pad>, <mask>
     }
@@ -57,7 +57,7 @@ class Model(BaseModel):
         'drop_rate': 0.1,
         'share_emb': True,
         'share_final': False,
-        'lan_vocab_size': 2,
+        'lan_vocab_size': 3,
     }
 
     train_params = {

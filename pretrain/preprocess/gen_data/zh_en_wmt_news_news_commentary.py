@@ -33,7 +33,7 @@ class GenData:
         # initialize news commentary loader
         start_ratio = 0.0 if _is_train else zh_en_news_commentary.Loader.PRETRAIN_TRAIN_RATIO
         end_ratio = zh_en_news_commentary.Loader.PRETRAIN_TRAIN_RATIO if _is_train else 1.0
-        zh_en_news_commentary_loader = zh_en_news_commentary.Loader(start_ratio, end_ratio)
+        zh_en_news_commentary_loader = zh_en_news_commentary.Loader(start_ratio, end_ratio, 0.2)
 
         # load the data
         zh_data, en_data = zh_en_wmt_loader.data()
@@ -116,8 +116,8 @@ class GenData:
 
 from pretrain.models.transformer_cdlm_translate import Model
 
-dataset = f'zh_en_wmt_news_news_commentary_cdlm_translate_test'
-tokenizer_dir = f'zh_en_ro_news_commentary_wmt_news_um_corpus_dict_90000'
+dataset = f'zh_en_wmt_19_20_cdlm_translate_6w_size_10_sr_80k_voc_test'
+tokenizer_dir = f'zh_en_ro_wmt_16_19_20_80000'
 
 GenData(
     _is_train=False,
